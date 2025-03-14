@@ -6,7 +6,6 @@ import PersonalRecordsCard from "./PersonalRecordsCard";
 import PRSection from "./PRSection";
 import TrainingSelector from "./TrainingSelector";
 
-// Define the shape of a training entry from TrainingSelector
 interface TrainingEntry {
   date: string;
   exercises: { [key: string]: number };
