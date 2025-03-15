@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import TrainingSession from "./TrainingSession";
+import React, { useState } from "react";
 
 interface ExerciseData {
     [key: string]: number;
@@ -12,44 +11,50 @@ interface TrainingEntry {
     exercises: ExerciseData;
 }
 
-function addExerciseToTrainings(
-    trainings: TrainingEntry[],
-    exerciseName: string,
-    initialValue: number
-): TrainingEntry[] {
-    return trainings.map((training) => ({
-        ...training,
-        exercises: {
-            ...training.exercises,
-            [exerciseName]: initialValue,
-        },
-    }));
-}
-
 const PersonalRecordsCard: React.FC<{
     trainings: TrainingEntry[];
     setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
     onNavigateToMetricsSection: () => void;
     onNavigateToTrainingSelector: () => void;
     weight: number;
+    onUpdateTraining?: (training: TrainingEntry, index: number) => void;
 }> = ({
           trainings,
           setTrainings,
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
           weight,
+          onUpdateTraining,
       }) => {
-    // Handle adding a new training session directly with a prompt
-    const handleAddTrainingSession = () => {
-        const trainingName = prompt("Enter the name of the new training session:");
-        if (trainingName) {
-            const newTraining: TrainingEntry = {
-                date: new Date().toISOString().split("T")[0], // Current date
-                exercises: {
-                    "Default Exercise": 10, // Default exercise with a starting weight
-                },
-            };
-            setTrainings([...trainings, newTraining]);
+    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+    const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
+
+    const handleDelete = (index: number) => {
+        setDeleteConfirm(index);
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirm !== null) {
+            const updatedTrainings = [...trainings];
+            updatedTrainings.splice(deleteConfirm, 1);
+            setTrainings(updatedTrainings);
+            setDeleteConfirm(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirm(null);
+    };
+
+    const toggleExpandTraining = (index: number) => {
+        setExpandedTraining(expandedTraining === index ? null : index);
+    };
+
+    const handleUpdate = (index: number) => {
+        if (onUpdateTraining) {
+            onUpdateTraining(trainings[index], index);
+        } else {
+            console.log("Update functionality not implemented yet");
         }
     };
 
@@ -61,7 +66,7 @@ const PersonalRecordsCard: React.FC<{
                 Your personal records
             </h2>
 
-            <div className="flex relative items-center mt-24">
+            <div className="flex relative items-center mt-16">
                 <div className="ml-10 text-3xl text-white max-sm:text-2xl">
                     Current weight
                 </div>
@@ -72,17 +77,100 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto max-h-96">
+            {deleteConfirm !== null && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                        <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
+                        <p className="mb-6">Are you sure you want to delete this training session?</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
+                                onClick={cancelDelete}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                                onClick={confirmDelete}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex-grow overflow-y-auto max-h-96 mt-6">
                 {trainings.length === 0 ? (
-                    <p className="text-center text-white">No training sessions added yet.</p>
+                    <p className="text-center text-white text-xl">No training sessions added yet.</p>
                 ) : (
                     trainings.map((training, index) => {
                         const prExercise = Object.entries(training.exercises).reduce(
                             (a, b) => (a[1] > b[1] ? a : b)
                         );
                         const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
-                        const trainingText = `${training.date}: exercises: ${Object.keys(training.exercises).length}, PR: ${prText}`;
-                        return <TrainingSession key={index} text={trainingText} />;
+
+                        return (
+                            <div
+                                key={index}
+                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${expandedTraining === index ? 'border-2 border-white' : ''}`}
+                            >
+                                {/* Training header with toggle and delete */}
+                                <div className="p-3 bg-stone-600">
+                                    <div className="flex justify-between items-center">
+                                        <div
+                                            className="flex items-center cursor-pointer flex-grow"
+                                            onClick={() => toggleExpandTraining(index)}
+                                        >
+                                            <span className="text-white font-bold mr-2 whitespace-nowrap">{training.date}</span>
+                                            <span className="text-white mr-2 truncate max-w-xs">
+                                                Exercises: {Object.keys(training.exercises).length} | PR: {prText}
+                                            </span>
+                                            <span className="text-white">
+                                                {expandedTraining === index ? '▲' : '▼'}
+                                            </span>
+                                        </div>
+                                        <div className="flex space-x-2 flex-shrink-0">
+                                            <button
+                                                className="text-sm px-2 py-0.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition whitespace-nowrap"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleUpdate(index);
+                                                }}
+                                            >
+                                                Update
+                                            </button>
+                                            <button
+                                                className="text-sm px-2 py-0.5 bg-red-500 text-black rounded-md hover:bg-red-600 transition whitespace-nowrap"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(index);
+                                                }}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Expanded view with all exercises */}
+                                {expandedTraining === index && (
+                                    <div className="p-4 bg-stone-500">
+                                        <h4 className="text-white font-semibold mb-2">Exercises:</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(training.exercises).map(([exercise, weight], idx) => (
+                                                <div key={idx}
+                                                     className="bg-stone-600 p-2 rounded flex justify-between">
+                                                    <span className="text-white truncate mr-2">{exercise}</span>
+                                                    <span
+                                                        className="text-white font-bold whitespace-nowrap">{weight} kg</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
                     })
                 )}
             </div>

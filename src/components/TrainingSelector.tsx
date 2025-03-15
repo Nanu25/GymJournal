@@ -90,13 +90,13 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
             <div className="flex justify-center mt-10 gap-4">
               <button
                   onClick={handleSaveTraining}
-                  className="text-xl text-white bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
+                  className="text-xl text-black bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
               >
                 Add
               </button>
               <button
                   onClick={onBackToDashboard}
-                  className="text-xl text-white bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
+                  className="text-xl text-black bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
               >
                 Go Back
               </button>
