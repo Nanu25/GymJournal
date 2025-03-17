@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 interface ExerciseData {
     [key: string]: number;
@@ -10,6 +10,14 @@ interface TrainingEntry {
     date: string;
     exercises: ExerciseData;
 }
+
+interface UpdateFormData {
+    date: string;
+    exercises: { name: string; weight: number }[];
+}
+
+type SortField = "date" | "pr" | "exercises" | null;
+type SortDirection = "asc" | "desc";
 
 const PersonalRecordsCard: React.FC<{
     trainings: TrainingEntry[];
@@ -28,6 +36,16 @@ const PersonalRecordsCard: React.FC<{
       }) => {
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
+    const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
+    const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
+        date: "",
+        exercises: [],
+    });
+
+    // States for filtering and sorting
+    const [sortField, setSortField] = useState<SortField>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+    const [searchTerm, setSearchTerm] = useState("");
 
     const handleDelete = (index: number) => {
         setDeleteConfirm(index);
@@ -54,9 +72,136 @@ const PersonalRecordsCard: React.FC<{
         if (onUpdateTraining) {
             onUpdateTraining(trainings[index], index);
         } else {
-            console.log("Update functionality not implemented yet");
+            const training = trainings[index];
+            const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
+                name,
+                weight,
+            }));
+            setUpdateFormData({
+                date: training.date,
+                exercises,
+            });
+            setUpdateFormOpen(index);
         }
     };
+
+    const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+        setUpdateFormData({
+            ...updateFormData,
+            [field]: e.target.value,
+        });
+    };
+
+    const handleExerciseNameChange = (index: number, value: string) => {
+        const updatedExercises = [...updateFormData.exercises];
+        updatedExercises[index] = { ...updatedExercises[index], name: value };
+        setUpdateFormData({
+            ...updateFormData,
+            exercises: updatedExercises,
+        });
+    };
+
+    const handleExerciseWeightChange = (index: number, value: string) => {
+        const updatedExercises = [...updateFormData.exercises];
+        updatedExercises[index] = { ...updatedExercises[index], weight: parseFloat(value) || 0 };
+        setUpdateFormData({
+            ...updateFormData,
+            exercises: updatedExercises,
+        });
+    };
+
+    const addExerciseField = () => {
+        setUpdateFormData({
+            ...updateFormData,
+            exercises: [...updateFormData.exercises, { name: "", weight: 0 }],
+        });
+    };
+
+    const removeExerciseField = (index: number) => {
+        const updatedExercises = [...updateFormData.exercises];
+        updatedExercises.splice(index, 1);
+        setUpdateFormData({
+            ...updateFormData,
+            exercises: updatedExercises,
+        });
+    };
+
+    const submitUpdateForm = () => {
+        if (updateFormOpen !== null) {
+            const exercisesObject: ExerciseData = {};
+            updateFormData.exercises.forEach((exercise) => {
+                if (exercise.name.trim()) {
+                    exercisesObject[exercise.name.trim()] = exercise.weight;
+                }
+            });
+
+            const updatedTraining: TrainingEntry = {
+                date: updateFormData.date,
+                exercises: exercisesObject,
+            };
+
+            const updatedTrainings = [...trainings];
+            updatedTrainings[updateFormOpen] = updatedTraining;
+            setTrainings(updatedTrainings);
+            setUpdateFormOpen(null);
+        }
+    };
+
+    const cancelUpdateForm = () => {
+        setUpdateFormOpen(null);
+    };
+
+    const handleSort = (field: "date" | "pr" | "exercises") => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortDirection("asc");
+        }
+    };
+
+    const filteredAndSortedTrainings = useMemo(() => {
+        const indexedTrainings = trainings.map((training, index) => ({
+            training,
+            originalIndex: index,
+        }));
+
+        let result = indexedTrainings;
+        if (searchTerm) {
+            result = result.filter(({ training }) =>
+                training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                Object.keys(training.exercises).some((exercise) =>
+                    exercise.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            );
+        }
+
+        if (sortField) {
+            result = [...result].sort((a, b) => {
+                const trainingA = a.training;
+                const trainingB = b.training;
+                let comparison = 0;
+
+                if (sortField === "date") {
+                    comparison = trainingA.date.localeCompare(trainingB.date);
+                } else if (sortField === "pr") {
+                    const prA = Object.values(trainingA.exercises).length > 0
+                        ? Math.max(...Object.values(trainingA.exercises))
+                        : 0;
+                    const prB = Object.values(trainingB.exercises).length > 0
+                        ? Math.max(...Object.values(trainingB.exercises))
+                        : 0;
+                    comparison = prA - prB;
+                } else if (sortField === "exercises") {
+                    comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
+                }
+
+                return sortDirection === "asc" ? comparison : -comparison;
+            });
+        }
+
+        return result;
+    }, [trainings, searchTerm, sortField, sortDirection]);
 
     return (
         <section
@@ -77,6 +222,46 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             </div>
 
+            {/* Filter Bar */}
+            <div className="mt-4 mb-2 px-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search by date or exercise"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="px-3 py-1 border border-gray-300 rounded bg-white text-black"
+                        style={{ minWidth: "210px" }}
+                    />
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={() => handleSort("date")}
+                            className={`px-2 py-1 rounded text-black ${
+                                sortField === "date" ? "bg-stone-700" : "bg-stone-600"
+                            }`}
+                        >
+                            Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
+                        </button>
+                        <button
+                            onClick={() => handleSort("pr")}
+                            className={`px-2 py-1 rounded text-black ${
+                                sortField === "pr" ? "bg-stone-700" : "bg-stone-600"
+                            }`}
+                        >
+                            PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
+                        </button>
+                        <button
+                            onClick={() => handleSort("exercises")}
+                            className={`px-2 py-1 rounded text-black ${
+                                sortField === "exercises" ? "bg-stone-700" : "bg-stone-600"
+                            }`}
+                        >
+                            #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {deleteConfirm !== null && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
@@ -90,7 +275,7 @@ const PersonalRecordsCard: React.FC<{
                                 Cancel
                             </button>
                             <button
-                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                                className="px-4 py-2 bg-red-500 text-black rounded-md hover:bg-red-600 transition"
                                 onClick={confirmDelete}
                             >
                                 Delete
@@ -100,42 +285,116 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             )}
 
-            <div className="flex-grow overflow-y-auto max-h-96 mt-6">
-                {trainings.length === 0 ? (
-                    <p className="text-center text-white text-xl">No training sessions added yet.</p>
+            {updateFormOpen !== null && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full max-h-screen overflow-y-auto">
+                        <h3 className="text-xl font-bold mb-4">Update Training Session</h3>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-1">Date:</label>
+                            <input
+                                type="text"
+                                value={updateFormData.date}
+                                onChange={(e) => handleUpdateInputChange(e, "date")}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-1">Exercises:</label>
+                            {updateFormData.exercises.map((exercise, idx) => (
+                                <div key={idx} className="flex mb-2 space-x-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Exercise name"
+                                        value={exercise.name}
+                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
+                                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                    <input
+                                        type="number min=0"
+                                        placeholder="Weight (kg)"
+                                        value={exercise.weight}
+                                        onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
+                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeExerciseField(idx)}
+                                        className="px-3 py-2 bg-red-500 text-black rounded-md hover:bg-red-600 transition"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={addExerciseField}
+                                className="mt-2 px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition"
+                            >
+                                Add Exercise
+                            </button>
+                        </div>
+                        <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
+                                onClick={cancelUpdateForm}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-green-500 text-black rounded-md hover:bg-green-600 transition"
+                                onClick={submitUpdateForm}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex-grow overflow-y-auto max-h-96 mt-2">
+                {filteredAndSortedTrainings.length === 0 ? (
+                    trainings.length === 0 ? (
+                        <p className="text-center text-white text-xl">No training sessions added yet.</p>
+                    ) : (
+                        <p className="text-center text-white text-xl">No matching training sessions found.</p>
+                    )
                 ) : (
-                    trainings.map((training, index) => {
+                    filteredAndSortedTrainings.map(({ training, originalIndex }) => {
                         const prExercise = Object.entries(training.exercises).reduce(
-                            (a, b) => (a[1] > b[1] ? a : b)
+                            (a, b) => (a[1] > b[1] ? a : b),
+                            ["", 0]
                         );
                         const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
 
                         return (
                             <div
-                                key={index}
-                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${expandedTraining === index ? 'border-2 border-white' : ''}`}
+                                key={originalIndex}
+                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${
+                                    expandedTraining === originalIndex ? "border-2 border-white" : ""
+                                }`}
                             >
-                                {/* Training header with toggle and delete */}
                                 <div className="p-3 bg-stone-600">
                                     <div className="flex justify-between items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow"
-                                            onClick={() => toggleExpandTraining(index)}
+                                            onClick={() => toggleExpandTraining(originalIndex)}
                                         >
-                                            <span className="text-white font-bold mr-2 whitespace-nowrap">{training.date}</span>
+                                            <span className="text-white font-bold mr-2 whitespace-nowrap">
+                                                {training.date}
+                                            </span>
                                             <span className="text-white mr-2 truncate max-w-xs">
                                                 Exercises: {Object.keys(training.exercises).length} | PR: {prText}
                                             </span>
                                             <span className="text-white">
-                                                {expandedTraining === index ? '▲' : '▼'}
+                                                {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
                                         <div className="flex space-x-2 flex-shrink-0">
                                             <button
-                                                className="text-sm px-2 py-0.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition whitespace-nowrap"
+                                                className="text-sm px-2 py-0.5 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition whitespace-nowrap"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleUpdate(index);
+                                                    handleUpdate(originalIndex);
                                                 }}
                                             >
                                                 Update
@@ -144,7 +403,7 @@ const PersonalRecordsCard: React.FC<{
                                                 className="text-sm px-2 py-0.5 bg-red-500 text-black rounded-md hover:bg-red-600 transition whitespace-nowrap"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDelete(index);
+                                                    handleDelete(originalIndex);
                                                 }}
                                             >
                                                 Delete
@@ -152,18 +411,19 @@ const PersonalRecordsCard: React.FC<{
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Expanded view with all exercises */}
-                                {expandedTraining === index && (
+                                {expandedTraining === originalIndex && (
                                     <div className="p-4 bg-stone-500">
                                         <h4 className="text-white font-semibold mb-2">Exercises:</h4>
                                         <div className="grid grid-cols-2 gap-2">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
-                                                <div key={idx}
-                                                     className="bg-stone-600 p-2 rounded flex justify-between">
+                                                <div
+                                                    key={idx}
+                                                    className="bg-stone-600 p-2 rounded flex justify-between"
+                                                >
                                                     <span className="text-white truncate mr-2">{exercise}</span>
-                                                    <span
-                                                        className="text-white font-bold whitespace-nowrap">{weight} kg</span>
+                                                    <span className="text-white font-bold whitespace-nowrap">
+                                                        {weight} kg
+                                                    </span>
                                                 </div>
                                             ))}
                                         </div>
@@ -182,7 +442,6 @@ const PersonalRecordsCard: React.FC<{
                 >
                     Add training session
                 </button>
-
                 <button
                     className="w-full mt-2.5 text-3xl italic text-center text-black max-sm:text-2xl"
                     onClick={onNavigateToMetricsSection}
