@@ -33,15 +33,7 @@ const exerciseCategories = [
 
 // Generate mock training data
 const generateMockTrainings = (): TrainingEntry[] => {
-  // Create dates for the last 5 trainings (twice a week)
-  const dates = [];
-  const today = new Date();
-  for (let i = 0; i < 5; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (i * 3 + Math.floor(i/2)));  // Simulate Monday/Thursday schedule
-    dates.push(date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }));
-  }
-
+  const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09"];
   return [
     {
       date: dates[0],
@@ -104,24 +96,19 @@ const generateMockTrainings = (): TrainingEntry[] => {
 };
 
 const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
-  // State to store the list of trainings (in-memory) with mock data
   const [trainings, setTrainings] = useState<TrainingEntry[]>(() => generateMockTrainings());
 
-  // State to toggle between dashboard and TrainingSelector
   const [isAddingTraining, setIsAddingTraining] = useState(false);
 
-  // Function to navigate to TrainingSelector
   const handleNavigateToTrainingSelector = () => {
     setIsAddingTraining(true);
   };
 
-  // Function to save a new training and return to dashboard
   const handleSaveTraining = (newTraining: TrainingEntry) => {
-    setTrainings([newTraining, ...trainings]); // Add new training at the beginning
+    setTrainings([newTraining, ...trainings]);
     setIsAddingTraining(false);
   };
 
-  // Function to go back to dashboard without saving
   const handleBackToDashboard = () => {
     setIsAddingTraining(false);
   };
