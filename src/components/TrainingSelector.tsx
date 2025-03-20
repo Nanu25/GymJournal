@@ -16,7 +16,7 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
     },
     {
       name: "Back",
-      exercises: ["Pullup", "Dumbbell Row", "Cable Row", "Lat Pulldown", "Deadlift"],
+      exercises: ["Pullup", "Dumbbell Row", "Cable Row", "Lat Pulldown", "Deadlift", "Back Extensions"],
     },
     {
       name: "Legs",
@@ -84,7 +84,7 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="bg-white bg-opacity-10 border border-gray-300 rounded-lg p-3 text-white w-full focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                      className="bg-white bg-opacity-10 border border-gray-300 rounded-lg p-3 text-black w-full focus:outline-none focus:ring-2 focus:ring-opacity-50"
                       style={{ borderColor: "#B4A0A0", boxShadow: "0 0 0 1px rgba(180, 160, 160, 0.2)" }}
                   />
                 </div>

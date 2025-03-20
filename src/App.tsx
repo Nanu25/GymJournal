@@ -56,15 +56,15 @@ const App = () => {
         setCurrentPage("trainingSelector");
     }
 
-    // Function to add a new training session
-    const addTrainingSession = (exerciseData: { [exercise: string]: number }) => {
-        const newId = trainingSessions.length + 1; // Simple ID generation
-        const newSession: TrainingSessionData = {
-            id: newId,
-            exerciseData,
-        };
-        setTrainingSessions([...trainingSessions, newSession]);
-    };
+    // // Function to add a new training session
+    // const addTrainingSession = (exerciseData: { [exercise: string]: number }) => {
+    //     const newId = trainingSessions.length + 1; // Simple ID generation
+    //     const newSession: TrainingSessionData = {
+    //         id: newId,
+    //         exerciseData,
+    //     };
+    //     setTrainingSessions([...trainingSessions, newSession]);
+    // };
 
     return (
         <div className="w-screen h-screen overflow-hidden flex flex-col">

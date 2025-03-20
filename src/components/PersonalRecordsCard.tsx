@@ -1,6 +1,30 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import ReactPaginate from 'react-paginate';
+
+interface PaginationProps {
+    pageCount: number;
+    onPageChange: (selectedPage: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({ pageCount, onPageChange }) => (
+    <ReactPaginate
+        previousLabel={"←"}
+        nextLabel={"→"}
+        breakLabel={"..."}
+        pageCount={pageCount}
+        marginPagesDisplayed={2}
+        pageRangeDisplayed={3}
+        onPageChange={(data) => onPageChange(data.selected)}
+        containerClassName={"pagination flex items-center justify-center space-x-2 mt-4"}
+        pageClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
+        previousClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
+        nextClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
+        breakClassName={"px-3 py-1"}
+        activeClassName={"bg-stone-800"}
+    />
+);
 
 interface ExerciseData {
     [key: string]: number;
@@ -41,11 +65,71 @@ const PersonalRecordsCard: React.FC<{
         date: "",
         exercises: [],
     });
-
-    // States for filtering and sorting
     const [sortField, setSortField] = useState<SortField>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 3;
+
+    const filteredAndSortedTrainings = useMemo(() => {
+        const indexedTrainings = trainings.map((training, index) => ({
+            training,
+            originalIndex: index,
+        }));
+
+        let result = indexedTrainings;
+        if (searchTerm) {
+            result = result.filter(({ training }) =>
+                training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                Object.keys(training.exercises).some((exercise) =>
+                    exercise.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            );
+        }
+
+        if (sortField) {
+            result = [...result].sort((a, b) => {
+                const trainingA = a.training;
+                const trainingB = b.training;
+                let comparison = 0;
+
+                if (sortField === "date") {
+                    comparison = trainingA.date.localeCompare(trainingB.date);
+                } else if (sortField === "pr") {
+                    const prA = Object.values(trainingA.exercises).length > 0
+                        ? Math.max(...Object.values(trainingA.exercises))
+                        : 0;
+                    const prB = Object.values(trainingB.exercises).length > 0
+                        ? Math.max(...Object.values(trainingB.exercises))
+                        : 0;
+                    comparison = prA - prB;
+                } else if (sortField === "exercises") {
+                    comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
+                }
+
+                return sortDirection === "asc" ? comparison : -comparison;
+            });
+        }
+
+        return result;
+    }, [trainings, searchTerm, sortField, sortDirection]);
+
+    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
+
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [searchTerm, sortField, sortDirection]);
+
+    useEffect(() => {
+        if (pageCount > 0 && currentPage >= pageCount) {
+            setCurrentPage(pageCount - 1);
+        } else if (pageCount === 0) {
+            setCurrentPage(0);
+        }
+    }, [pageCount]);
 
     const handleDelete = (index: number) => {
         setDeleteConfirm(index);
@@ -160,48 +244,9 @@ const PersonalRecordsCard: React.FC<{
         }
     };
 
-    const filteredAndSortedTrainings = useMemo(() => {
-        const indexedTrainings = trainings.map((training, index) => ({
-            training,
-            originalIndex: index,
-        }));
-
-        let result = indexedTrainings;
-        if (searchTerm) {
-            result = result.filter(({ training }) =>
-                training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                Object.keys(training.exercises).some((exercise) =>
-                    exercise.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-            );
-        }
-
-        if (sortField) {
-            result = [...result].sort((a, b) => {
-                const trainingA = a.training;
-                const trainingB = b.training;
-                let comparison = 0;
-
-                if (sortField === "date") {
-                    comparison = trainingA.date.localeCompare(trainingB.date);
-                } else if (sortField === "pr") {
-                    const prA = Object.values(trainingA.exercises).length > 0
-                        ? Math.max(...Object.values(trainingA.exercises))
-                        : 0;
-                    const prB = Object.values(trainingB.exercises).length > 0
-                        ? Math.max(...Object.values(trainingB.exercises))
-                        : 0;
-                    comparison = prA - prB;
-                } else if (sortField === "exercises") {
-                    comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
-                }
-
-                return sortDirection === "asc" ? comparison : -comparison;
-            });
-        }
-
-        return result;
-    }, [trainings, searchTerm, sortField, sortDirection]);
+    const handlePageChange = (selectedPage: number) => {
+        setCurrentPage(selectedPage);
+    };
 
     return (
         <section
@@ -359,7 +404,7 @@ const PersonalRecordsCard: React.FC<{
                         <p className="text-center text-white text-xl">No matching training sessions found.</p>
                     )
                 ) : (
-                    filteredAndSortedTrainings.map(({ training, originalIndex }) => {
+                    currentTrainings.map(({ training, originalIndex }) => {
                         const prExercise = Object.entries(training.exercises).reduce(
                             (a, b) => (a[1] > b[1] ? a : b),
                             ["", 0]
@@ -435,7 +480,9 @@ const PersonalRecordsCard: React.FC<{
                 )}
             </div>
 
-            <div className="mt-auto mb-5">
+            <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
+
+            <div className="mt-5">
                 <button
                     className="w-full mt-2.5 text-3xl italic text-center text-black max-sm:text-2xl"
                     onClick={onNavigateToTrainingSelector}
