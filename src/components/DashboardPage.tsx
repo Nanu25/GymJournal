@@ -33,7 +33,7 @@ const exerciseCategories = [
 
 // Generate mock training data
 const generateMockTrainings = (): TrainingEntry[] => {
-  const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09"];
+  const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09", "2025-02-10", "2025-02-14"];
   return [
     {
       date: dates[0],
@@ -91,6 +91,29 @@ const generateMockTrainings = (): TrainingEntry[] => {
         "Dumbbell Row": 26,
         "Overhead Press": 40
       }
+    },
+    //Chest
+    {
+      date: dates[5],
+        exercises: {
+            "Dumbbell Press": 35,
+            "Incline Dumbbell": 30,
+            "Dumbbell Flys": 20,
+            "Chest Press": 60,
+            "Push-ups": 25
+        }
+    },
+
+    {
+        date: dates[6],
+        exercises: {
+          "Dumbbell Press": 40,
+          "Incline Dumbbell": 35,
+          "Dumbbell Flys": 25,
+          "Biceps Curl": 35,
+          "Cable Triceps Pushdown": 30,
+          "Overhead triceps": 20
+        }
     }
   ];
 };
@@ -132,7 +155,7 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
               <WelcomeHeader username="username" />
 
               <div className="flex flex-col md:flex-row justify-between">
-                <div className="md:w-2/3">
+                <div className="md:w-2/3 min-h-[600px]">
                   <PersonalRecordsCard
                       trainings={trainings}
                       setTrainings={setTrainings}

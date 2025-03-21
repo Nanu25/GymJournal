@@ -17,24 +17,32 @@ import {
 
 const muscleGroupMapping = {
     "Bench Press": "Chest",
-    "Squat": "Legs",
+    "Dumbbell Press": "Chest",
+    "Dumbbell Flys": "Chest",
+    "Incline Dumbbell": "Chest",
+    "Chest Press": "Chest",
     "Deadlift": "Back",
+    "Lat Pulldown": "Back",
+    "Pullup": "Back",
+    "Dumbbell Row": "Back",
+    "Cable Row": "Back",
+    "Dumbbell Row": "Back",
+    "Back Extensions": "Back",
     "Shoulder Press": "Shoulders",
-    "Biceps Curl": "Arms",
-    "Triceps Extension": "Arms",
-    "Pull-up": "Back",
+    "Lateral Raise": "Shoulders",
+    "Front Raise": "Shoulders",
+    "Shrugs": "Shoulders",
+    "Face Pulls": "Shoulders",
+    "Squat": "Legs",
     "Leg Press": "Legs",
     "Leg Curl": "Legs",
     "Calf Raise": "Legs",
-    "Lat Pulldown": "Back",
-    "Dumbbell Row": "Back",
-    "Chest Fly": "Chest",
-    "Triceps Pushdown": "Arms",
-    "Leg Extension": "Legs",
-    "Hammer Curl": "Arms",
+    "Lunges": "Legs",
+    "Cable Triceps Pushdown": "Arms",
+    "Hammer Curls": "Arms",
     "Dips": "Arms",
-    "Cable Row": "Back",
-    "Lateral Raise": "Shoulders"
+    "Biceps Curl": "Arms",
+    "Overhead Triceps": "Arms"
 };
 
 // Colors for the pie chart segments
@@ -114,23 +122,24 @@ const PRSection = ({ trainings }) => {
     }, [trainings]);
 
     return (
-        <aside className="mt-50 mx-auto max-md:mt-30">
+        <aside className="mt-60 mx-auto max-md:mt-40 flex flex-col items-center">
             <CrownIcon />
-            <div className="p-5 opacity-70 bg-red-950 h-auto min-h-[300px] w-[270px]">
+            <div className="p-5 opacity-70 bg-red-950 h-auto min-h-[370px] w-[420px]">
                 {/* Pie Chart: Muscle Group Distribution */}
-                <div className="mb-4">
+                <div className="mb-5">
                     <h4 className="text-white text-center">Muscle Group Distribution</h4>
                     {pieChartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={150}>
+                        <ResponsiveContainer width="100%" height={320}>
                             <PieChart>
                                 <Pie
                                     data={pieChartData}
                                     cx="50%"
                                     cy="50%"
-                                    outerRadius={60}
+                                    outerRadius={75}
                                     fill="#8884d8"
                                     dataKey="value"
-                                    label={({ name }) => name}
+                                    labelLine={false}
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
                                     {pieChartData.map((entry, index) => (
                                         <Cell
@@ -147,10 +156,10 @@ const PRSection = ({ trainings }) => {
                 </div>
 
                 {/* Line Chart: Progress Over Time */}
-                <div className="mb-4">
+                <div className="mb-5">
                     <h4 className="text-white text-center">Progress Over Time</h4>
                     <select
-                        className="mx-auto mt-2 mb-2 h-8 text-sm text-white bg-slate-500 w-full"
+                        className="block mx-auto mt-2 mb-2 h-8 text-sm text-white bg-slate-500 w-64 flex justify-center"
                         value={selectedExercise || ""}
                         onChange={(e) => setSelectedExercise(e.target.value)}
                     >
@@ -176,7 +185,7 @@ const PRSection = ({ trainings }) => {
                 </div>
 
                 {/* Bar Chart: Total Weight Per Session */}
-                <div className="mb-4">
+                <div className="mb-5">
                     <h4 className="text-white text-center">Total Weight Per Session</h4>
                     {barChartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={150}>

@@ -69,7 +69,7 @@ const PersonalRecordsCard: React.FC<{
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 3;
+    const itemsPerPage = 5;
 
     const filteredAndSortedTrainings = useMemo(() => {
         const indexedTrainings = trainings.map((training, index) => ({
