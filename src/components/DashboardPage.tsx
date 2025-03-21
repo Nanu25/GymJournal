@@ -142,7 +142,9 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
                   />
                 </div>
                 <div className="md:w-1/3 flex justify-center">
-                  <PRSection />
+                  <PRSection
+                    trainings={trainings}
+                  />
                 </div>
               </div>
             </main>

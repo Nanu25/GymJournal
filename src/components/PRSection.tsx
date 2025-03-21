@@ -1,95 +1,195 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import CrownIcon from "./icons/CrownIcon";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import {
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    BarChart,
+    Bar,
+} from "recharts";
 
-const BasicPie = () => {
-    // Three different datasets
-    const datasets = {
-        dataset1: [
-            { name: "Chest", value: 70 },
-            { name: "Back", value: 60 },
-            { name: "Legs", value: 50 },
-        ],
-        dataset2: [
-            { name: "Series A", value: 25 },
-            { name: "Series B", value: 35 },
-            { name: "Series C", value: 10 },
-        ],
-        dataset3: [
-            { name: "Series A", value: 40 },
-            { name: "Series B", value: 20 },
-            { name: "Series C", value: 15 },
-        ]
-    };
-
-    // State to track which dataset is currently selected
-    const [currentDataset, setCurrentDataset] = useState('dataset1');
-
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
-
-    // Get the current data based on selected dataset
-    const data = datasets[currentDataset];
-
-    return (
-        <div className="w-full">
-            {/* Dataset selection buttons */}
-            <div className="flex justify-center gap-2 mb-2">
-                <button
-                    className={`px-2 py-1 text-xs rounded ${currentDataset === 'dataset1' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setCurrentDataset('dataset1')}
-                >
-                    Dataset 1
-                </button>
-                <button
-                    className={`px-2 py-1 text-xs rounded ${currentDataset === 'dataset2' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setCurrentDataset('dataset2')}
-                >
-                    Dataset 2
-                </button>
-                <button
-                    className={`px-2 py-1 text-xs rounded ${currentDataset === 'dataset3' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setCurrentDataset('dataset3')}
-                >
-                    Dataset 3
-                </button>
-            </div>
-
-            {/* Pie chart */}
-            <ResponsiveContainer width="100%" height={150}>
-                <PieChart>
-                    <Pie
-                        data={data}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({name}) => name}
-                    >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                </PieChart>
-            </ResponsiveContainer>
-        </div>
-    );
+const muscleGroupMapping = {
+    "Bench Press": "Chest",
+    "Squat": "Legs",
+    "Deadlift": "Back",
+    "Shoulder Press": "Shoulders",
+    "Biceps Curl": "Arms",
+    "Triceps Extension": "Arms",
+    "Pull-up": "Back",
+    "Leg Press": "Legs",
+    "Leg Curl": "Legs",
+    "Calf Raise": "Legs",
+    "Lat Pulldown": "Back",
+    "Dumbbell Row": "Back",
+    "Chest Fly": "Chest",
+    "Triceps Pushdown": "Arms",
+    "Leg Extension": "Legs",
+    "Hammer Curl": "Arms",
+    "Dips": "Arms",
+    "Cable Row": "Back",
+    "Lateral Raise": "Shoulders"
 };
 
-const PRSection = () => {
+// Colors for the pie chart segments
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+
+const PRSection = ({ trainings }) => {
+    const [pieChartData, setPieChartData] = useState([]);
+    const [selectedExercise, setSelectedExercise] = useState(null);
+    const [lineChartData, setLineChartData] = useState([]);
+    const [barChartData, setBarChartData] = useState([]);
+
+    // Compute pie chart data (Muscle Group Distribution)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const muscleGroupCounts = {};
+            trainings.forEach((training) => {
+                Object.keys(training.exercises).forEach((exercise) => {
+                    const muscleGroup = muscleGroupMapping[exercise] || "Other";
+                    muscleGroupCounts[muscleGroup] =
+                        (muscleGroupCounts[muscleGroup] || 0) + 1;
+                });
+            });
+            const data = Object.entries(muscleGroupCounts).map(([name, value]) => ({
+                name,
+                value,
+            }));
+            setPieChartData(data);
+        }, 100); // Simulate async delay
+        return () => clearTimeout(timer);
+    }, [trainings]);
+
+    // Compute line chart data (Progress Over Time)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (selectedExercise) {
+                const data = trainings
+                    .filter((training) => selectedExercise in training.exercises)
+                    .map((training) => ({
+                        date: training.date,
+                        weight: training.exercises[selectedExercise],
+                    }))
+                    .sort((a, b) => a.date.localeCompare(b.date));
+                setLineChartData(data);
+            } else {
+                setLineChartData([]);
+            }
+        }, 100); // Simulate async delay
+        return () => clearTimeout(timer);
+    }, [trainings, selectedExercise]);
+
+    // Compute bar chart data (Total Weight Per Session)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const data = trainings
+                .map((training) => ({
+                    date: training.date,
+                    totalWeight: Object.values(training.exercises).reduce(
+                        (sum, weight) => sum + weight,
+                        0
+                    ),
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+            setBarChartData(data);
+        }, 100); // Simulate async delay
+        return () => clearTimeout(timer);
+    }, [trainings]);
+
+    // Get unique exercises for the dropdown
+    const exerciseList = useMemo(() => {
+        const allExercises = new Set();
+        trainings.forEach((training) => {
+            Object.keys(training.exercises).forEach((exercise) =>
+                allExercises.add(exercise)
+            );
+        });
+        return Array.from(allExercises);
+    }, [trainings]);
+
     return (
-        <aside className="mt-48 mx-auto max-md:mt-28">
+        <aside className="mt-50 mx-auto max-md:mt-30">
             <CrownIcon />
             <div className="p-5 opacity-70 bg-red-950 h-auto min-h-[300px] w-[270px]">
-                <h3 className="mt-3.5 text-3xl text-center text-white">PR</h3>
-                <select className="mx-auto mt-5 mb-0 h-8 text-2xl text-white opacity-50 bg-slate-500 w-[230px]">
-                    <option>Select muscle group</option>
-                </select>
+                {/* Pie Chart: Muscle Group Distribution */}
+                <div className="mb-4">
+                    <h4 className="text-white text-center">Muscle Group Distribution</h4>
+                    {pieChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={150}>
+                            <PieChart>
+                                <Pie
+                                    data={pieChartData}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={60}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    label={({ name }) => name}
+                                >
+                                    {pieChartData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[index % COLORS.length]}
+                                        />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-white text-center">No data available</p>
+                    )}
+                </div>
 
-                 Display the Pie Chart
-                <div className="mt-5 flex justify-center">
-                    <BasicPie />
+                {/* Line Chart: Progress Over Time */}
+                <div className="mb-4">
+                    <h4 className="text-white text-center">Progress Over Time</h4>
+                    <select
+                        className="mx-auto mt-2 mb-2 h-8 text-sm text-white bg-slate-500 w-full"
+                        value={selectedExercise || ""}
+                        onChange={(e) => setSelectedExercise(e.target.value)}
+                    >
+                        <option value="">Select an exercise</option>
+                        {exerciseList.map((exercise) => (
+                            <option key={exercise} value={exercise}>
+                                {exercise}
+                            </option>
+                        ))}
+                    </select>
+                    {lineChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={150}>
+                            <LineChart data={lineChartData}>
+                                <Line type="monotone" dataKey="weight" stroke="#8884d8" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-white text-center">No data for selected exercise</p>
+                    )}
+                </div>
+
+                {/* Bar Chart: Total Weight Per Session */}
+                <div className="mb-4">
+                    <h4 className="text-white text-center">Total Weight Per Session</h4>
+                    {barChartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={150}>
+                            <BarChart data={barChartData}>
+                                <Bar dataKey="totalWeight" fill="#8884d8" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-white text-center">No data available</p>
+                    )}
                 </div>
             </div>
         </aside>
