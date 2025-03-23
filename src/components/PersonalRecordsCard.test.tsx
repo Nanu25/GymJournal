@@ -1,0 +1,74 @@
+import React from 'react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import PersonalRecordsCard from './PersonalRecordsCard';
+import '@testing-library/jest-dom';
+
+interface TrainingEntry {
+    date: string;
+    exercises: { [key: string]: number };
+}
+
+describe('PersonalRecordsCard', () => {
+    // Create proper mock data that matches the TrainingEntry interface
+    const initialTrainings: TrainingEntry[] = [
+        {
+            date: '2025-01-01',
+            exercises: {
+                'Bench Press': 100,
+                'Squat': 150,
+            },
+        },
+        {
+            date: '2025-01-02',
+            exercises: {
+                'Deadlift': 200,
+                'Shoulder Press': 80,
+            },
+        },
+        {
+            date: '2025-01-03',
+            exercises: {
+                'Pull-up': 0,
+                'Leg Press': 250,
+            },
+        },
+    ];
+
+    // Mock the required props
+    const mockSetTrainings = jest.fn();
+    const mockNavigateToMetricsSection = jest.fn();
+    const mockNavigateToTrainingSelector = jest.fn();
+    const mockUpdateTraining = jest.fn();
+
+    test('deletes a training and hides the confirmation dialog', () => {
+        render(
+            <PersonalRecordsCard
+                trainings={initialTrainings}
+                setTrainings={mockSetTrainings}
+                onNavigateToMetricsSection={mockNavigateToMetricsSection}
+                onNavigateToTrainingSelector={mockNavigateToTrainingSelector}
+                weight={75} // User's weight in kg, for example
+                onUpdateTraining={mockUpdateTraining}
+            />
+        );
+
+        // Click the first "Delete" button to open the confirmation dialog
+        const deleteButtons = screen.getAllByText('Delete');
+        fireEvent.click(deleteButtons[0]);
+
+        // Find the confirmation dialog container using its unique text
+        const dialogContainer = screen.getByText('Are you sure you want to delete this training session?').parentElement;
+
+        // Find the "Delete" button within the dialog container
+        const confirmDeleteButton = within(dialogContainer).getByText('Delete');
+
+        // Click the "Delete" button in the confirmation dialog
+        fireEvent.click(confirmDeleteButton);
+
+        // Check that setTrainings was called
+        expect(mockSetTrainings).toHaveBeenCalled();
+
+        // Check that the confirmation dialog is closed
+        expect(screen.queryByText('Are you sure you want to delete this training session?')).not.toBeInTheDocument();
+    });
+});

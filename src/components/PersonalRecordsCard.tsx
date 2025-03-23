@@ -248,9 +248,22 @@ const PersonalRecordsCard: React.FC<{
         setCurrentPage(selectedPage);
     };
 
+    // Add this near the top of your component
+    const exerciseStats = useMemo(() => {
+        if (trainings.length === 0) return { max: 0, min: 0, avg: 0 };
+
+        const counts = trainings.map(training => Object.keys(training.exercises).length);
+
+        return {
+            max: Math.max(...counts),
+            min: Math.min(...counts),
+            avg: Math.round(counts.reduce((sum, count) => sum + count, 0) / counts.length)
+        };
+    }, [trainings]);
+
     return (
         <section
-            className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[703px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col"
+            className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[730px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col"
         >
             <h2 className="mt-6 text-4xl italic text-center text-black max-sm:text-3xl">
                 Your personal records
@@ -410,6 +423,17 @@ const PersonalRecordsCard: React.FC<{
                             ["", 0]
                         );
                         const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
+                        const exerciseCount = Object.keys(training.exercises).length;
+
+                        // Determine the background color based on exercise count
+                        let statHighlight = "bg-stone-600"; // default
+                        if (exerciseCount === exerciseStats.max) {
+                            statHighlight = "bg-green-700"; // max - green
+                        } else if (exerciseCount === exerciseStats.min) {
+                            statHighlight = "bg-red-700"; // min - red
+                        } else if (exerciseCount === exerciseStats.avg) {
+                            statHighlight = "bg-orange-500"; // average - yellow
+                        }
 
                         return (
                             <div
@@ -418,19 +442,19 @@ const PersonalRecordsCard: React.FC<{
                                     expandedTraining === originalIndex ? "border-2 border-white" : ""
                                 }`}
                             >
-                                <div className="p-3 bg-stone-600">
+                                <div className={`p-3 ${statHighlight}`}>
                                     <div className="flex justify-between items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow"
                                             onClick={() => toggleExpandTraining(originalIndex)}
                                         >
-                                            <span className="text-white font-bold mr-2 whitespace-nowrap">
-                                                {training.date}
-                                            </span>
+                                        <span className="text-white font-bold mr-2 whitespace-nowrap">
+                                            {training.date}
+                                        </span>
                                             <span className="text-white mr-2 truncate max-w-xs">
-                                                Exercises: {Object.keys(training.exercises).length} | PR: {prText}
+                                                Exercises: {exerciseCount} | PR: {prText}
                                             </span>
-                                            <span className="text-white">
+                                                                <span className="text-white">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
@@ -478,6 +502,22 @@ const PersonalRecordsCard: React.FC<{
                         );
                     })
                 )}
+            </div>
+
+            {/*Legend*/}
+            <div className="flex justify-center space-x-4 text-sm text-white mb-2">
+                <div className="flex items-center">
+                    <div className="w-3 h-3 bg-green-700 rounded-full mr-1"></div>
+                    <span>Most exercises ({exerciseStats.max})</span>
+                </div>
+                <div className="flex items-center">
+                    <div className="w-3 h-3 bg-yellow-700 rounded-full mr-1"></div>
+                    <span>Average ({exerciseStats.avg})</span>
+                </div>
+                <div className="flex items-center">
+                    <div className="w-3 h-3 bg-red-700 rounded-full mr-1"></div>
+                    <span>Least exercises ({exerciseStats.min})</span>
+                </div>
             </div>
 
             <Pagination pageCount={pageCount} onPageChange={handlePageChange} />

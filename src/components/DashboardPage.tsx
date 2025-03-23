@@ -33,7 +33,7 @@ const exerciseCategories = [
 
 // Generate mock training data
 const generateMockTrainings = (): TrainingEntry[] => {
-  const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09", "2025-02-10", "2025-02-14"];
+  const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09", "2025-02-10", "2025-02-14", "2025-02-26"];
   return [
     {
       date: dates[0],
@@ -111,10 +111,23 @@ const generateMockTrainings = (): TrainingEntry[] => {
           "Incline Dumbbell": 35,
           "Dumbbell Flys": 25,
           "Biceps Curl": 35,
-          "Cable Triceps Pushdown": 30,
-          "Overhead triceps": 20
+        }
+
+    },
+
+    {
+      date: dates[7],
+        exercises: {
+            "Dumbbell Press": 45,
+            "Incline Dumbbell": 40,
+            "Dumbbell Flys": 30,
+            "Chest Press": 70,
+            "Push-ups": 30,
+            "Biceps Curl": 40,
+            "Triceps Pushdown": 30,
         }
     }
+
   ];
 };
 
@@ -148,7 +161,6 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
             <TrainingSelector
                 onBackToDashboard={handleBackToDashboard}
                 onSaveTraining={handleSaveTraining}
-                exerciseCategories={exerciseCategories} // Pass exercise categories to the selector
             />
         ) : (
             <main className="relative p-5 w-full max-sm:hidden">
