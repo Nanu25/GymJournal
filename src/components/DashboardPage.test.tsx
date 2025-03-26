@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DashboardPage from './DashboardPage';
 
+
 // Define the TrainingEntry type to match what your components use
 interface TrainingEntry {
     date: string;

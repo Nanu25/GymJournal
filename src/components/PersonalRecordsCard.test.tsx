@@ -9,7 +9,6 @@ interface TrainingEntry {
 }
 
 describe('PersonalRecordsCard', () => {
-    // Create proper mock data that matches the TrainingEntry interface
     const initialTrainings: TrainingEntry[] = [
         {
             date: '2025-01-01',
@@ -34,11 +33,14 @@ describe('PersonalRecordsCard', () => {
         },
     ];
 
-    // Mock the required props
     const mockSetTrainings = jest.fn();
     const mockNavigateToMetricsSection = jest.fn();
     const mockNavigateToTrainingSelector = jest.fn();
     const mockUpdateTraining = jest.fn();
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
     test('deletes a training and hides the confirmation dialog', () => {
         render(
@@ -47,7 +49,7 @@ describe('PersonalRecordsCard', () => {
                 setTrainings={mockSetTrainings}
                 onNavigateToMetricsSection={mockNavigateToMetricsSection}
                 onNavigateToTrainingSelector={mockNavigateToTrainingSelector}
-                weight={75} // User's weight in kg, for example
+                weight={75}
                 onUpdateTraining={mockUpdateTraining}
             />
         );
@@ -65,8 +67,43 @@ describe('PersonalRecordsCard', () => {
         // Click the "Delete" button in the confirmation dialog
         fireEvent.click(confirmDeleteButton);
 
-        // Check that setTrainings was called
-        expect(mockSetTrainings).toHaveBeenCalled();
+        // Check that setTrainings was called with the correct updated array
+        expect(mockSetTrainings).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                initialTrainings[1],
+                initialTrainings[2]
+            ])
+        );
+
+        // Check that the confirmation dialog is closed
+        expect(screen.queryByText('Are you sure you want to delete this training session?')).not.toBeInTheDocument();
+    });
+
+    test('cancels deletion when "Cancel" is clicked', () => {
+        render(
+            <PersonalRecordsCard
+                trainings={initialTrainings}
+                setTrainings={mockSetTrainings}
+                onNavigateToMetricsSection={mockNavigateToMetricsSection}
+                onNavigateToTrainingSelector={mockNavigateToTrainingSelector}
+                weight={75}
+                onUpdateTraining={mockUpdateTraining}
+            />
+        );
+
+        // Click the first "Delete" button to open the confirmation dialog
+        const deleteButtons = screen.getAllByText('Delete');
+        fireEvent.click(deleteButtons[0]);
+
+        // Find the confirmation dialog container
+        const dialogContainer = screen.getByText('Are you sure you want to delete this training session?').parentElement;
+
+        // Find and click the "Cancel" button within the dialog container
+        const cancelButton = within(dialogContainer).getByText('Cancel');
+        fireEvent.click(cancelButton);
+
+        // Verify that setTrainings was not called
+        expect(mockSetTrainings).not.toHaveBeenCalled();
 
         // Check that the confirmation dialog is closed
         expect(screen.queryByText('Are you sure you want to delete this training session?')).not.toBeInTheDocument();
