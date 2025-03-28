@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import DividerLine from "./DividerLine";
 import MetricInput from "./MetricInput";
 
-const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
+const TrainingSelector = ({ onBackToDashboard }) => {
   const [trainingData, setTrainingData] = useState({});
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [activeCategory, setActiveCategory] = useState("Chest");
@@ -39,7 +39,7 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
     }));
   };
 
-  const handleSaveTraining = () => {
+  const handleSaveTraining = async () => {
     const filteredData = Object.entries(trainingData)
         .filter(([_, value]) => value > 0)
         .reduce((acc, [key, value]) => {
@@ -52,14 +52,35 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
         date,
         exercises: filteredData,
       };
-      onSaveTraining(trainingEntry);
-      setTrainingData({});
-      setDate(new Date().toISOString().split("T")[0]);
+
+      try {
+        const response = await fetch("/api/trainings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(trainingEntry),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save training");
+        }
+
+        const savedTraining = await response.json();
+        console.log("Training saved:", savedTraining);
+
+        // Reset form
+        setTrainingData({});
+        setDate(new Date().toISOString().split("T")[0]);
+        onBackToDashboard(); // Navigate back after saving
+      } catch (error) {
+        console.error("Error saving training:", error);
+        alert("Failed to save training. Please try again.");
+      }
     }
   };
 
-  // Calculate how many exercises have been added
-  const exercisesAdded = Object.values(trainingData).filter(val => val > 0).length;
+  const exercisesAdded = Object.values(trainingData).filter((val) => val > 0).length;
 
   return (
       <div
@@ -117,15 +138,17 @@ const TrainingSelector = ({ onBackToDashboard, onSaveTraining }) => {
             <div className="bg-stone-500 bg-opacity-70 rounded-xl p-6 w-full max-w-[600px] mb-6">
               <h2 className="text-xl font-semibold text-white mb-4">{activeCategory} Exercises</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {exerciseCategories.find(cat => cat.name === activeCategory)?.exercises.map((exercise) => (
-                    <div key={exercise} className="bg-stone-500 p-4 rounded-lg">
-                      <MetricInput
-                          label={exercise}
-                          onChange={handleExerciseChange}
-                          initialValue={trainingData[exercise] || 0}
-                      />
-                    </div>
-                ))}
+                {exerciseCategories
+                    .find((cat) => cat.name === activeCategory)
+                    ?.exercises.map((exercise) => (
+                        <div key={exercise} className="bg-stone-500 p-4 rounded-lg">
+                          <MetricInput
+                              label={exercise}
+                              onChange={handleExerciseChange}
+                              initialValue={trainingData[exercise] || 0}
+                          />
+                        </div>
+                    ))}
               </div>
             </div>
 
