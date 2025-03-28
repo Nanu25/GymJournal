@@ -48,14 +48,14 @@ const PersonalRecordsCard: React.FC<{
     setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
     onNavigateToMetricsSection: () => void;
     onNavigateToTrainingSelector: () => void;
-    weight: number;
+    // weight: number;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
 }> = ({
           trainings,
           setTrainings,
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
-          weight,
+          // weight,
           onUpdateTraining,
       }) => {
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -70,6 +70,25 @@ const PersonalRecordsCard: React.FC<{
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 5;
+    const [weight, setWeight] = useState<number | null>(null);
+
+    // Fetch weight from the backend when the component mounts
+    useEffect(() => {
+        const fetchWeight = async () => {
+            try {
+                const response = await fetch("/api/user"); // Adjust the endpoint if needed
+                if (!response.ok) {
+                    throw new Error("Failed to fetch weight");
+                }
+                const data = await response.json();
+                setWeight(data.weight); // Set the weight from the backend (e.g., 75)
+            } catch (error) {
+                console.error("Error fetching weight:", error);
+                setWeight(0); // Fallback to 0 if there’s an error
+            }
+        };
+        fetchWeight();
+    }, []); // Empty array means this runs once when the component mounts
 
     const filteredAndSortedTrainings = useMemo(() => {
         const indexedTrainings = trainings.map((training, index) => ({
@@ -248,7 +267,6 @@ const PersonalRecordsCard: React.FC<{
         setCurrentPage(selectedPage);
     };
 
-    // Add this near the top of your component
     const exerciseStats = useMemo(() => {
         if (trainings.length === 0) return { max: 0, min: 0, avg: 0 };
 
@@ -273,10 +291,8 @@ const PersonalRecordsCard: React.FC<{
                 <div className="ml-10 text-3xl text-white max-sm:text-2xl">
                     Current weight
                 </div>
-                <div
-                    className="absolute text-3xl italic text-white opacity-30 bg-zinc-600 h-[39px] right-[54px] w-[102px] max-sm:text-2xl"
-                >
-                    {weight}
+                <div className="absolute text-3xl italic text-white opacity-30 bg-zinc-600 h-[39px] right-[54px] w-[102px] max-sm:text-2xl">
+                    {weight !== null ? weight : "Loading..."} {/* Show weight or loading state */}
                 </div>
             </div>
 

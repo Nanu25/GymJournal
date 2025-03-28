@@ -1,21 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DividerLine from "./DividerLine";
 
 interface EditMetricsProps {
-  weight: number;
-  setWeight: (newWeight: number) => void;
   onBackToDashboard: () => void;
 }
 
-const EditMetrics: React.FC<EditMetricsProps> = ({
-                                                   weight,
-                                                   setWeight,
-                                                   onBackToDashboard,
-                                                 }) => {
+const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
   // Personal information states
-  const [newWeight, setNewWeight] = useState(weight.toString());
+  const [newWeight, setNewWeight] = useState("");
   const [height, setHeight] = useState("");
   const [age, setAge] = useState("");
 
@@ -24,13 +18,44 @@ const EditMetrics: React.FC<EditMetricsProps> = ({
   const [timePerSession, setTimePerSession] = useState("");
   const [repetitionRange, setRepetitionRange] = useState("");
 
-  const handleEdit = () => {
-    const updatedWeight = parseFloat(newWeight);
-    if (!isNaN(updatedWeight)) {
-      setWeight(updatedWeight);
+  // Fetch initial metrics from backend on mount
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (!response.ok) throw new Error('Failed to fetch metrics');
+        const data = await response.json();
+        setNewWeight(data.weight.toString());
+        // Set other fields if expanded later
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
+  // Handle edit by sending updated weight to backend
+  const handleEdit = async () => {
+    const weightNum = parseFloat(newWeight);
+    if (isNaN(weightNum) || weightNum <= 0) {
+      alert('Please enter a valid positive weight');
+      return;
     }
-    // If needed, you can later use the other values (height, age, training metrics)
-    onBackToDashboard();
+
+    try {
+      const response = await fetch('/api/user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weight: weightNum }),
+      });
+      if (!response.ok) throw new Error('Failed to update weight');
+      const updatedData = await response.json();
+      console.log('Updated metrics:', updatedData);
+      onBackToDashboard();
+    } catch (error) {
+      console.error('Error updating metrics:', error);
+      alert('Failed to update weight');
+    }
   };
 
   return (
@@ -150,7 +175,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({
             <div className="flex justify-center mt-10 gap-4">
               <button
                   onClick={handleEdit}
-                  className="text-xl text-balck bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
+                  className="text-xl text-black bg-blue-800 rounded opacity-100 cursor-pointer h-[39px] w-[102px] flex items-center justify-center hover:opacity-70 transition-opacity"
               >
                 Edit
               </button>

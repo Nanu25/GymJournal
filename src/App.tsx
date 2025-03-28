@@ -80,12 +80,8 @@ const App = () => {
                 />
             )}
             {currentPage === "editMetrics" && (
-                <EditMetrics onBackToDashboard={navigateToDashboard}
-                                weight={weight}
-                                setWeight={setWeight}
-                />
+                <EditMetrics onBackToDashboard={navigateToDashboard} />
             )}
-
             {currentPage === "trainingSelector" && (
                 <TrainingSelector
                     onBackToDashboard={navigateToDashboard}
