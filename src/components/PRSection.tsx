@@ -48,11 +48,28 @@ const muscleGroupMapping = {
 // Colors for the pie chart segments
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
-const PRSection = ({ trainings }) => {
+const PRSection = () => {
     const [pieChartData, setPieChartData] = useState([]);
     const [selectedExercise, setSelectedExercise] = useState(null);
     const [lineChartData, setLineChartData] = useState([]);
     const [barChartData, setBarChartData] = useState([]);
+
+    const [trainings, setTrainings] = useState([]);
+    useEffect(() => {
+        const fetchTrainings = async () => {
+            try {
+                const response = await fetch("/api/trainings");
+                if (!response.ok) throw new Error("Failed to fetch trainings");
+                const data = await response.json();
+                setTrainings(data);
+            } catch (error) {
+                console.error("Error fetching trainings:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTrainings();
+    }, []);
 
     // Compute pie chart data (Muscle Group Distribution)
     useEffect(() => {

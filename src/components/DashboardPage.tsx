@@ -169,16 +169,14 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="md:w-2/3 min-h-[600px]">
                   <PersonalRecordsCard
-                      trainings={trainings}
                       setTrainings={setTrainings}
                       onNavigateToMetricsSection={onNavigateToMetricsSection}
                       onNavigateToTrainingSelector={handleNavigateToTrainingSelector}
-                      weight={weight}
                   />
                 </div>
                 <div className="md:w-1/3 flex justify-center">
                   <PRSection
-                    trainings={trainings}
+                    // trainings={trainings}
                   />
                 </div>
               </div>

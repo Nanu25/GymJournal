@@ -102,76 +102,104 @@ const PersonalRecordsCard: React.FC<{
         };
         fetchTrainings();
     }, []);
-    const filteredAndSortedTrainings = useMemo(() => {
-        const indexedTrainings = trainings.map((training, index) => ({
-            training,
-            originalIndex: index,
-        }));
 
-        let result = indexedTrainings;
-        if (searchTerm) {
-            result = result.filter(({ training }) =>
-                training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                Object.keys(training.exercises).some((exercise) =>
-                    exercise.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-            );
-        }
+    // const filteredAndSortedTrainings = useMemo(() => {
+    //     const indexedTrainings = trainings.map((training, index) => ({
+    //         training,
+    //         originalIndex: index,
+    //     }));
+    //
+    //     let result = indexedTrainings;
+    //     if (searchTerm) {
+    //         result = result.filter(({ training }) =>
+    //             training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //             Object.keys(training.exercises).some((exercise) =>
+    //                 exercise.toLowerCase().includes(searchTerm.toLowerCase())
+    //             )
+    //         );
+    //     }
+    //
+    //     if (sortField) {
+    //         result = [...result].sort((a, b) => {
+    //             const trainingA = a.training;
+    //             const trainingB = b.training;
+    //             let comparison = 0;
+    //
+    //             if (sortField === "date") {
+    //                 comparison = trainingA.date.localeCompare(trainingB.date);
+    //             } else if (sortField === "pr") {
+    //                 const prA = Object.values(trainingA.exercises).length > 0
+    //                     ? Math.max(...Object.values(trainingA.exercises))
+    //                     : 0;
+    //                 const prB = Object.values(trainingB.exercises).length > 0
+    //                     ? Math.max(...Object.values(trainingB.exercises))
+    //                     : 0;
+    //                 comparison = prA - prB;
+    //             } else if (sortField === "exercises") {
+    //                 comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
+    //             }
+    //
+    //             return sortDirection === "asc" ? comparison : -comparison;
+    //         });
+    //     }
+    //
+    //     return result;
+    // }, [trainings, searchTerm, sortField, sortDirection]);
 
-        if (sortField) {
-            result = [...result].sort((a, b) => {
-                const trainingA = a.training;
-                const trainingB = b.training;
-                let comparison = 0;
+    // const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
+    // const startIndex = currentPage * itemsPerPage;
+    // const endIndex = startIndex + itemsPerPage;
+    // const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
 
-                if (sortField === "date") {
-                    comparison = trainingA.date.localeCompare(trainingB.date);
-                } else if (sortField === "pr") {
-                    const prA = Object.values(trainingA.exercises).length > 0
-                        ? Math.max(...Object.values(trainingA.exercises))
-                        : 0;
-                    const prB = Object.values(trainingB.exercises).length > 0
-                        ? Math.max(...Object.values(trainingB.exercises))
-                        : 0;
-                    comparison = prA - prB;
-                } else if (sortField === "exercises") {
-                    comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
-                }
-
-                return sortDirection === "asc" ? comparison : -comparison;
-            });
-        }
-
-        return result;
-    }, [trainings, searchTerm, sortField, sortDirection]);
-
-    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
-
-    useEffect(() => {
-        setCurrentPage(0);
-    }, [searchTerm, sortField, sortDirection]);
-
-    useEffect(() => {
-        if (pageCount > 0 && currentPage >= pageCount) {
-            setCurrentPage(pageCount - 1);
-        } else if (pageCount === 0) {
-            setCurrentPage(0);
-        }
-    }, [pageCount]);
+    // useEffect(() => {
+    //     setCurrentPage(0);
+    // }, [searchTerm, sortField, sortDirection]);
+    //
+    // useEffect(() => {
+    //     if (pageCount > 0 && currentPage >= pageCount) {
+    //         setCurrentPage(pageCount - 1);
+    //     } else if (pageCount === 0) {
+    //         setCurrentPage(0);
+    //     }
+    // }, [pageCount]);
 
     const handleDelete = (index: number) => {
         setDeleteConfirm(index);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteConfirm !== null) {
-            const updatedTrainings = [...trainings];
-            updatedTrainings.splice(deleteConfirm, 1);
-            setTrainings(updatedTrainings);
-            setDeleteConfirm(null);
+            try {
+                const response = await fetch(`/api/trainings/${deleteConfirm}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete training');
+                }
+
+                // Fetch the updated trainings data
+                const updatedResponse = await fetch("/api/trainings");
+                if (!updatedResponse.ok) {
+                    throw new Error('Failed to fetch updated trainings');
+                }
+
+                const updatedTrainingsData = await updatedResponse.json();
+
+                // Update trainings state with the fresh data
+                setTrainings(updatedTrainingsData);
+
+                // Reset delete confirmation
+                setDeleteConfirm(null);
+
+                // If you have any chart update functions, call them here
+                // For example:
+                // updateCharts(updatedTrainingsData);
+
+            } catch (error) {
+                console.error('Error deleting training:', error);
+                alert('Failed to delete training. Please try again.');
+            }
         }
     };
 
@@ -241,29 +269,64 @@ const PersonalRecordsCard: React.FC<{
         });
     };
 
-    const submitUpdateForm = () => {
+    const submitUpdateForm = async () => {
         if (updateFormOpen !== null) {
-            const exercisesObject: ExerciseData = {};
+            const exercisesObject = {};
             updateFormData.exercises.forEach((exercise) => {
                 if (exercise.name.trim()) {
                     exercisesObject[exercise.name.trim()] = exercise.weight;
                 }
             });
 
-            const updatedTraining: TrainingEntry = {
+            const updatedTraining = {
                 date: updateFormData.date,
                 exercises: exercisesObject,
             };
 
-            const updatedTrainings = [...trainings];
-            updatedTrainings[updateFormOpen] = updatedTraining;
-            setTrainings(updatedTrainings);
-            setUpdateFormOpen(null);
+            try {
+                // Call the backend to update the training
+                const updatedData = await updateTraining(updateFormOpen, updatedTraining);
+
+                // Update the local trainings array with the backend's response
+                const updatedTrainings = [...trainings];
+                updatedTrainings[updateFormOpen] = updatedData;
+                setTrainings(updatedTrainings);
+
+                // Close the form
+                setUpdateFormOpen(null);
+            } catch (error) {
+                console.error('Error updating training:', error);
+                alert('Failed to update training. Please try again.');
+            }
         }
     };
 
     const cancelUpdateForm = () => {
         setUpdateFormOpen(null);
+    };
+    const updateTraining = async (index, updatedTraining) => {
+        try {
+            const response = await fetch(`/api/trainings/${index}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: updatedTraining.date,
+                    exercises: updatedTraining.exercises,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update training');
+            }
+
+            const updatedData = await response.json();
+            return updatedData; // Return the updated training data
+        } catch (error) {
+            console.error('Error:', error);
+            throw error; // Rethrow the error to be handled in submitUpdateForm
+        }
     };
 
     const handleSort = (field: "date" | "pr" | "exercises") => {
@@ -291,6 +354,73 @@ const PersonalRecordsCard: React.FC<{
         };
     }, [trainings]);
 
+    useEffect(() => {
+        const fetchTrainings = async () => {
+            // Build query parameters - only include parameters with values
+            const params: Record<string, string> = {};
+            if (searchTerm) params.searchTerm = searchTerm;
+            if (sortField) params.sortField = sortField;
+            if (sortDirection) params.sortDirection = sortDirection;
+
+            const query = new URLSearchParams(params).toString();
+
+            try {
+                // setLoading(true);
+                const response = await fetch(`/api/trainings?${query}`);
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setTrainings(data);
+
+                // Calculate exercise statistics
+                if (data.length > 0) {
+                    const exerciseCounts = data.map(t => Object.keys(t.exercises).length);
+                    exerciseStats({
+                        min: Math.min(...exerciseCounts),
+                        max: Math.max(...exerciseCounts),
+                        avg: Math.round(exerciseCounts.reduce((a, b) => a + b, 0) / exerciseCounts.length)
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching trainings:', error);
+               // setError('Failed to load trainings. Please try again later.');
+            } finally {
+                //setLoading(false);
+                console.log('Loading complete');
+            }
+        };
+        fetchTrainings();
+    }, [searchTerm, sortField, sortDirection]);
+
+
+
+    // Filter and sort trainings client-side (if needed)
+    const filteredAndSortedTrainings = trainings.map((training, originalIndex) => ({
+        training,
+        originalIndex
+    }));
+
+    // Handle pagination
+    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
+
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [searchTerm, sortField, sortDirection]);
+
+    useEffect(() => {
+        if (pageCount > 0 && currentPage >= pageCount) {
+            setCurrentPage(pageCount - 1);
+        } else if (pageCount === 0) {
+            setCurrentPage(0);
+        }
+    }, [pageCount]);
+
     return (
         <section
             className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[730px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col"
@@ -308,7 +438,6 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             </div>
 
-            {/* Filter Bar */}
             <div className="mt-4 mb-2 px-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <input
@@ -347,6 +476,7 @@ const PersonalRecordsCard: React.FC<{
                     </div>
                 </div>
             </div>
+
 
             {deleteConfirm !== null && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
