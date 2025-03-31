@@ -48,68 +48,79 @@ const muscleGroupMapping = {
 // Colors for the pie chart segments
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
-const PRSection = () => {
+const PRSection = ({trainings = []}) => {
     const [pieChartData, setPieChartData] = useState([]);
     const [selectedExercise, setSelectedExercise] = useState(null);
     const [lineChartData, setLineChartData] = useState([]);
     const [barChartData, setBarChartData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true); // Add this line
 
-    const [trainings, setTrainings] = useState([]);
+    // const [trainings, setTrainings] = useState([]);
+    // useEffect(() => {
+    //     const fetchTrainings = async () => {
+    //         try {
+    //             const response = await fetch("/api/trainings");
+    //             if (!response.ok) throw new Error("Failed to fetch trainings");
+    //             const data = await response.json();
+    //             setTrainings(data);
+    //         } catch (error) {
+    //             console.error("Error fetching trainings:", error);
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
+    //     fetchTrainings();
+    // }, []);
+
+    // Fetch pie chart data (Muscle Group Distribution)
     useEffect(() => {
-        const fetchTrainings = async () => {
+        const fetchMuscleGroupData = async () => {
             try {
-                const response = await fetch("/api/trainings");
-                if (!response.ok) throw new Error("Failed to fetch trainings");
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                const response = await fetch('/api/trainings/muscle-group-distribution');
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                setTrainings(data);
+                setPieChartData(data);
             } catch (error) {
-                console.error("Error fetching trainings:", error);
-            } finally {
-                setIsLoading(false);
+                console.error('Error fetching muscle group distribution:', error);
             }
         };
-        fetchTrainings();
-    }, []);
 
-    // Compute pie chart data (Muscle Group Distribution)
+        fetchMuscleGroupData();
+    }, [trainings]); // Only fetch once on component mount or add dependencies if needed
+
+// Update the useEffect in your PRSection.tsx
     useEffect(() => {
-        const timer = setTimeout(() => {
-            const muscleGroupCounts = {};
-            trainings.forEach((training) => {
-                Object.keys(training.exercises).forEach((exercise) => {
-                    const muscleGroup = muscleGroupMapping[exercise] || "Other";
-                    muscleGroupCounts[muscleGroup] =
-                        (muscleGroupCounts[muscleGroup] || 0) + 1;
+        if (selectedExercise) {
+            // Show loading state if needed
+            setIsLoading(true);
+
+            // Fetch data from the backend
+            fetch(`/api/trainings/exercise-progress/${encodeURIComponent(selectedExercise)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch exercise progress data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setLineChartData(data);
+                    setIsLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error fetching exercise progress:', error);
+                    setLineChartData([]);
+                    setIsLoading(false);
                 });
-            });
-            const data = Object.entries(muscleGroupCounts).map(([name, value]) => ({
-                name,
-                value,
-            }));
-            setPieChartData(data);
-        }, 100); // Simulate async delay
-        return () => clearTimeout(timer);
-    }, [trainings]);
-
-    // Compute line chart data (Progress Over Time)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (selectedExercise) {
-                const data = trainings
-                    .filter((training) => selectedExercise in training.exercises)
-                    .map((training) => ({
-                        date: training.date,
-                        weight: training.exercises[selectedExercise],
-                    }))
-                    .sort((a, b) => a.date.localeCompare(b.date));
-                setLineChartData(data);
-            } else {
-                setLineChartData([]);
-            }
-        }, 100); // Simulate async delay
-        return () => clearTimeout(timer);
-    }, [trainings, selectedExercise]);
-
+        } else {
+            setLineChartData([]);
+        }
+    }, [selectedExercise]);
     // Compute bar chart data (Total Weight Per Session)
     useEffect(() => {
         const timer = setTimeout(() => {

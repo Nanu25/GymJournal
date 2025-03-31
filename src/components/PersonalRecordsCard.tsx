@@ -50,15 +50,17 @@ const PersonalRecordsCard: React.FC<{
     onNavigateToTrainingSelector: () => void;
     // weight: number;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
+    onTrainingChange?: (trainings: TrainingEntry[]) => void;
 }> = ({
-         // trainings,
+          // trainings = [],
           //setTrainings,
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
           // weight,
           onUpdateTraining,
+            onTrainingChange,
       }) => {
-    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+    // const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
     const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
@@ -163,48 +165,58 @@ const PersonalRecordsCard: React.FC<{
     //     }
     // }, [pageCount]);
 
-    const handleDelete = (index: number) => {
-        setDeleteConfirm(index);
+    // State to track which training to delete
+    const [trainingToDelete, setTrainingToDelete] = useState(null);
+
+    // State to control dialog visibility - this was missing
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+    // Function to handle initial delete button click
+    const handleDelete = (training) => {
+        // Store the training object
+        setTrainingToDelete(training);
+        // Show the confirmation dialog
+        setShowDeleteDialog(true);
     };
 
     const confirmDelete = async () => {
-        if (deleteConfirm !== null) {
-            try {
-                const response = await fetch(`/api/trainings/${deleteConfirm}`, {
-                    method: 'DELETE',
-                });
+        if (!trainingToDelete) {
+            console.error('Invalid trainingToDelete:', trainingToDelete);
+            return;
+        }
 
-                if (!response.ok) {
-                    throw new Error('Failed to delete training');
-                }
+        try {
+            const encodedDate = encodeURIComponent(trainingToDelete.date);
+            const response = await fetch(`/api/trainings/${encodedDate}`, {
+                method: 'DELETE',
+            });
 
-                // Fetch the updated trainings data
-                const updatedResponse = await fetch("/api/trainings");
-                if (!updatedResponse.ok) {
-                    throw new Error('Failed to fetch updated trainings');
-                }
-
-                const updatedTrainingsData = await updatedResponse.json();
-
-                // Update trainings state with the fresh data
-                setTrainings(updatedTrainingsData);
-
-                // Reset delete confirmation
-                setDeleteConfirm(null);
-
-                // If you have any chart update functions, call them here
-                // For example:
-                // updateCharts(updatedTrainingsData);
-
-            } catch (error) {
-                console.error('Error deleting training:', error);
-                alert('Failed to delete training. Please try again.');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete training');
             }
+
+            // Update local state
+            const updatedTrainings = trainings.filter(t => t.date !== trainingToDelete.date);
+            setTrainings(updatedTrainings);
+
+            if (onTrainingChange) {
+                onTrainingChange(updatedTrainings);
+            }
+
+            setTrainingToDelete(null);
+            setShowDeleteDialog(false);
+        } catch (error) {
+            console.error('Error deleting training:', error);
+            alert(`Failed to delete training: ${error.message}`);
         }
     };
 
+
+    // Function to cancel deletion
     const cancelDelete = () => {
-        setDeleteConfirm(null);
+        setTrainingToDelete(null);
+        setShowDeleteDialog(false);
     };
 
     const toggleExpandTraining = (index: number) => {
@@ -279,18 +291,25 @@ const PersonalRecordsCard: React.FC<{
             });
 
             const updatedTraining = {
-                date: updateFormData.date,
+                date: updateFormData.date, // Send date as identifier
                 exercises: exercisesObject,
             };
 
             try {
-                // Call the backend to update the training
-                const updatedData = await updateTraining(updateFormOpen, updatedTraining);
+                // Call the backend to update the training by date
+                const updatedData = await updateTraining(updateFormData.date, updatedTraining);
 
-                // Update the local trainings array with the backend's response
-                const updatedTrainings = [...trainings];
-                updatedTrainings[updateFormOpen] = updatedData;
+                // Update the local trainings array
+                const updatedTrainings = trainings.map(training =>
+                    training.date === updateFormData.date ? updatedData : training
+                );
+
                 setTrainings(updatedTrainings);
+
+                // Notify parent component if callback exists
+                if (onTrainingChange) {
+                    onTrainingChange(updatedTrainings);
+                }
 
                 // Close the form
                 setUpdateFormOpen(null);
@@ -301,18 +320,19 @@ const PersonalRecordsCard: React.FC<{
         }
     };
 
+
     const cancelUpdateForm = () => {
         setUpdateFormOpen(null);
     };
-    const updateTraining = async (index, updatedTraining) => {
+
+    const updateTraining = async (date: string, updatedTraining: any) => {
         try {
-            const response = await fetch(`/api/trainings/${index}`, {
+            const response = await fetch(`/api/trainings/${date}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    date: updatedTraining.date,
                     exercises: updatedTraining.exercises,
                 }),
             });
@@ -478,7 +498,7 @@ const PersonalRecordsCard: React.FC<{
             </div>
 
 
-            {deleteConfirm !== null && (
+            {trainingToDelete !== null && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
                         <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
@@ -630,7 +650,7 @@ const PersonalRecordsCard: React.FC<{
                                                 className="text-sm px-2 py-0.5 bg-red-500 text-black rounded-md hover:bg-red-600 transition whitespace-nowrap"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDelete(originalIndex);
+                                                    handleDelete(training); // Pass both the training object and index
                                                 }}
                                             >
                                                 Delete
