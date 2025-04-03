@@ -1,0 +1,127 @@
+[
+  {
+    "date": "2025-01-10",
+    "exercises": {
+      "Dumbbell Press": 3,
+      "Incline Dumbbell": 25,
+      "Dumbbell Flys": 18,
+      "Biceps Curl": 30,
+      "Cable Triceps Pushdown": 25,
+      "Overhead triceps": 15
+    }
+  },
+  {
+    "date": "2025-01-20",
+    "exercises": {
+      "Squats": 85,
+      "Leg Curl": 60,
+      "Calf Raises": 120,
+      "Leg Extensions": 55,
+      "Leg Press": 140
+    }
+  },
+  {
+    "date": "2025-01-25",
+    "exercises": {
+      "Pullup": 15,
+      "Dumbbell Row": 24,
+      "Cable Row": 60,
+      "Lat Pulldown": 55,
+      "Deadlift": 100,
+      "Face Pulls": 20
+    }
+  },
+  {
+    "date": "2025-02-07",
+    "exercises": {
+      "Squats": 80,
+      "Dumbbell Press": 28,
+      "Pullup": 12,
+      "Biceps Curl": 15,
+      "Calf Raises": 110,
+      "Cable Triceps Pushdown": 22
+    }
+  },
+  {
+    "date": "2025-02-09",
+    "exercises": {
+      "Deadlift": 110,
+      "Squats": 90,
+      "Dumbbell Press": 32,
+      "Dumbbell Row": 26,
+      "Overhead Press": 40
+    }
+  },
+  {
+    "date": "2025-02-10",
+    "exercises": {
+      "Dumbbell Press": 35,
+      "Incline Dumbbell": 30,
+      "Dumbbell Flys": 20,
+      "Chest Press": 60,
+      "Push-ups": 25
+    }
+  },
+  {
+    "date": "2025-02-14",
+    "exercises": {
+      "Dumbbell Press": 40,
+      "Incline Dumbbell": 35,
+      "Dumbbell Flys": 25,
+      "Biceps Curl": 35
+    }
+  },
+  {
+    "date": "2025-02-26",
+    "exercises": {
+      "Dumbbell Press": 45,
+      "Incline Dumbbell": 40,
+      "Dumbbell Flys": 30,
+      "Chest Press": 70,
+      "Push-ups": 30,
+      "Biceps Curl": 40,
+      "Triceps Pushdown": 30
+    }
+  },
+  {
+    "date": "2025-03-01",
+    "exercises": {
+      "Bench Press": 60,
+      "Incline Dumbbell": 40,
+      "Dumbbell Flys": 30,
+      "Chest Press": 70,
+      "Push-ups": 30
+    }
+  },
+  {
+    "date": "2025-03-05",
+    "exercises": {
+      "Squats": 80,
+      "Leg Curl": 60,
+      "Calf Raises": 120,
+      "Leg Extensions": 55,
+      "Leg Press": 140
+    }
+  },
+  {
+    "date": "2025-03-10",
+    "exercises": {
+      "Deadlift": 110,
+      "Squats": 90,
+      "Dumbbell Press": 32,
+      "Dumbbell Row": 26,
+      "Overhead Press": 40
+    }
+  },
+  {
+    "date": "2025-03-15",
+    "exercises": {
+      "Pullup": 15,
+      "Dumbbell Row": 24,
+      "Cable Row": 60,
+      "Lat Pulldown": 55,
+      "Deadlift": 100,
+      "Face Pulls": 20
+    }
+  }
+]

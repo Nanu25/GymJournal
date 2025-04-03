@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+const mockTrainings = require("../data/mockTrainings.json");
+const muscleGroupMappingData = require("../data/muscleGroupMappingData.json");
 
 // Define the structure for TrainingEntry
 interface TrainingEntry {
@@ -6,101 +8,8 @@ interface TrainingEntry {
     exercises: { [key: string]: number };
 }
 
-// Generate mock training data
-const generateMockTrainings = (): TrainingEntry[] => {
-    const dates = ["2025-01-10", "2025-01-20", "2025-01-25", "2025-02-07", "2025-02-09", "2025-02-10", "2025-02-14", "2025-02-26"];
-    return [
-        {
-            date: dates[0],
-            exercises: {
-                "Dumbbell Press": 3,
-                "Incline Dumbbell": 25,
-                "Dumbbell Flys": 18,
-                "Biceps Curl": 30,
-                "Cable Triceps Pushdown": 25,
-                "Overhead triceps": 15
-            }
-        },
-        {
-            date: dates[1],
-            exercises: {
-                "Squats": 85,
-                "Leg Curl": 60,
-                "Calf Raises": 120,
-                "Leg Extensions": 55,
-                "Leg Press": 140
-            }
-        },
-        {
-            date: dates[2],
-            exercises: {
-                "Pullup": 15,
-                "Dumbbell Row": 24,
-                "Cable Row": 60,
-                "Lat Pulldown": 55,
-                "Deadlift": 100,
-                "Face Pulls": 20
-            }
-        },
-        {
-            date: dates[3],
-            exercises: {
-                "Squats": 80,
-                "Dumbbell Press": 28,
-                "Pullup": 12,
-                "Biceps Curl": 15,
-                "Calf Raises": 110,
-                "Cable Triceps Pushdown": 22
-            }
-        },
-        {
-            date: dates[4],
-            exercises: {
-                "Deadlift": 110,
-                "Squats": 90,
-                "Dumbbell Press": 32,
-                "Dumbbell Row": 26,
-                "Overhead Press": 40
-            }
-        },
-        {
-            date: dates[5],
-            exercises: {
-                "Dumbbell Press": 35,
-                "Incline Dumbbell": 30,
-                "Dumbbell Flys": 20,
-                "Chest Press": 60,
-                "Push-ups": 25
-            }
-        },
-        {
-            date: dates[6],
-            exercises: {
-                "Dumbbell Press": 40,
-                "Incline Dumbbell": 35,
-                "Dumbbell Flys": 25,
-                "Biceps Curl": 35
-            }
-        },
-        {
-            date: dates[7],
-            exercises: {
-                "Dumbbell Press": 45,
-                "Incline Dumbbell": 40,
-                "Dumbbell Flys": 30,
-                "Chest Press": 70,
-                "Push-ups": 30,
-                "Biceps Curl": 40,
-                "Triceps Pushdown": 30
-            }
-        }
-    ];
-};
+let trainings: TrainingEntry[] = mockTrainings; // Load mock data into the variable
 
-export {generateMockTrainings};
-
-// Initialize the trainings array with mock data
-let trainings: TrainingEntry[] = generateMockTrainings();
 export {trainings};
 
 export const getAllTrainings = (req: Request, res: Response): void => {
@@ -139,25 +48,50 @@ export const getAllTrainings = (req: Request, res: Response): void => {
     res.status(200).json(result);
 };
 
-const getMaxExercise = (training: TrainingEntry): [string, number] => {
-    return Object.entries(training.exercises).reduce(
-        (a, b) => (a[1] > b[1] ? a : b),
-        ["", 0]
-    );
-};
-
-// Create a new training
 export const createTraining = (req: Request, res: Response): void => {
     const { date, exercises } = req.body;
 
-    if (!date || !exercises || Object.keys(exercises).length === 0) {
-        res.status(400).json({ message: 'Date and at least one exercise are required' });
+    if (!date || !exercises) {
+        res.status(400).json({ message: 'Date and exercises are required' });
+        return;
+    }
+
+    const invalidExercises: string[] = [];
+
+    Object.entries(exercises).forEach(([exercise, value]) => {
+        if (isNaN(Number(value))) {
+            invalidExercises.push(`${exercise} has non-numeric value`);
+        }
+        else if (Number(value) <= 0) {
+            invalidExercises.push(`${exercise} has zero or negative value`);
+        }
+    });
+
+    if (invalidExercises.length > 0) {
+        res.status(400).json({
+            message: 'Invalid exercise values detected',
+            details: invalidExercises
+        });
+        return;
+    }
+
+    // Filter zero values if needed
+    const filteredExercises = Object.entries(exercises)
+        .filter(([_, value]) => Number(value) > 0)
+        .reduce((acc, [key, value]) => {
+            acc[key] = Number(value);
+            return acc;
+        }, {} as Record<string, number>);
+
+    // Check if any exercises remain after filtering
+    if (Object.keys(filteredExercises).length === 0) {
+        res.status(400).json({ message: 'At least one exercise with positive value is required' });
         return;
     }
 
     const newTraining: TrainingEntry = {
         date,
-        exercises,
+        exercises: filteredExercises,
     };
 
     trainings.push(newTraining);
@@ -209,39 +143,7 @@ export const updateTrainingByDate = (req: Request, res: Response): void => {
 };
 
 
-
-
-const muscleGroupMapping = {
-    "Bench Press": "Chest",
-    "Dumbbell Press": "Chest",
-    "Dumbbell Flys": "Chest",
-    "Incline Dumbbell": "Chest",
-    "Chest Press": "Chest",
-    "Deadlift": "Back",
-    "Lat Pulldown": "Back",
-    "Pullup": "Back",
-    "Dumbbell Row": "Back",
-    "Cable Row": "Back",
-    "Back Extensions": "Back",
-    "Shoulder Press": "Shoulders",
-    "Lateral Raise": "Shoulders",
-    "Front Raise": "Shoulders",
-    "Shrugs": "Shoulders",
-    "Face Pulls": "Shoulders",
-    "Squat": "Legs",
-    "Leg Press": "Legs",
-    "Leg Curl": "Legs",
-    "Calf Raise": "Legs",
-    "Lunges": "Legs",
-    "Cable Triceps Pushdown": "Arms",
-    "Hammer Curls": "Arms",
-    "Dips": "Arms",
-    "Biceps Curl": "Arms",
-    "Overhead Triceps": "Arms"
-} as { [key: string]: string };
-
-
-// Backend function to get muscle group distribution data
+const muscleGroupMapping = muscleGroupMappingData as { [key: string]: string };
 export const getMuscleGroupDistribution = (req: Request, res: Response): void => {
     const muscleGroupCounts: { [key: string]: number } = {};
 
@@ -280,7 +182,6 @@ export const getExerciseProgressData = (req: Request, res: Response): void => {
     res.status(200).json(progressData);
 };
 
-// Get total weight per session for bar chart
 export const getTotalWeightPerSession = (req: Request, res: Response): void => {
     const data = trainings
         .map((training) => ({
