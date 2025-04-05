@@ -112,35 +112,6 @@ const updateTrainingByDate = (req, res) => {
     res.status(200).json(trainings[trainingIndex]);
 };
 exports.updateTrainingByDate = updateTrainingByDate;
-//
-// const muscleGroupMapping = {
-//     "Bench Press": "Chest",
-//     "Dumbbell Press": "Chest",
-//     "Dumbbell Flys": "Chest",
-//     "Incline Dumbbell": "Chest",
-//     "Chest Press": "Chest",
-//     "Deadlift": "Back",
-//     "Lat Pulldown": "Back",
-//     "Pullup": "Back",
-//     "Dumbbell Row": "Back",
-//     "Cable Row": "Back",
-//     "Back Extensions": "Back",
-//     "Shoulder Press": "Shoulders",
-//     "Lateral Raise": "Shoulders",
-//     "Front Raise": "Shoulders",
-//     "Shrugs": "Shoulders",
-//     "Face Pulls": "Shoulders",
-//     "Squat": "Legs",
-//     "Leg Press": "Legs",
-//     "Leg Curl": "Legs",
-//     "Calf Raise": "Legs",
-//     "Lunges": "Legs",
-//     "Cable Triceps Pushdown": "Arms",
-//     "Hammer Curls": "Arms",
-//     "Dips": "Arms",
-//     "Biceps Curl": "Arms",
-//     "Overhead Triceps": "Arms"
-// } as { [key: string]: string };
 const muscleGroupMapping = muscleGroupMappingData;
 const getMuscleGroupDistribution = (req, res) => {
     const muscleGroupCounts = {};
