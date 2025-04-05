@@ -6,11 +6,13 @@ import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
 import fs from 'fs';
 
-// Ensure 'uploads/' directory exists
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
-}
+// Define uploads directory correctly - going up one level from src
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 
+// Ensure 'uploads/' directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 const app = express();
 
@@ -19,10 +21,10 @@ interface MulterRequest extends Request {
     file?: Express.Multer.File;
 }
 
-// Configure multer storage
+// Configure multer storage with proper path
 const storage = multer.diskStorage({
     destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-        cb(null, 'uploads/');
+        cb(null, UPLOADS_DIR);
     },
     filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -46,7 +48,8 @@ const upload = multer({
     fileFilter: fileFilter,
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Update static file serving path
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Upload video endpoint
 app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, next: NextFunction): void => {
@@ -58,32 +61,41 @@ app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Respon
     res.json({ fileName: req.file.filename, filePath: `/uploads/${req.file.filename}` });
 });
 
-// Download video endpoint
+// Download video endpoint - fixed path
 app.get('/api/download/:filename', (req: Request, res: Response, next: NextFunction): void => {
-    const filePath: string = path.join(__dirname, 'uploads', req.params.filename);
+    const filePath: string = path.join(UPLOADS_DIR, req.params.filename);
+    console.log('Looking for file at:', filePath);
+    console.log('__dirname is:', __dirname);
+    console.log('UPLOADS_DIR is:', UPLOADS_DIR);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.log('File does not exist at this path');
+        // @ts-ignore
+        return res.status(404).json({ message: 'File not found.' });
+    }
 
     res.download(filePath, (err: Error | null) => {
         if (err) {
+            console.log('Download error:', err);
             res.status(404).json({ message: 'File not found.' });
         }
     });
 });
 
-// Add this to backend/src/app.ts
-
-// Get all videos endpoint
+// Get all videos endpoint - fixed path
 app.get('/api/videos', (req: Request, res: Response): void => {
     try {
-        const uploadsDir = path.join(__dirname, 'uploads');
-        fs.readdir(uploadsDir, (err, files) => {
+        fs.readdir(UPLOADS_DIR, (err, files) => {
             if (err) {
+                console.error('Error reading directory:', err);
                 return res.status(500).json({ message: 'Error reading uploads directory' });
             }
 
             const videoFiles = files
                 .filter(file => file.match(/\.(mp4|mov|avi|wmv|mkv|webm)$/i))
                 .map(fileName => {
-                    const stats = fs.statSync(path.join(uploadsDir, fileName));
+                    const stats = fs.statSync(path.join(UPLOADS_DIR, fileName));
                     return {
                         fileName: fileName,
                         filePath: `/uploads/${fileName}`,

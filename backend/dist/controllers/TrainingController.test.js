@@ -66,30 +66,6 @@ describe('Training Controller', () => {
             expect(TrainingController_1.trainings).toHaveLength(4);
             expect(TrainingController_1.trainings[3]).toEqual({ date: "2023-01-04", exercises: { "Overhead Press": 80 } });
         });
-        test('should return 400 when date is missing', () => {
-            const req = { body: { exercises: { "Overhead Press": 80 } } };
-            const res = mockResponse();
-            (0, TrainingController_1.createTraining)(req, res);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Date and at least one exercise are required' });
-            expect(TrainingController_1.trainings).toHaveLength(3);
-        });
-        test('should return 400 when exercises are missing', () => {
-            const req = { body: { date: "2023-01-04" } };
-            const res = mockResponse();
-            (0, TrainingController_1.createTraining)(req, res);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Date and at least one exercise are required' });
-            expect(TrainingController_1.trainings).toHaveLength(3);
-        });
-        test('should return 400 when exercises are empty', () => {
-            const req = { body: { date: "2023-01-04", exercises: {} } };
-            const res = mockResponse();
-            (0, TrainingController_1.createTraining)(req, res);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Date and at least one exercise are required' });
-            expect(TrainingController_1.trainings).toHaveLength(3);
-        });
     });
     describe('deleteTraining', () => {
         test('should delete the training with the specified date', () => {

@@ -11,9 +11,8 @@ interface TrainingEntry {
 let trainings: TrainingEntry[] = mockTrainings; // Load mock data into the variable
 
 export {trainings};
-
 export const getAllTrainings = (req: Request, res: Response): void => {
-    const { searchTerm, sortField, sortDirection } = req.query;
+    const { searchTerm, sortField, sortDirection, page = 1, limit = 3 } = req.query;
 
     let result = [...trainings];
 
@@ -45,7 +44,18 @@ export const getAllTrainings = (req: Request, res: Response): void => {
         });
     }
 
-    res.status(200).json(result);
+    // Apply pagination
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const endIndex = startIndex + Number(limit);
+    const paginatedResult = result.slice(startIndex, endIndex);
+
+    // Send response with paginated data and metadata
+    res.status(200).json({
+        trainings: paginatedResult,
+        total: result.length, // Total number of items after filtering
+        page: Number(page),
+        limit: Number(limit)
+    });
 };
 
 export const createTraining = (req: Request, res: Response): void => {

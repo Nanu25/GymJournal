@@ -6,7 +6,7 @@ const muscleGroupMappingData = require("../data/muscleGroupMappingData.json");
 let trainings = mockTrainings; // Load mock data into the variable
 exports.trainings = trainings;
 const getAllTrainings = (req, res) => {
-    const { searchTerm, sortField, sortDirection } = req.query;
+    const { searchTerm, sortField, sortDirection, page = 1, limit = 3 } = req.query;
     let result = [...trainings];
     // Apply filtering
     if (searchTerm) {
@@ -32,7 +32,17 @@ const getAllTrainings = (req, res) => {
             return sortDirection === "asc" ? comparison : -comparison;
         });
     }
-    res.status(200).json(result);
+    // Apply pagination
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const endIndex = startIndex + Number(limit);
+    const paginatedResult = result.slice(startIndex, endIndex);
+    // Send response with paginated data and metadata
+    res.status(200).json({
+        trainings: paginatedResult,
+        total: result.length, // Total number of items after filtering
+        page: Number(page),
+        limit: Number(limit)
+    });
 };
 exports.getAllTrainings = getAllTrainings;
 const createTraining = (req, res) => {
@@ -112,35 +122,6 @@ const updateTrainingByDate = (req, res) => {
     res.status(200).json(trainings[trainingIndex]);
 };
 exports.updateTrainingByDate = updateTrainingByDate;
-//
-// const muscleGroupMapping = {
-//     "Bench Press": "Chest",
-//     "Dumbbell Press": "Chest",
-//     "Dumbbell Flys": "Chest",
-//     "Incline Dumbbell": "Chest",
-//     "Chest Press": "Chest",
-//     "Deadlift": "Back",
-//     "Lat Pulldown": "Back",
-//     "Pullup": "Back",
-//     "Dumbbell Row": "Back",
-//     "Cable Row": "Back",
-//     "Back Extensions": "Back",
-//     "Shoulder Press": "Shoulders",
-//     "Lateral Raise": "Shoulders",
-//     "Front Raise": "Shoulders",
-//     "Shrugs": "Shoulders",
-//     "Face Pulls": "Shoulders",
-//     "Squat": "Legs",
-//     "Leg Press": "Legs",
-//     "Leg Curl": "Legs",
-//     "Calf Raise": "Legs",
-//     "Lunges": "Legs",
-//     "Cable Triceps Pushdown": "Arms",
-//     "Hammer Curls": "Arms",
-//     "Dips": "Arms",
-//     "Biceps Curl": "Arms",
-//     "Overhead Triceps": "Arms"
-// } as { [key: string]: string };
 const muscleGroupMapping = muscleGroupMappingData;
 const getMuscleGroupDistribution = (req, res) => {
     const muscleGroupCounts = {};
