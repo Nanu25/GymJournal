@@ -1,30 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import ReactPaginate from 'react-paginate';
-
-interface PaginationProps {
-    pageCount: number;
-    onPageChange: (selectedPage: number) => void;
-}
-
-const Pagination: React.FC<PaginationProps> = ({ pageCount, onPageChange }) => (
-    <ReactPaginate
-        previousLabel={"←"}
-        nextLabel={"→"}
-        breakLabel={"..."}
-        pageCount={pageCount}
-        marginPagesDisplayed={2}
-        pageRangeDisplayed={3}
-        onPageChange={(data) => onPageChange(data.selected)}
-        containerClassName={"pagination flex items-center justify-center space-x-2 mt-4"}
-        pageClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        previousClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        nextClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        breakClassName={"px-3 py-1"}
-        activeClassName={"bg-stone-800"}
-    />
-);
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 interface ExerciseData {
     [key: string]: number;
@@ -44,23 +20,16 @@ type SortField = "date" | "pr" | "exercises" | null;
 type SortDirection = "asc" | "desc";
 
 const PersonalRecordsCard: React.FC<{
-    trainings: TrainingEntry[];
-    setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
     onNavigateToMetricsSection: () => void;
     onNavigateToTrainingSelector: () => void;
-    // weight: number;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
 }> = ({
-          // trainings = [],
-          //setTrainings,
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
-          // weight,
           onUpdateTraining,
-            onTrainingChange,
+          onTrainingChange,
       }) => {
-    // const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
     const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
@@ -68,155 +37,152 @@ const PersonalRecordsCard: React.FC<{
         exercises: [],
     });
     const [sortField, setSortField] = useState<SortField>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+    const [sortDirection, setSortDirection] = useState<SortDirectionNunito>("asc");
     const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 5;
+    const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const observer = useRef<IntersectionObserver | null>(null);
     const [weight, setWeight] = useState<number | null>(null);
-    // Fetch weight from the backend when the component mounts
+    const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
     useEffect(() => {
         const fetchWeight = async () => {
             try {
-                const response = await fetch("/api/user"); // Adjust the endpoint if needed
-                if (!response.ok) {
-                    throw new Error("Failed to fetch weight");
-                }
+                const response = await fetch("/api/user");
+                if (!response.ok) throw new Error("Failed to fetch weight");
                 const data = await response.json();
-                setWeight(data.weight); // Set the weight from the backend (e.g., 75)
+                setWeight(data.weight);
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                setWeight(0); // Fallback to 0 if there’s an error
+                setWeight(0);
             }
         };
         fetchWeight();
-    }, []); // Empty array means this runs once when the component mounts
-    const [trainings, setTrainings] = useState([]);
-    useEffect(() => {
-        const fetchTrainings = async () => {
-            try {
-                const response = await fetch("/api/trainings");
-                if (!response.ok) throw new Error("Failed to fetch trainings");
-                const data = await response.json();
-                setTrainings(data);
-            } catch (error) {
-                console.error("Error fetching trainings:", error);
-            }
-        };
-        fetchTrainings();
     }, []);
 
-    // const filteredAndSortedTrainings = useMemo(() => {
-    //     const indexedTrainings = trainings.map((training, index) => ({
-    //         training,
-    //         originalIndex: index,
-    //     }));
-    //
-    //     let result = indexedTrainings;
-    //     if (searchTerm) {
-    //         result = result.filter(({ training }) =>
-    //             training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //             Object.keys(training.exercises).some((exercise) =>
-    //                 exercise.toLowerCase().includes(searchTerm.toLowerCase())
-    //             )
-    //         );
-    //     }
-    //
-    //     if (sortField) {
-    //         result = [...result].sort((a, b) => {
-    //             const trainingA = a.training;
-    //             const trainingB = b.training;
-    //             let comparison = 0;
-    //
-    //             if (sortField === "date") {
-    //                 comparison = trainingA.date.localeCompare(trainingB.date);
-    //             } else if (sortField === "pr") {
-    //                 const prA = Object.values(trainingA.exercises).length > 0
-    //                     ? Math.max(...Object.values(trainingA.exercises))
-    //                     : 0;
-    //                 const prB = Object.values(trainingB.exercises).length > 0
-    //                     ? Math.max(...Object.values(trainingB.exercises))
-    //                     : 0;
-    //                 comparison = prA - prB;
-    //             } else if (sortField === "exercises") {
-    //                 comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
-    //             }
-    //
-    //             return sortDirection === "asc" ? comparison : -comparison;
-    //         });
-    //     }
-    //
-    //     return result;
-    // }, [trainings, searchTerm, sortField, sortDirection]);
+    // Initial fetch when component mounts
+    useEffect(() => {
+        fetchTrainings(true);
+    }, []); // Empty dependency array to run only once on mount
 
-    // const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    // const startIndex = currentPage * itemsPerPage;
-    // const endIndex = startIndex + itemsPerPage;
-    // const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
-
-    // useEffect(() => {
-    //     setCurrentPage(0);
-    // }, [searchTerm, sortField, sortDirection]);
-    //
-    // useEffect(() => {
-    //     if (pageCount > 0 && currentPage >= pageCount) {
-    //         setCurrentPage(pageCount - 1);
-    //     } else if (pageCount === 0) {
-    //         setCurrentPage(0);
-    //     }
-    // }, [pageCount]);
-
-    // State to track which training to delete
-    const [trainingToDelete, setTrainingToDelete] = useState(null);
-
-    // State to control dialog visibility - this was missing
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-    // Function to handle initial delete button click
-    const handleDelete = (training) => {
-        // Store the training object
-        setTrainingToDelete(training);
-        // Show the confirmation dialog
-        setShowDeleteDialog(true);
-    };
-
-    const confirmDelete = async () => {
-        if (!trainingToDelete) {
-            console.error('Invalid trainingToDelete:', trainingToDelete);
-            return;
-        }
-
+    // Add this after your state declarations
+    const fetchTrainings = useCallback(async (reset: boolean = false) => {
         try {
-            const encodedDate = encodeURIComponent(trainingToDelete.date);
-            const response = await fetch(`/api/trainings/${encodedDate}`, {
-                method: 'DELETE',
+            setIsLoading(true);
+            const currentPage = reset ? 1 : page;
+
+            const params: Record<string, string> = {
+                limit: "3",
+                page: currentPage.toString()
+            };
+
+            if (sortField) params.sortField = sortField;
+            if (sortDirection) params.sortDirection = sortDirection;
+            if (searchTerm) params.searchTerm = searchTerm;
+
+            const query = new URLSearchParams(params).toString();
+            const response = await fetch(`/api/trainings?${query}`);
+
+            if (!response.ok) throw new Error("Failed to fetch trainings");
+
+            const data = await response.json();
+
+            setTrainings(prev => {
+                if (reset) return data.trainings;
+                return [...prev, ...data.trainings];
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete training');
-            }
-
-            // Update local state
-            const updatedTrainings = trainings.filter(t => t.date !== trainingToDelete.date);
-            setTrainings(updatedTrainings);
-
-            if (onTrainingChange) {
-                onTrainingChange(updatedTrainings);
-            }
-
-            setTrainingToDelete(null);
-            setShowDeleteDialog(false);
+            setPage(currentPage + 1);
+            setHasMore(data.trainings.length > 0 && currentPage * Number(params.limit) < data.total);
+            setLastUpdated(new Date());
         } catch (error) {
-            console.error('Error deleting training:', error);
-            alert(`Failed to delete training: ${error.message}`);
+            console.error("Error fetching trainings:", error instanceof Error ? error.message : String(error));
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [page, sortField, sortDirection, searchTerm]);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            // Only check for new data, don't reset the entire view
+            if (!isLoading) {
+                const checkForNewData = async () => {
+                    try {
+                        const params: Record<string, string> = {
+                            limit: "1",
+                            page: "1"
+                        };
+                        if (sortField) params.sortField = sortField;
+                        if (sortDirection) params.sortDirection = sortDirection;
+                        if (searchTerm) params.searchTerm = searchTerm;
+
+                        const query = new URLSearchParams(params).toString();
+                        const response = await fetch(`/api/trainings?${query}`);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Only do a full refresh if new data exists
+                            if (data.trainings.length > 0 &&
+                                (!trainings.length ||
+                                    data.trainings[0].date !== trainings[0].date)) {
+                                fetchTrainings(true);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error checking for updates:", error);
+                    }
+                };
+                checkForNewData();
+            }
+        }, 30000);
+        return () => clearInterval(intervalId);
+    }, [fetchTrainings, isLoading, sortField, sortDirection, searchTerm, trainings]);
+
+    const lastTrainingElementRef = useCallback(
+        (node: HTMLDivElement) => {
+            if (isLoading || !hasMore) return;
+            if (observer.current) observer.current.disconnect();
+
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    // Add a small debounce to prevent multiple rapid triggers
+                    const timeoutId = setTimeout(() => {
+                        fetchTrainings();
+                    }, 300);
+                    return () => clearTimeout(timeoutId);
+                }
+            }, {
+                // Adjust rootMargin to trigger loading a bit earlier
+                rootMargin: '100px'
+            });
+
+            if (node) observer.current.observe(node);
+        },
+        [isLoading, hasMore, fetchTrainings]
+    );
 
 
-    // Function to cancel deletion
-    const cancelDelete = () => {
-        setTrainingToDelete(null);
-        setShowDeleteDialog(false);
+    const exerciseStats = useMemo(() => {
+        if (trainings.length === 0) return { max: 0, min: 0, avg: 0 };
+        const counts = trainings.map((training) => Object.keys(training.exercises).length);
+        return {
+            max: Math.max(...counts),
+            min: Math.min(...counts),
+            avg: Math.round(counts.reduce((sum, count) => sum + count, 0) / counts.length),
+        };
+    }, [trainings]);
+
+    const handleSort = (field: "date" | "pr" | "exercises") => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortDirection("asc");
+        }
     };
 
     const toggleExpandTraining = (index: number) => {
@@ -232,229 +198,84 @@ const PersonalRecordsCard: React.FC<{
                 name,
                 weight,
             }));
-            setUpdateFormData({
-                date: training.date,
-                exercises,
-            });
+            setUpdateFormData({ date: training.date, exercises });
             setUpdateFormOpen(index);
         }
     };
 
-    const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-        setUpdateFormData({
-            ...updateFormData,
-            [field]: e.target.value,
-        });
-    };
-
-    const handleExerciseNameChange = (index: number, value: string) => {
-        const updatedExercises = [...updateFormData.exercises];
-        updatedExercises[index] = { ...updatedExercises[index], name: value };
-        setUpdateFormData({
-            ...updateFormData,
-            exercises: updatedExercises,
-        });
-    };
-
-    const handleExerciseWeightChange = (index: number, value: string) => {
-        const updatedExercises = [...updateFormData.exercises];
-        updatedExercises[index] = { ...updatedExercises[index], weight: parseFloat(value) || 0 };
-        setUpdateFormData({
-            ...updateFormData,
-            exercises: updatedExercises,
-        });
-    };
-
-    const addExerciseField = () => {
-        setUpdateFormData({
-            ...updateFormData,
-            exercises: [...updateFormData.exercises, { name: "", weight: 0 }],
-        });
-    };
-
-    const removeExerciseField = (index: number) => {
-        const updatedExercises = [...updateFormData.exercises];
-        updatedExercises.splice(index, 1);
-        setUpdateFormData({
-            ...updateFormData,
-            exercises: updatedExercises,
-        });
-    };
-
     const submitUpdateForm = async () => {
-        if (updateFormOpen !== null) {
-            const exercisesObject = {};
-            updateFormData.exercises.forEach((exercise) => {
-                if (exercise.name.trim()) {
-                    exercisesObject[exercise.name.trim()] = exercise.weight;
-                }
+        if (updateFormOpen === null) return;
+        const exercisesObject = updateFormData.exercises.reduce((acc, exercise) => {
+            if (exercise.name.trim()) acc[exercise.name.trim()] = exercise.weight;
+            return acc;
+        }, {} as ExerciseData);
+
+        const updatedTraining = { date: updateFormData.date, exercises: exercisesObject };
+
+        try {
+            const response = await fetch(`/api/trainings/${encodeURIComponent(updateFormData.date)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ exercises: updatedTraining.exercises }),
             });
+            if (!response.ok) throw new Error("Failed to update training");
+            const updatedData = await response.json();
 
-            const updatedTraining = {
-                date: updateFormData.date, // Send date as identifier
-                exercises: exercisesObject,
-            };
-
-            try {
-                // Call the backend to update the training by date
-                const updatedData = await updateTraining(updateFormData.date, updatedTraining);
-
-                // Update the local trainings array
-                const updatedTrainings = trainings.map(training =>
-                    training.date === updateFormData.date ? updatedData : training
-                );
-
-                setTrainings(updatedTrainings);
-
-                // Notify parent component if callback exists
-                if (onTrainingChange) {
-                    onTrainingChange(updatedTrainings);
-                }
-
-                // Close the form
-                setUpdateFormOpen(null);
-            } catch (error) {
-                console.error('Error updating training:', error);
-                alert('Failed to update training. Please try again.');
-            }
+            const updatedTrainings = trainings.map((t, i) => (i === updateFormOpen ? updatedData : t));
+            setTrainings(updatedTrainings);
+            if (onTrainingChange) onTrainingChange(updatedTrainings);
+            setUpdateFormOpen(null);
+        } catch (error) {
+            console.error("Error updating training:", error);
+            alert("Failed to update training. Please try again.");
         }
     };
 
-
-    const cancelUpdateForm = () => {
-        setUpdateFormOpen(null);
+    const handleDelete = (training: TrainingEntry) => {
+        setTrainingToDelete(training);
+        setShowDeleteDialog(true);
     };
 
-    const updateTraining = async (date: string, updatedTraining: any) => {
+    const confirmDelete = async () => {
+        if (!trainingToDelete) return;
+
         try {
-            const response = await fetch(`/api/trainings/${date}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    exercises: updatedTraining.exercises,
-                }),
+            const encodedDate = encodeURIComponent(trainingToDelete.date);
+            const response = await fetch(`/api/trainings/${encodedDate}`, {
+                method: "DELETE",
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update training');
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to delete training");
             }
 
-            const updatedData = await response.json();
-            return updatedData; // Return the updated training data
+            const updatedTrainings = trainings.filter((t) => t.date !== trainingToDelete.date);
+            setTrainings(updatedTrainings);
+            if (onTrainingChange) onTrainingChange(updatedTrainings);
+            setTrainingToDelete(null);
+            setShowDeleteDialog(false);
         } catch (error) {
-            console.error('Error:', error);
-            throw error; // Rethrow the error to be handled in submitUpdateForm
+            console.error("Error deleting training:", error);
+            alert(`Failed to delete training: ${error.message}`);
         }
     };
 
-    const handleSort = (field: "date" | "pr" | "exercises") => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-        } else {
-            setSortField(field);
-            setSortDirection("asc");
-        }
+    const cancelDelete = () => {
+        setTrainingToDelete(null);
+        setShowDeleteDialog(false);
     };
-
-    const handlePageChange = (selectedPage: number) => {
-        setCurrentPage(selectedPage);
-    };
-
-    const exerciseStats = useMemo(() => {
-        if (trainings.length === 0) return { max: 0, min: 0, avg: 0 };
-
-        const counts = trainings.map(training => Object.keys(training.exercises).length);
-
-        return {
-            max: Math.max(...counts),
-            min: Math.min(...counts),
-            avg: Math.round(counts.reduce((sum, count) => sum + count, 0) / counts.length)
-        };
-    }, [trainings]);
-
-    useEffect(() => {
-        const fetchTrainings = async () => {
-            // Build query parameters - only include parameters with values
-            const params: Record<string, string> = {};
-            if (searchTerm) params.searchTerm = searchTerm;
-            if (sortField) params.sortField = sortField;
-            if (sortDirection) params.sortDirection = sortDirection;
-
-            const query = new URLSearchParams(params).toString();
-
-            try {
-                // setLoading(true);
-                const response = await fetch(`/api/trainings?${query}`);
-
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setTrainings(data);
-
-                // Calculate exercise statistics
-                if (data.length > 0) {
-                    const exerciseCounts = data.map(t => Object.keys(t.exercises).length);
-                    exerciseStats({
-                        min: Math.min(...exerciseCounts),
-                        max: Math.max(...exerciseCounts),
-                        avg: Math.round(exerciseCounts.reduce((a, b) => a + b, 0) / exerciseCounts.length)
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching trainings:', error);
-               // setError('Failed to load trainings. Please try again later.');
-            } finally {
-                //setLoading(false);
-                console.log('Loading complete');
-            }
-        };
-        fetchTrainings();
-    }, [searchTerm, sortField, sortDirection]);
-
-
-
-    // Filter and sort trainings client-side (if needed)
-    const filteredAndSortedTrainings = trainings.map((training, originalIndex) => ({
-        training,
-        originalIndex
-    }));
-
-    // Handle pagination
-    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
-
-    useEffect(() => {
-        setCurrentPage(0);
-    }, [searchTerm, sortField, sortDirection]);
-
-    useEffect(() => {
-        if (pageCount > 0 && currentPage >= pageCount) {
-            setCurrentPage(pageCount - 1);
-        } else if (pageCount === 0) {
-            setCurrentPage(0);
-        }
-    }, [pageCount]);
 
     return (
-        <section
-            className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[730px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col"
-        >
+        <section className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[730px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col">
             <h2 className="mt-6 text-4xl italic text-center text-black max-sm:text-3xl">
                 Your personal records
             </h2>
 
             <div className="flex relative items-center mt-16">
-                <div className="ml-10 text-3xl text-white max-sm:text-2xl">
-                    Current weight
-                </div>
+                <div className="ml-10 text-3xl text-white max-sm:text-2xl">Current weight</div>
                 <div className="absolute text-3xl italic text-white opacity-30 bg-zinc-600 h-[39px] right-[54px] w-[102px] max-sm:text-2xl">
-                    {weight !== null ? weight : "Loading..."} {/* Show weight or loading state */}
+                    {weight !== null ? weight : "Loading..."}
                 </div>
             </div>
 
@@ -471,25 +292,19 @@ const PersonalRecordsCard: React.FC<{
                     <div className="flex space-x-2">
                         <button
                             onClick={() => handleSort("date")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "date" ? "bg-stone-700" : "bg-stone-600"
-                            }`}
+                            className={`px-2 py-1 rounded text-black ${sortField === "date" ? "bg-stone-700" : "bg-stone-600"}`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("pr")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "pr" ? "bg-stone-700" : "bg-stone-600"
-                            }`}
+                            className={`px-2 py-1 rounded text-black ${sortField === "pr" ? "bg-stone-700" : "bg-stone-600"}`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("exercises")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "exercises" ? "bg-stone-700" : "bg-stone-600"
-                            }`}
+                            className={`px-2 py-1 rounded text-black ${sortField === "exercises" ? "bg-stone-700" : "bg-stone-600"}`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
@@ -497,8 +312,7 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             </div>
 
-
-            {trainingToDelete !== null && (
+            {showDeleteDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
                         <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
@@ -530,7 +344,7 @@ const PersonalRecordsCard: React.FC<{
                             <input
                                 type="text"
                                 value={updateFormData.date}
-                                onChange={(e) => handleUpdateInputChange(e, "date")}
+                                onChange={(e) => setUpdateFormData({ ...updateFormData, date: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             />
                         </div>
@@ -542,19 +356,31 @@ const PersonalRecordsCard: React.FC<{
                                         type="text"
                                         placeholder="Exercise name"
                                         value={exercise.name}
-                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
+                                        onChange={(e) => {
+                                            const updatedExercises = [...updateFormData.exercises];
+                                            updatedExercises[idx].name = e.target.value;
+                                            setUpdateFormData({ ...updateFormData, exercises: updatedExercises });
+                                        }}
                                         className="flex-grow px-3 py-2 border border-gray-300 rounded-md"
                                     />
                                     <input
-                                        type="number min=0"
+                                        type="number"
+                                        min="0"
                                         placeholder="Weight (kg)"
                                         value={exercise.weight}
-                                        onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
+                                        onChange={(e) => {
+                                            const updatedExercises = [...updateFormData.exercises];
+                                            updatedExercises[idx].weight = parseFloat(e.target.value) || 0;
+                                            setUpdateFormData({ ...updateFormData, exercises: updatedExercises });
+                                        }}
                                         className="w-24 px-3 py-2 border border-gray-300 rounded-md"
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => removeExerciseField(idx)}
+                                        onClick={() => {
+                                            const updatedExercises = updateFormData.exercises.filter((_, i) => i !== idx);
+                                            setUpdateFormData({ ...updateFormData, exercises: updatedExercises });
+                                        }}
                                         className="px-3 py-2 bg-red-500 text-black rounded-md hover:bg-red-600 transition"
                                     >
                                         ✕
@@ -563,7 +389,7 @@ const PersonalRecordsCard: React.FC<{
                             ))}
                             <button
                                 type="button"
-                                onClick={addExerciseField}
+                                onClick={() => setUpdateFormData({ ...updateFormData, exercises: [...updateFormData.exercises, { name: "", weight: 0 }] })}
                                 className="mt-2 px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition"
                             >
                                 Add Exercise
@@ -572,7 +398,7 @@ const PersonalRecordsCard: React.FC<{
                         <div className="flex justify-end space-x-4 mt-6">
                             <button
                                 className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
-                                onClick={cancelUpdateForm}
+                                onClick={() => setUpdateFormOpen(null)}
                             >
                                 Cancel
                             </button>
@@ -588,14 +414,10 @@ const PersonalRecordsCard: React.FC<{
             )}
 
             <div className="flex-grow overflow-y-auto max-h-96 mt-2">
-                {filteredAndSortedTrainings.length === 0 ? (
-                    trainings.length === 0 ? (
-                        <p className="text-center text-white text-xl">No training sessions added yet.</p>
-                    ) : (
-                        <p className="text-center text-white text-xl">No matching training sessions found.</p>
-                    )
+                {trainings.length === 0 ? (
+                    <p className="text-center text-white text-xl">No training sessions added yet.</p>
                 ) : (
-                    currentTrainings.map(({ training, originalIndex }) => {
+                    trainings.map((training, index) => {
                         const prExercise = Object.entries(training.exercises).reduce(
                             (a, b) => (a[1] > b[1] ? a : b),
                             ["", 0]
@@ -603,37 +425,31 @@ const PersonalRecordsCard: React.FC<{
                         const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
                         const exerciseCount = Object.keys(training.exercises).length;
 
-                        // Determine the background color based on exercise count
-                        let statHighlight = "bg-stone-600"; // default
-                        if (exerciseCount === exerciseStats.max) {
-                            statHighlight = "bg-green-700"; // max - green
-                        } else if (exerciseCount === exerciseStats.min) {
-                            statHighlight = "bg-red-700"; // min - red
-                        } else if (exerciseCount === exerciseStats.avg) {
-                            statHighlight = "bg-orange-500"; // average - yellow
-                        }
+                        let statHighlight = "bg-stone-600";
+                        if (exerciseCount === exerciseStats.max) statHighlight = "bg-green-700";
+                        else if (exerciseCount === exerciseStats.min) statHighlight = "bg-red-700";
+                        else if (exerciseCount === exerciseStats.avg) statHighlight = "bg-orange-500";
 
                         return (
                             <div
-                                key={originalIndex}
-                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${
-                                    expandedTraining === originalIndex ? "border-2 border-white" : ""
-                                }`}
+                                key={index}
+                                ref={index === trainings.length - 1 ? lastTrainingElementRef : null}
+                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${expandedTraining === index ? "border-2 border-white" : ""}`}
                             >
                                 <div className={`p-3 ${statHighlight}`}>
                                     <div className="flex justify-between items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow"
-                                            onClick={() => toggleExpandTraining(originalIndex)}
+                                            onClick={() => toggleExpandTraining(index)}
                                         >
-                                        <span className="text-white font-bold mr-2 whitespace-nowrap">
-                                            {training.date}
-                                        </span>
+                                            <span className="text-white font-bold mr-2 whitespace-nowrap">
+                                                {training.date}
+                                            </span>
                                             <span className="text-white mr-2 truncate max-w-xs">
                                                 Exercises: {exerciseCount} | PR: {prText}
                                             </span>
-                                                                <span className="text-white">
-                                                {expandedTraining === originalIndex ? "▲" : "▼"}
+                                            <span className="text-white">
+                                                {expandedTraining === index ? "▲" : "▼"}
                                             </span>
                                         </div>
                                         <div className="flex space-x-2 flex-shrink-0">
@@ -641,7 +457,7 @@ const PersonalRecordsCard: React.FC<{
                                                 className="text-sm px-2 py-0.5 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition whitespace-nowrap"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleUpdate(originalIndex);
+                                                    handleUpdate(index);
                                                 }}
                                             >
                                                 Update
@@ -650,7 +466,7 @@ const PersonalRecordsCard: React.FC<{
                                                 className="text-sm px-2 py-0.5 bg-red-500 text-black rounded-md hover:bg-red-600 transition whitespace-nowrap"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDelete(training); // Pass both the training object and index
+                                                    handleDelete(training);
                                                 }}
                                             >
                                                 Delete
@@ -658,7 +474,7 @@ const PersonalRecordsCard: React.FC<{
                                         </div>
                                     </div>
                                 </div>
-                                {expandedTraining === originalIndex && (
+                                {expandedTraining === index && (
                                     <div className="p-4 bg-stone-500">
                                         <h4 className="text-white font-semibold mb-2">Exercises:</h4>
                                         <div className="grid grid-cols-2 gap-2">
@@ -680,9 +496,12 @@ const PersonalRecordsCard: React.FC<{
                         );
                     })
                 )}
+                    {isLoading && <p className="text-center text-white">Loading more trainings...</p>}
+                    {!hasMore && trainings.length > 0 && (
+                        <p className="text-center text-white">No more trainings to load.</p>
+                    )}
             </div>
 
-            {/*Legend*/}
             <div className="flex justify-center space-x-4 text-sm text-white mb-2">
                 <div className="flex items-center">
                     <div className="w-3 h-3 bg-green-700 rounded-full mr-1"></div>
@@ -697,8 +516,6 @@ const PersonalRecordsCard: React.FC<{
                     <span>Least exercises ({exerciseStats.min})</span>
                 </div>
             </div>
-
-            <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
 
             <div className="mt-5">
                 <button
@@ -715,9 +532,7 @@ const PersonalRecordsCard: React.FC<{
                 </button>
             </div>
 
-            <div
-                className="absolute h-px bg-indigo-700 left-[110px] top-[107px] w-[510px] max-sm:w-4/5 max-sm:left-[10%]"
-            />
+            <div className="absolute h-px bg-indigo-700 left-[110px] top-[107px] w-[510px] max-sm:w-4/5 max-sm:left-[10%]" />
         </section>
     );
 };

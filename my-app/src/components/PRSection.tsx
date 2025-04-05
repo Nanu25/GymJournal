@@ -15,38 +15,8 @@ import {
     Bar,
 } from "recharts";
 
-const muscleGroupMapping = {
-    "Bench Press": "Chest",
-    "Dumbbell Press": "Chest",
-    "Dumbbell Flys": "Chest",
-    "Incline Dumbbell": "Chest",
-    "Chest Press": "Chest",
-    "Deadlift": "Back",
-    "Lat Pulldown": "Back",
-    "Pullup": "Back",
-    "Dumbbell Row": "Back",
-    "Cable Row": "Back",
-    "Dumbbell Row": "Back",
-    "Back Extensions": "Back",
-    "Shoulder Press": "Shoulders",
-    "Lateral Raise": "Shoulders",
-    "Front Raise": "Shoulders",
-    "Shrugs": "Shoulders",
-    "Face Pulls": "Shoulders",
-    "Squat": "Legs",
-    "Leg Press": "Legs",
-    "Leg Curl": "Legs",
-    "Calf Raise": "Legs",
-    "Lunges": "Legs",
-    "Cable Triceps Pushdown": "Arms",
-    "Hammer Curls": "Arms",
-    "Dips": "Arms",
-    "Biceps Curl": "Arms",
-    "Overhead Triceps": "Arms"
-};
-
 // Colors for the pie chart segments
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#00308F"];
 
 const PRSection = ({trainings = []}) => {
     const [pieChartData, setPieChartData] = useState([]);
@@ -55,30 +25,12 @@ const PRSection = ({trainings = []}) => {
     const [barChartData, setBarChartData] = useState([]);
     const [isLoading, setIsLoading] = useState(true); // Add this line
 
-    // const [trainings, setTrainings] = useState([]);
-    // useEffect(() => {
-    //     const fetchTrainings = async () => {
-    //         try {
-    //             const response = await fetch("/api/trainings");
-    //             if (!response.ok) throw new Error("Failed to fetch trainings");
-    //             const data = await response.json();
-    //             setTrainings(data);
-    //         } catch (error) {
-    //             console.error("Error fetching trainings:", error);
-    //         } finally {
-    //             setIsLoading(false);
-    //         }
-    //     };
-    //     fetchTrainings();
-    // }, []);
-
-    // Fetch pie chart data (Muscle Group Distribution)
     useEffect(() => {
         const fetchMuscleGroupData = async () => {
             try {
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                const response = await fetch('/api/trainings/muscle-group-distribution');
+                const response = await fetch('http://localhost:3000/api/trainings/muscle-group-distribution');
 
                 if (!response.ok) {
                     throw new Error(`Server responded with status: ${response.status}`);
@@ -92,16 +44,13 @@ const PRSection = ({trainings = []}) => {
         };
 
         fetchMuscleGroupData();
-    }, [trainings]); // Only fetch once on component mount or add dependencies if needed
+    }, [trainings]);
 
-// Update the useEffect in your PRSection.tsx
     useEffect(() => {
         if (selectedExercise) {
-            // Show loading state if needed
             setIsLoading(true);
 
-            // Fetch data from the backend
-            fetch(`/api/trainings/exercise-progress/${encodeURIComponent(selectedExercise)}`)
+            fetch(`http://localhost:3000/api/trainings/exercise-progress/${encodeURIComponent(selectedExercise)}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Failed to fetch exercise progress data');
@@ -121,12 +70,11 @@ const PRSection = ({trainings = []}) => {
             setLineChartData([]);
         }
     }, [selectedExercise]);
-    // Update the useEffect for bar chart data
-// Update the useEffect for bar chart data
+
     useEffect(() => {
         const fetchTotalWeightData = async () => {
             try {
-                const response = await fetch("/api/trainings/total-weight");
+                const response = await fetch("http://localhost:3000/api/trainings/total-weight");
                 if (!response.ok) throw new Error("Failed to fetch total weight data");
                 const data = await response.json();
                 setBarChartData(data);
@@ -142,7 +90,7 @@ const PRSection = ({trainings = []}) => {
     useEffect(() => {
         const fetchExerciseList = async () => {
             try {
-                const response = await fetch("/api/trainings/exercises");
+                const response = await fetch("http://localhost:3000/api/trainings/exercises");
                 if (!response.ok) throw new Error("Failed to fetch exercise list");
                 const data = await response.json();
                 setExerciseList(data);
@@ -154,7 +102,6 @@ const PRSection = ({trainings = []}) => {
         fetchExerciseList();
     }, [trainings]); // Add trainings as dependency
 
-// Add state for the exercise list if not already defined
     const [exerciseList, setExerciseList] = useState([]);
 
     return (

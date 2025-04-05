@@ -5,6 +5,7 @@ import WelcomeHeader from "./WelcomeHeader";
 import PersonalRecordsCard from "./PersonalRecordsCard";
 import PRSection from "./PRSection";
 import TrainingSelector from "./TrainingSelector";
+import FileUpload from './FileUpload';
 
 interface TrainingEntry {
   date: string;
@@ -130,17 +131,16 @@ interface TrainingEntry {
 //
 //   ];
 // };
-
 const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
-  const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
-
+  const [trainings, setTrainings] = useState([]);
   const [isAddingTraining, setIsAddingTraining] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false); // New state for file upload
 
   const handleNavigateToTrainingSelector = () => {
     setIsAddingTraining(true);
   };
 
-  const handleSaveTraining = (newTraining: TrainingEntry) => {
+  const handleSaveTraining = (newTraining) => {
     setTrainings([newTraining, ...trainings]);
     setIsAddingTraining(false);
   };
@@ -149,8 +149,18 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
     setIsAddingTraining(false);
   };
 
-  const handleTrainingsChanged = (updatedTrainings: TrainingEntry[]) => {
+  const handleTrainingsChanged = (updatedTrainings) => {
     setTrainings(updatedTrainings);
+  };
+
+  // New handler to navigate to FileUpload
+  const handleNavigateToFileUpload = () => {
+    setIsUploadingFile(true);
+  };
+
+  // New handler to return from FileUpload
+  const handleBackFromFileUpload = () => {
+    setIsUploadingFile(false);
   };
 
   useEffect(() => {
@@ -162,8 +172,6 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
         setTrainings(data);
       } catch (error) {
         console.error("Error fetching trainings:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -178,7 +186,9 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
                 "linear-gradient(to bottom, #09205A 31%, #4E6496 90%, #C2D8FB 100%)",
           }}
       >
-        {isAddingTraining ? (
+        {isUploadingFile ? (
+            <FileUpload onBackToDashboard={handleBackFromFileUpload} />
+        ) : isAddingTraining ? (
             <TrainingSelector
                 onBackToDashboard={handleBackToDashboard}
                 onSaveTraining={handleSaveTraining}
@@ -186,7 +196,6 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
         ) : (
             <main className="relative p-5 w-full max-sm:hidden">
               <WelcomeHeader username="username" />
-
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="md:w-2/3 min-h-[600px]">
                   <PersonalRecordsCard
@@ -197,14 +206,18 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
                   />
                 </div>
                 <div className="md:w-1/3 flex justify-center">
-                  <PRSection
-                     trainings={trainings}
-                  />
+                  <PRSection trainings={trainings} />
                 </div>
               </div>
+              {/* Button to navigate to FileUpload */}
+              <button
+                  onClick={handleNavigateToFileUpload}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-600"
+              >
+                Upload Video
+              </button>
             </main>
         )}
-
         <footer className="w-full bg-black text-white p-4 text-center">
           <p className="text-sm">
             © 2025 Fitness Journal | Created by Grancea Alexandru
@@ -214,4 +227,4 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
   );
 };
 
-export default DashboardPage;
+export default DashboardPage;;
