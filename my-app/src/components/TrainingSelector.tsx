@@ -136,21 +136,22 @@ const TrainingSelector = ({ onBackToDashboard }) => {
 
             {/* Exercise Inputs */}
             <div className="bg-stone-500 bg-opacity-70 rounded-xl p-6 w-full max-w-[600px] mb-6">
-              <h2 className="text-xl font-semibold text-white mb-4">{activeCategory} Exercises</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {exerciseCategories
-                    .find((cat) => cat.name === activeCategory)
-                    ?.exercises.map((exercise) => (
-                        <div key={exercise} className="bg-stone-500 p-4 rounded-lg">
-                          <MetricInput
-                              label={exercise}
-                              onChange={handleExerciseChange}
-                              initialValue={trainingData[exercise] || 0}
-                          />
-                        </div>
-                    ))}
-              </div>
+            <h2 className="text-xl font-semibold text-white mb-4">{activeCategory} Exercises</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {exerciseCategories
+                  .find((cat) => cat.name === activeCategory)
+                  ?.exercises.map((exercise) => (
+                      <div key={exercise} className="bg-stone-500 p-4 rounded-lg">
+                        <MetricInput
+                            label={exercise}
+                            onChange={handleExerciseChange}
+                            value={trainingData[exercise] || ""}
+                        />
+                      </div>
+                  ))}
             </div>
+          </div>
+
 
             <div className="flex justify-center mt-6 gap-4">
               <button

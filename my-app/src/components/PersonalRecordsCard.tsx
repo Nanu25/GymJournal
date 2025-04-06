@@ -48,17 +48,14 @@ const PersonalRecordsCard: React.FC<{
     setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
     onNavigateToMetricsSection: () => void;
     onNavigateToTrainingSelector: () => void;
-    // weight: number;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
 }> = ({
-          // trainings = [],
-          //setTrainings,
+
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
-          // weight,
           onUpdateTraining,
-            onTrainingChange,
+          onTrainingChange,
       }) => {
     // const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
@@ -91,79 +88,19 @@ const PersonalRecordsCard: React.FC<{
         fetchWeight();
     }, []); // Empty array means this runs once when the component mounts
     const [trainings, setTrainings] = useState([]);
-    useEffect(() => {
-        const fetchTrainings = async () => {
-            try {
-                const response = await fetch("/api/trainings");
-                if (!response.ok) throw new Error("Failed to fetch trainings");
-                const data = await response.json();
-                setTrainings(data);
-            } catch (error) {
-                console.error("Error fetching trainings:", error);
-            }
-        };
-        fetchTrainings();
-    }, []);
-
-    // const filteredAndSortedTrainings = useMemo(() => {
-    //     const indexedTrainings = trainings.map((training, index) => ({
-    //         training,
-    //         originalIndex: index,
-    //     }));
-    //
-    //     let result = indexedTrainings;
-    //     if (searchTerm) {
-    //         result = result.filter(({ training }) =>
-    //             training.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //             Object.keys(training.exercises).some((exercise) =>
-    //                 exercise.toLowerCase().includes(searchTerm.toLowerCase())
-    //             )
-    //         );
-    //     }
-    //
-    //     if (sortField) {
-    //         result = [...result].sort((a, b) => {
-    //             const trainingA = a.training;
-    //             const trainingB = b.training;
-    //             let comparison = 0;
-    //
-    //             if (sortField === "date") {
-    //                 comparison = trainingA.date.localeCompare(trainingB.date);
-    //             } else if (sortField === "pr") {
-    //                 const prA = Object.values(trainingA.exercises).length > 0
-    //                     ? Math.max(...Object.values(trainingA.exercises))
-    //                     : 0;
-    //                 const prB = Object.values(trainingB.exercises).length > 0
-    //                     ? Math.max(...Object.values(trainingB.exercises))
-    //                     : 0;
-    //                 comparison = prA - prB;
-    //             } else if (sortField === "exercises") {
-    //                 comparison = Object.keys(trainingA.exercises).length - Object.keys(trainingB.exercises).length;
-    //             }
-    //
-    //             return sortDirection === "asc" ? comparison : -comparison;
-    //         });
-    //     }
-    //
-    //     return result;
-    // }, [trainings, searchTerm, sortField, sortDirection]);
-
-    // const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    // const startIndex = currentPage * itemsPerPage;
-    // const endIndex = startIndex + itemsPerPage;
-    // const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
-
     // useEffect(() => {
-    //     setCurrentPage(0);
-    // }, [searchTerm, sortField, sortDirection]);
-    //
-    // useEffect(() => {
-    //     if (pageCount > 0 && currentPage >= pageCount) {
-    //         setCurrentPage(pageCount - 1);
-    //     } else if (pageCount === 0) {
-    //         setCurrentPage(0);
-    //     }
-    // }, [pageCount]);
+    //     const fetchTrainings = async () => {
+    //         try {
+    //             const response = await fetch("/api/trainings");
+    //             if (!response.ok) throw new Error("Failed to fetch trainings");
+    //             const data = await response.json();
+    //             setTrainings(data);
+    //         } catch (error) {
+    //             console.error("Error fetching trainings:", error);
+    //         }
+    //     };
+    //     fetchTrainings();
+    // }, []);
 
     // State to track which training to delete
     const [trainingToDelete, setTrainingToDelete] = useState(null);
