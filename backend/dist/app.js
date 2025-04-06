@@ -92,6 +92,10 @@ app.use(express_1.default.json());
 // Routes
 app.use('/api/trainings', trainingroutes_1.default);
 app.use('/api/user', userroutes_1.default);
+// backend/src/app.ts - Add this endpoint
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

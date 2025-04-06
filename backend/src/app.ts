@@ -107,6 +107,10 @@ app.use(express.json());
 // Routes
 app.use('/api/trainings', trainingRoutes);
 app.use('/api/user', userRoutes);
+// backend/src/app.ts - Add this endpoint
+app.get('/api/health', (req: Request, res: Response): void => {
+    res.status(200).json({ status: 'ok' });
+});
 
 const PORT: number = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => {
