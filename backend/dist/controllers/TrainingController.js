@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = exports.updateTrainingByDate = exports.deleteTraining = exports.createTraining = exports.getAllTrainings = exports.trainings = void 0;
+exports.validateDate = validateDate;
 const mockTrainings = require("../data/mockTrainings.json");
 const muscleGroupMappingData = require("../data/muscleGroupMappingData.json");
 let trainings = mockTrainings; // Load mock data into the variable
@@ -35,10 +36,38 @@ const getAllTrainings = (req, res) => {
     res.status(200).json(result);
 };
 exports.getAllTrainings = getAllTrainings;
+function validateDate(dateString) {
+    // Check if the date string matches the YYYY-MM-DD pattern
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) {
+        return { isValid: false, message: 'Date must be in YYYY-MM-DD format' };
+    }
+    // Parse the date to check if it's a valid date
+    const parsedDate = new Date(dateString);
+    if (isNaN(parsedDate.getTime())) {
+        return { isValid: false, message: 'Invalid date provided' };
+    }
+    // Extract components to verify each part is valid
+    const [year, month, day] = dateString.split('-').map(Number);
+    const reconstructedDate = new Date(year, month - 1, day); // Month is 0-indexed in JavaScript
+    // Check if the date components match after reconstruction
+    // This catches invalid dates like "2023-02-31" (Feb 31st doesn't exist)
+    if (reconstructedDate.getFullYear() !== year ||
+        reconstructedDate.getMonth() !== month - 1 ||
+        reconstructedDate.getDate() !== day) {
+        return { isValid: false, message: 'Invalid date: date components out of range' };
+    }
+    return { isValid: true };
+}
 const createTraining = (req, res) => {
     const { date, exercises } = req.body;
     if (!date || !exercises) {
         res.status(400).json({ message: 'Date and exercises are required' });
+        return;
+    }
+    const dateValidation = validateDate(date);
+    if (!dateValidation.isValid) {
+        res.status(400).json({ message: dateValidation.message });
         return;
     }
     const invalidExercises = [];
@@ -79,8 +108,11 @@ const createTraining = (req, res) => {
 exports.createTraining = createTraining;
 const deleteTraining = (req, res) => {
     const decodedDate = decodeURIComponent(req.params.date);
-    console.log('Backend received delete request for date:', decodedDate);
-    console.log('Available training dates:', trainings.map(t => t.date));
+    const dateValidation = validateDate(decodedDate);
+    if (!dateValidation.isValid) {
+        res.status(400).json({ message: dateValidation.message });
+        return;
+    }
     const trainingIndex = trainings.findIndex(t => t.date === decodedDate);
     console.log('Found at index:', trainingIndex);
     if (trainingIndex === -1) {
@@ -95,6 +127,11 @@ exports.deleteTraining = deleteTraining;
 const updateTrainingByDate = (req, res) => {
     const { date } = req.params;
     const { exercises } = req.body;
+    const dateValidation = validateDate(date);
+    if (!dateValidation.isValid) {
+        res.status(400).json({ message: dateValidation.message });
+        return;
+    }
     // Find the training with the matching date
     const trainingIndex = trainings.findIndex(training => training.date === date);
     // Validate if the training exists
