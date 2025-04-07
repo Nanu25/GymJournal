@@ -57,7 +57,6 @@ const PersonalRecordsCard: React.FC<{
           onUpdateTraining,
           onTrainingChange,
       }) => {
-    // const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
     const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
@@ -70,6 +69,7 @@ const PersonalRecordsCard: React.FC<{
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 5;
     const [weight, setWeight] = useState<number | null>(null);
+
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
         const fetchWeight = async () => {
@@ -88,19 +88,6 @@ const PersonalRecordsCard: React.FC<{
         fetchWeight();
     }, []); // Empty array means this runs once when the component mounts
     const [trainings, setTrainings] = useState([]);
-    // useEffect(() => {
-    //     const fetchTrainings = async () => {
-    //         try {
-    //             const response = await fetch("/api/trainings");
-    //             if (!response.ok) throw new Error("Failed to fetch trainings");
-    //             const data = await response.json();
-    //             setTrainings(data);
-    //         } catch (error) {
-    //             console.error("Error fetching trainings:", error);
-    //         }
-    //     };
-    //     fetchTrainings();
-    // }, []);
 
     // State to track which training to delete
     const [trainingToDelete, setTrainingToDelete] = useState(null);

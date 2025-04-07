@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import CrownIcon from "./icons/CrownIcon";
 import {
     PieChart,
@@ -15,36 +15,6 @@ import {
     Bar,
 } from "recharts";
 
-const muscleGroupMapping = {
-    "Bench Press": "Chest",
-    "Dumbbell Press": "Chest",
-    "Dumbbell Flys": "Chest",
-    "Incline Dumbbell": "Chest",
-    "Chest Press": "Chest",
-    "Deadlift": "Back",
-    "Lat Pulldown": "Back",
-    "Pullup": "Back",
-    "Dumbbell Row": "Back",
-    "Cable Row": "Back",
-    "Dumbbell Row": "Back",
-    "Back Extensions": "Back",
-    "Shoulder Press": "Shoulders",
-    "Lateral Raise": "Shoulders",
-    "Front Raise": "Shoulders",
-    "Shrugs": "Shoulders",
-    "Face Pulls": "Shoulders",
-    "Squat": "Legs",
-    "Leg Press": "Legs",
-    "Leg Curl": "Legs",
-    "Calf Raise": "Legs",
-    "Lunges": "Legs",
-    "Cable Triceps Pushdown": "Arms",
-    "Hammer Curls": "Arms",
-    "Dips": "Arms",
-    "Biceps Curl": "Arms",
-    "Overhead Triceps": "Arms"
-};
-
 // Colors for the pie chart segments
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
@@ -54,23 +24,6 @@ const PRSection = ({trainings = []}) => {
     const [lineChartData, setLineChartData] = useState([]);
     const [barChartData, setBarChartData] = useState([]);
     const [isLoading, setIsLoading] = useState(true); // Add this line
-
-    // const [trainings, setTrainings] = useState([]);
-    // useEffect(() => {
-    //     const fetchTrainings = async () => {
-    //         try {
-    //             const response = await fetch("/api/trainings");
-    //             if (!response.ok) throw new Error("Failed to fetch trainings");
-    //             const data = await response.json();
-    //             setTrainings(data);
-    //         } catch (error) {
-    //             console.error("Error fetching trainings:", error);
-    //         } finally {
-    //             setIsLoading(false);
-    //         }
-    //     };
-    //     fetchTrainings();
-    // }, []);
 
     // Fetch pie chart data (Muscle Group Distribution)
     useEffect(() => {

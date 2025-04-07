@@ -11,7 +11,7 @@ interface TrainingEntry {
   exercises: { [key: string]: number };
 }
 
-const DashboardPage = ({ onLogout, onNavigateToMetricsSection, weight }) => {
+const DashboardPage = ({ onLogout, onNavigateToMetricsSection}) => {
   const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
 
   const [isAddingTraining, setIsAddingTraining] = useState(false);
