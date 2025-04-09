@@ -69,8 +69,6 @@ app.get('/api/download/:filename', (req: Request, res: Response, next: NextFunct
     });
 });
 
-// Add this to backend/src/app.ts
-
 // Get all videos endpoint
 app.get('/api/videos', (req: Request, res: Response): void => {
     try {
@@ -103,6 +101,11 @@ app.get('/api/videos', (req: Request, res: Response): void => {
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Health check endpoint
+app.get('/api/health', (req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok' });
+});
 
 // Routes
 app.use('/api/trainings', trainingRoutes);

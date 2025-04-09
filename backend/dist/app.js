@@ -58,7 +58,6 @@ app.get('/api/download/:filename', (req, res, next) => {
         }
     });
 });
-// Add this to backend/src/app.ts
 // Get all videos endpoint
 app.get('/api/videos', (req, res) => {
     try {
@@ -89,6 +88,10 @@ app.get('/api/videos', (req, res) => {
 // Middleware
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 // Routes
 app.use('/api/trainings', trainingroutes_1.default);
 app.use('/api/user', userroutes_1.default);
