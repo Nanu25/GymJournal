@@ -4,6 +4,7 @@ import DashboardPage from "./components/DashboardPage";
 import GymJournalRegistration from "./components/GymJournalRegistration";
 import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
 import TrainingSelector from "@/components/TrainingSelector.tsx";
+import NetworkStatus from './components/NetworkStatus';
 
 
 interface TrainingSessionData {
@@ -87,7 +88,7 @@ const App = () => {
                     onBackToDashboard={navigateToDashboard}
                 />
             )}
-
+            <NetworkStatus />
         </div>
     );
 };
