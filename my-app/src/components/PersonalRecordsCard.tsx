@@ -18,11 +18,12 @@ const Pagination: React.FC<PaginationProps> = ({ pageCount, onPageChange }) => (
         pageRangeDisplayed={3}
         onPageChange={(data) => onPageChange(data.selected)}
         containerClassName={"pagination flex items-center justify-center space-x-2 mt-4"}
-        pageClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        previousClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        nextClassName={"px-3 py-1 bg-stone-600 text-white rounded-md hover:bg-stone-700"}
-        breakClassName={"px-3 py-1"}
-        activeClassName={"bg-stone-800"}
+        pageClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        previousClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        nextClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        breakClassName={"px-4 py-2 text-blue-200"}
+        activeClassName={"!bg-gradient-to-r from-blue-500 to-blue-600 !text-white border-blue-400 shadow-lg shadow-blue-500/20"}
+        disabledClassName={"opacity-50 cursor-not-allowed"}
     />
 );
 
@@ -203,7 +204,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
     const submitUpdateForm = async () => {
         if (updateFormOpen !== null) {
-            const exercisesObject = {};
+            const exercisesObject: { [key: string]: number } = {};
             updateFormData.exercises.forEach((exercise) => {
                 if (exercise.name.trim()) {
                     exercisesObject[exercise.name.trim()] = exercise.weight;
@@ -331,61 +332,64 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
     return (
         <section
-            className="relative p-10 bg-gradient-to-br from-stone-800 to-stone-900 min-h-[800px] rounded-[32px] w-full flex flex-col shadow-2xl border border-stone-700/30"
+            className="relative p-10 bg-[#0f172a] min-h-[800px] rounded-[32px] w-full flex flex-col shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl"
         >
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/50 to-transparent rounded-[32px] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 to-transparent rounded-[32px] pointer-events-none" />
             
-            <h2 className="relative text-5xl font-bold text-center text-white mb-12 tracking-wide">
+            <h2 className="relative text-5xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-12 tracking-wide">
                 Training History
             </h2>
 
-            <div className="relative flex items-center bg-stone-800/50 p-6 rounded-xl border border-stone-700/30">
-                <div className="text-3xl text-white font-medium">
-                    Current Weight
+            <div className="relative flex items-center bg-[#1a2234] p-8 rounded-2xl border border-blue-500/10">
+                <div className="flex items-center">
+                    <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full mr-4"></div>
+                    <div className="text-3xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent font-medium">
+                        Current Weight
+                    </div>
                 </div>
-                <div className="ml-auto text-3xl font-bold text-white bg-gradient-to-r from-blue-500/20 to-blue-600/20 px-6 py-2 rounded-lg border border-blue-500/30">
+                <div className="ml-auto text-3xl font-bold text-white bg-gradient-to-r from-blue-500/20 to-blue-600/20 px-8 py-3 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-500/10">
                     {weight !== null ? `${weight} kg` : "Loading..."}
                 </div>
             </div>
 
-            <div className="relative mt-6 mb-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="relative mt-8 mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex-grow max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search by date or exercise"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-5 py-4 text-lg border border-stone-700/30 rounded-xl bg-stone-800/50 text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                    />
+                        <input
+                            type="text"
+                            placeholder="Search by date or exercise"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-6 py-4 text-lg border border-blue-500/10 rounded-xl bg-[#1a2234] text-white placeholder-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
+                        />
                     </div>
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-4">
                         <button
                             onClick={() => handleSort("date")}
-                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "date" 
-                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
-                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
+                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("pr")}
-                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "pr" 
-                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
-                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
+                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("exercises")}
-                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "exercises" 
-                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
-                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
+                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -394,51 +398,56 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 </div>
             </div>
 
-            <div className="relative flex-grow overflow-y-auto max-h-[400px] mt-4 pr-2 custom-scrollbar">
-                {filteredAndSortedTrainings.length === 0 ? (
-                    trainings.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center">
-                            <p className="text-stone-400 text-2xl mb-4">No training sessions added yet</p>
-                            <button
-                                onClick={onNavigateToTrainingSelector}
-                                className="px-6 py-3 text-xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-black rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
-                            >
-                                Add Your First Session
-                            </button>
-                        </div>
-                    ) : (
-                        <p className="text-center text-stone-400 text-2xl">No matching training sessions found.</p>
-                    )
+            <div className="relative space-y-6">
+                {currentTrainings.length === 0 ? (
+                    <div className="flex items-center justify-center h-48 bg-[#1a2234] rounded-2xl border border-blue-500/10">
+                        <p className="text-blue-200/50 text-xl">No training sessions found</p>
+                    </div>
                 ) : (
                     currentTrainings.map(({ training, originalIndex }) => {
-                        const prExercise = Object.entries(training.exercises).reduce(
-                            (a, b) => (a[1] > b[1] ? a : b),
-                            ["", 0]
-                        );
-                        const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
-                        const exerciseCount = Object.keys(training.exercises).length;
+                        const prExercise = Object.entries(training.exercises).reduce((max, [name, weight]) => 
+                            !max || weight > max.weight ? { name, weight } : max
+                        , null as { name: string; weight: number } | null);
 
-                        let statHighlight = "bg-stone-800/50";
-                        let borderColor = "border-stone-700/30";
-                        if (exerciseCount === exerciseStats.max) {
-                            statHighlight = "bg-gradient-to-r from-green-500/10 to-green-600/10";
-                            borderColor = "border-green-500/30";
-                        } else if (exerciseCount === exerciseStats.min) {
-                            statHighlight = "bg-gradient-to-r from-red-500/10 to-red-600/10";
-                            borderColor = "border-red-500/30";
-                        } else if (exerciseCount === exerciseStats.avg) {
-                            statHighlight = "bg-gradient-to-r from-orange-500/10 to-orange-600/10";
-                            borderColor = "border-orange-500/30";
-                        }
+                        const exerciseCount = Object.keys(training.exercises).length;
+                        const prText = prExercise ? `${prExercise.name}: ${prExercise.weight} kg` : "None";
+
+                        const isHighPerformer = exerciseCount === exerciseStats.max;
+                        const isLowPerformer = exerciseCount === exerciseStats.min;
+                        const isAveragePerformer = exerciseCount === Math.round((exerciseStats.max + exerciseStats.min) / 2);
+                        
+                        const borderColor = isHighPerformer 
+                            ? "border-amber-500/30" 
+                            : isLowPerformer 
+                            ? "border-red-500/30" 
+                            : isAveragePerformer
+                            ? "border-blue-500/30"
+                            : "border-blue-500/10";
+
+                        const statHighlight = isHighPerformer 
+                            ? "bg-gradient-to-r from-amber-500/10 to-amber-600/10" 
+                            : isLowPerformer 
+                            ? "bg-gradient-to-r from-red-500/10 to-red-600/10" 
+                            : isAveragePerformer
+                            ? "bg-gradient-to-r from-blue-500/10 to-blue-600/10"
+                            : "bg-[#1a2234]";
+
+                        const performanceIndicator = isHighPerformer 
+                            ? "text-amber-400" 
+                            : isLowPerformer 
+                            ? "text-red-400" 
+                            : isAveragePerformer
+                            ? "text-blue-400"
+                            : "text-blue-200/70";
 
                         return (
                             <div
                                 key={originalIndex}
-                                className={`mb-5 rounded-xl overflow-hidden border ${borderColor} transition-all duration-200 ${
+                                className={`rounded-2xl overflow-hidden border ${borderColor} transition-all duration-200 ${
                                     expandedTraining === originalIndex ? "ring-2 ring-blue-500/50" : ""
                                 }`}
                             >
-                                <div className={`p-5 ${statHighlight}`}>
+                                <div className={`p-6 ${statHighlight}`}>
                                     <div className="flex justify-between items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow"
@@ -446,22 +455,22 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                         >
                                             <div className="flex flex-col mr-6">
                                                 <span className="text-white font-bold text-xl">
-                                            {training.date}
-                                        </span>
-                                                <span className="text-stone-400 text-lg mt-1">
+                                                    {training.date}
+                                                </span>
+                                                <span className={`${performanceIndicator} text-lg mt-1`}>
                                                     {exerciseCount} exercises
-                                            </span>
+                                                </span>
                                             </div>
                                             <div className="flex-grow">
                                                 <div className="text-white font-medium text-xl">PR: {prText}</div>
                                             </div>
-                                            <span className="text-stone-400 ml-4 text-2xl">
+                                            <span className="text-blue-200/70 ml-4 text-2xl transition-transform duration-200">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
-                                        <div className="flex space-x-3 ml-6">
+                                        <div className="flex space-x-4 ml-6">
                                             <button
-                                                className="px-5 py-2.5 text-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-white rounded-lg border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
+                                                className="px-6 py-3 text-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-white rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200 shadow-lg shadow-blue-500/10"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
@@ -470,7 +479,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                                 Update
                                             </button>
                                             <button
-                                                className="px-5 py-2.5 text-lg bg-gradient-to-r from-red-500/20 to-red-600/20 text-white rounded-lg border border-red-500/30 hover:border-red-400/50 transition-all duration-200"
+                                                className="px-6 py-3 text-lg bg-gradient-to-r from-red-500/20 to-red-600/20 text-white rounded-xl border border-red-500/30 hover:border-red-400/50 transition-all duration-200 shadow-lg shadow-red-500/10"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(training);
@@ -482,16 +491,16 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                     </div>
                                 </div>
                                 {expandedTraining === originalIndex && (
-                                    <div className="p-5 bg-stone-800/30">
-                                        <h4 className="text-white font-semibold text-xl mb-4">Exercises:</h4>
+                                    <div className="p-6 bg-[#1a2234]/50 border-t border-blue-500/10">
+                                        <h4 className="text-white font-semibold text-xl mb-6">Exercises:</h4>
                                         <div className="grid grid-cols-2 gap-4">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="bg-stone-800/50 p-4 rounded-lg flex justify-between items-center border border-stone-700/30"
+                                                    className="bg-[#1a2234] p-5 rounded-xl flex justify-between items-center border border-blue-500/10 hover:border-blue-400/30 transition-all duration-200"
                                                 >
                                                     <span className="text-white text-lg truncate mr-3">{exercise}</span>
-                                                    <span className="text-white font-bold text-lg whitespace-nowrap px-4 py-2 bg-stone-700/50 rounded-md">
+                                                    <span className="text-white font-bold text-lg whitespace-nowrap px-5 py-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
                                                         {weight} kg
                                                     </span>
                                                 </div>
@@ -505,38 +514,38 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 )}
             </div>
 
-            <div className="relative mt-4 pt-4 border-t border-stone-700/30">
-                <div className="flex justify-center space-x-6 text-sm text-stone-400 mb-4">
-                <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-green-500/50 to-green-600/50 rounded-full mr-2"></div>
-                    <span>Most exercises ({exerciseStats.max})</span>
+            <div className="relative mt-8 pt-6 border-t border-blue-500/10">
+                <div className="flex justify-center space-x-8 text-sm mb-6">
+                    <div className="flex items-center">
+                        <div className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full mr-2"></div>
+                        <span className="text-emerald-200">Most exercises ({exerciseStats.max})</span>
+                    </div>
+                    <div className="flex items-center">
+                        <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mr-2"></div>
+                        <span className="text-blue-200">Average ({exerciseStats.avg})</span>
+                    </div>
+                    <div className="flex items-center">
+                        <div className="w-3 h-3 bg-gradient-to-r from-red-400 to-red-600 rounded-full mr-2"></div>
+                        <span className="text-red-200">Least exercises ({exerciseStats.min})</span>
+                    </div>
                 </div>
-                <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-orange-500/50 to-orange-600/50 rounded-full mr-2"></div>
-                    <span>Average ({exerciseStats.avg})</span>
-                </div>
-                <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-red-500/50 to-red-600/50 rounded-full mr-2"></div>
-                    <span>Least exercises ({exerciseStats.min})</span>
-                </div>
-            </div>
 
-            <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
+                <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
 
-                <div className="mt-6 space-y-3">
-                <button
-                        className="w-full py-3 text-xl font-bold text-center text-black bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
-                    onClick={onNavigateToTrainingSelector}
-                >
+                <div className="mt-8 space-y-4">
+                    <button
+                        className="w-full py-4 text-xl font-bold text-center text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 hover:border-blue-300 transition-all duration-200 shadow-lg shadow-blue-500/20"
+                        onClick={onNavigateToTrainingSelector}
+                    >
                         Add Training Session
-                </button>
-                <button
-                        className="w-full py-3 text-xl font-bold text-center text-black bg-gradient-to-r from-stone-700/20 to-stone-800/20 rounded-xl border border-stone-700/30 hover:border-stone-600/50 transition-all duration-200"
-                    onClick={onNavigateToMetricsSection}
-                >
-                    Edit Metrics
-                </button>
-            </div>
+                    </button>
+                    <button
+                        className="w-full py-4 text-xl font-bold text-center text-blue-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                        onClick={onNavigateToMetricsSection}
+                    >
+                        Edit Metrics
+                    </button>
+                </div>
             </div>
 
             {trainingToDelete !== null && (

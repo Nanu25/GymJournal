@@ -1,15 +1,14 @@
 "use client";
 
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import WelcomeHeader from "./WelcomeHeader";
 import PersonalRecordsCard from "./PersonalRecordsCard";
 import PRSection from "./PRSection";
 import TrainingSelector from "./TrainingSelector";
-import CrownIcon from "./icons/CrownIcon";
 
 interface TrainingEntry {
-  date: string;
-  exercises: { [key: string]: number };
+    date: string;
+    exercises: { [key: string]: number };
 }
 
 interface DashboardPageProps {
@@ -18,101 +17,114 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMetricsSection }) => {
-  const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
-  const [isAddingTraining, setIsAddingTraining] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+    const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
+    const [showTrainingSelector, setShowTrainingSelector] = useState(false);
+    const [username, setUsername] = useState<string>("");
 
-  const handleNavigateToTrainingSelector = () => {
-    setIsAddingTraining(true);
-  };
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch("/api/user");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch user data");
+                }
+                const data = await response.json();
+                setUsername(data.username || "User");
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                setUsername("User");
+            }
+        };
 
-  const handleSaveTraining = (newTraining: TrainingEntry) => {
-    setTrainings([newTraining, ...trainings]);
-    setIsAddingTraining(false);
-  };
+        fetchUserData();
+    }, []);
 
-  const handleBackToDashboard = () => {
-    setIsAddingTraining(false);
-  };
+    useEffect(() => {
+        const fetchTrainings = async () => {
+            try {
+                const response = await fetch("/api/trainings");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch trainings");
+                }
+                const data = await response.json();
+                setTrainings(data);
+            } catch (error) {
+                console.error("Error fetching trainings:", error);
+            }
+        };
 
-  const handleTrainingsChanged = (updatedTrainings: TrainingEntry[]) => {
-    setTrainings(updatedTrainings);
-  };
+        fetchTrainings();
+    }, []);
 
-  useEffect(() => {
-    const fetchTrainings = async () => {
-      try {
-        const response = await fetch("/api/trainings");
-        if (!response.ok) throw new Error("Failed to fetch trainings");
-        const data = await response.json();
-        setTrainings(data);
-      } catch (error) {
-        console.error("Error fetching trainings:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    const handleTrainingsChanged = (updatedTrainings: TrainingEntry[]) => {
+        setTrainings(updatedTrainings);
     };
 
-    fetchTrainings();
-  }, []);
+    const handleNavigateToTrainingSelector = () => {
+        setShowTrainingSelector(true);
+    };
 
-  return (
-      <div
-          className="min-h-screen w-full overflow-y-auto"
-          style={{
-            background: "linear-gradient(180deg, #09205A 0%, #1E3A8A 50%, #2563EB 100%)",
-            backgroundAttachment: "fixed"
-          }}
-      >
-        {isAddingTraining ? (
-            <TrainingSelector
-                onBackToDashboard={handleBackToDashboard}
-                onSaveTraining={handleSaveTraining}
-            />
-        ) : (
-            <>
-                <main className="container mx-auto px-6 py-8 max-w-[1920px]">
-                    {/* Header Section */}
-                    <div className="flex justify-between items-center mb-12">
-                        <WelcomeHeader username="username" />
-                    </div>
+    const handleTrainingAdded = async (newTraining: TrainingEntry) => {
+        try {
+            // Fetch the updated list of trainings after adding a new one
+            const response = await fetch("/api/trainings");
+            if (!response.ok) {
+                throw new Error("Failed to fetch updated trainings");
+            }
+            const data = await response.json();
+            setTrainings(data);
+            setShowTrainingSelector(false);
+        } catch (error) {
+            console.error("Error fetching updated trainings:", error);
+            // Still hide the selector but show an error
+            setShowTrainingSelector(false);
+            alert("Training added but failed to refresh the list. Please reload the page.");
+        }
+    };
 
-                    {/* Main Content Section with 60/40 split */}
-                    <div className="flex gap-8">
-                        {/* Left Section - PersonalRecordsCard (60%) */}
-                        <div className="flex-[6]">
-                            <PersonalRecordsCard
-                                trainings={trainings}
-                                setTrainings={setTrainings}
-                                onNavigateToMetricsSection={onNavigateToMetricsSection}
-                                onNavigateToTrainingSelector={handleNavigateToTrainingSelector}
-                                onTrainingChange={handleTrainingsChanged}
-                            />
+    return (
+        <div className="min-h-screen bg-[#080b14] overflow-x-hidden">
+            {showTrainingSelector ? (
+                <TrainingSelector
+                    onTrainingAdded={handleTrainingAdded}
+                    onCancel={() => setShowTrainingSelector(false)}
+                />
+            ) : (
+                <>
+                    <header className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-b border-blue-500/10  top-0 z-50">
+                        <div className="container mx-auto px-6 py-4">
+                            <WelcomeHeader username={username} onLogout={onLogout} />
                         </div>
+                    </header>
 
-                        {/* Right Section - PRSection (40%) */}
-                        <div className="flex-[4] relative">
-                            {/* <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10">
-                                <CrownIcon />
-                            </div> */}
-                            <PRSection
-                                trainings={trainings}
-                            />
+                    <main className="container mx-auto px-6 py-8">
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            <div className="w-full lg:w-[60%]">
+                                <PersonalRecordsCard
+                                    trainings={trainings}
+                                    setTrainings={setTrainings}
+                                    onNavigateToMetricsSection={onNavigateToMetricsSection}
+                                    onNavigateToTrainingSelector={handleNavigateToTrainingSelector}
+                                    onTrainingChange={handleTrainingsChanged}
+                                />
+                            </div>
+                            <div className="w-full lg:w-[40%] sticky top-24">
+                                <PRSection trainings={trainings} />
+                            </div>
                         </div>
-                    </div>
-                </main>
-                <footer className="w-full bg-[#0f172a] text-white p-6 mt-12">
-                  <div className="container mx-auto text-center">
-                      <p className="text-sm font-medium">
-                          © 2025 Fitness Journal | Created by Grancea Alexandru
-                      </p>
-                  </div>
-              </footer>
+                    </main>
 
-                          </>
-        )}
-      </div>
-  );
+                    <footer className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-t border-blue-500/10 mt-12">
+                        <div className="container mx-auto px-6 py-4">
+                            <p className="text-center text-blue-200/70 font-medium">
+                                © 2025 Fitness Journal | Created by Grancea Alexandru
+                            </p>
+                        </div>
+                    </footer>
+                </>
+            )}
+        </div>
+    );
 };
 
 export default DashboardPage;
