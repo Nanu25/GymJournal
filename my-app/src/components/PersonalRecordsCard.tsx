@@ -43,15 +43,18 @@ interface UpdateFormData {
 type SortField = "date" | "pr" | "exercises" | null;
 type SortDirection = "asc" | "desc";
 
-const PersonalRecordsCard: React.FC<{
+interface PersonalRecordsCardProps {
     trainings: TrainingEntry[];
     setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
     onNavigateToMetricsSection: () => void;
     onNavigateToTrainingSelector: () => void;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
-}> = ({
+}
 
+const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
+    trainings,
+    setTrainings,
           onNavigateToMetricsSection,
           onNavigateToTrainingSelector,
           onUpdateTraining,
@@ -69,6 +72,9 @@ const PersonalRecordsCard: React.FC<{
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 5;
     const [weight, setWeight] = useState<number | null>(null);
+    const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
 
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
@@ -82,24 +88,15 @@ const PersonalRecordsCard: React.FC<{
                 setWeight(data.weight); // Set the weight from the backend (e.g., 75)
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                setWeight(0); // Fallback to 0 if there’s an error
+                setWeight(0); // Fallback to 0 if there's an error
             }
         };
         fetchWeight();
     }, []); // Empty array means this runs once when the component mounts
-    const [trainings, setTrainings] = useState([]);
-
-    // State to track which training to delete
-    const [trainingToDelete, setTrainingToDelete] = useState(null);
-
-    // State to control dialog visibility - this was missing
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     // Function to handle initial delete button click
-    const handleDelete = (training) => {
-        // Store the training object
+    const handleDelete = (training: TrainingEntry) => {
         setTrainingToDelete(training);
-        // Show the confirmation dialog
         setShowDeleteDialog(true);
     };
 
@@ -132,10 +129,9 @@ const PersonalRecordsCard: React.FC<{
             setShowDeleteDialog(false);
         } catch (error) {
             console.error('Error deleting training:', error);
-            alert(`Failed to delete training: ${error.message}`);
+            alert(`Failed to delete training: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
-
 
     // Function to cancel deletion
     const cancelDelete = () => {
@@ -214,14 +210,22 @@ const PersonalRecordsCard: React.FC<{
                 }
             });
 
-            const updatedTraining = {
-                date: updateFormData.date, // Send date as identifier
-                exercises: exercisesObject,
-            };
-
             try {
-                // Call the backend to update the training by date
-                const updatedData = await updateTraining(updateFormData.date, updatedTraining);
+                const response = await fetch(`/api/trainings/${updateFormData.date}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        exercises: exercisesObject,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update training');
+                }
+
+                const updatedData = await response.json();
 
                 // Update the local trainings array
                 const updatedTrainings = trainings.map(training =>
@@ -230,12 +234,10 @@ const PersonalRecordsCard: React.FC<{
 
                 setTrainings(updatedTrainings);
 
-                // Notify parent component if callback exists
                 if (onTrainingChange) {
                     onTrainingChange(updatedTrainings);
                 }
 
-                // Close the form
                 setUpdateFormOpen(null);
             } catch (error) {
                 console.error('Error updating training:', error);
@@ -244,33 +246,8 @@ const PersonalRecordsCard: React.FC<{
         }
     };
 
-
     const cancelUpdateForm = () => {
         setUpdateFormOpen(null);
-    };
-
-    const updateTraining = async (date: string, updatedTraining: any) => {
-        try {
-            const response = await fetch(`/api/trainings/${date}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    exercises: updatedTraining.exercises,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update training');
-            }
-
-            const updatedData = await response.json();
-            return updatedData; // Return the updated training data
-        } catch (error) {
-            console.error('Error:', error);
-            throw error; // Rethrow the error to be handled in submitUpdateForm
-        }
     };
 
     const handleSort = (field: "date" | "pr" | "exercises") => {
@@ -286,18 +263,6 @@ const PersonalRecordsCard: React.FC<{
         setCurrentPage(selectedPage);
     };
 
-    const exerciseStats = useMemo(() => {
-        if (trainings.length === 0) return { max: 0, min: 0, avg: 0 };
-
-        const counts = trainings.map(training => Object.keys(training.exercises).length);
-
-        return {
-            max: Math.max(...counts),
-            min: Math.min(...counts),
-            avg: Math.round(counts.reduce((sum, count) => sum + count, 0) / counts.length)
-        };
-    }, [trainings]);
-
     useEffect(() => {
         const fetchTrainings = async () => {
             // Build query parameters - only include parameters with values
@@ -309,7 +274,6 @@ const PersonalRecordsCard: React.FC<{
             const query = new URLSearchParams(params).toString();
 
             try {
-                // setLoading(true);
                 const response = await fetch(`/api/trainings?${query}`);
 
                 if (!response.ok) {
@@ -318,30 +282,13 @@ const PersonalRecordsCard: React.FC<{
 
                 const data = await response.json();
                 setTrainings(data);
-
-                // Calculate exercise statistics
-                if (data.length > 0) {
-                    const exerciseCounts = data.map(t => Object.keys(t.exercises).length);
-                    exerciseStats({
-                        min: Math.min(...exerciseCounts),
-                        max: Math.max(...exerciseCounts),
-                        avg: Math.round(exerciseCounts.reduce((a, b) => a + b, 0) / exerciseCounts.length)
-                    });
-                }
             } catch (error) {
                 console.error('Error fetching trainings:', error);
-               // setError('Failed to load trainings. Please try again later.');
-            } finally {
-                //setLoading(false);
-                console.log('Loading complete');
             }
         };
         fetchTrainings();
     }, [searchTerm, sortField, sortDirection]);
 
-
-
-    // Filter and sort trainings client-side (if needed)
     const filteredAndSortedTrainings = trainings.map((training, originalIndex) => ({
         training,
         originalIndex
@@ -363,56 +310,82 @@ const PersonalRecordsCard: React.FC<{
         } else if (pageCount === 0) {
             setCurrentPage(0);
         }
-    }, [pageCount]);
+    }, [pageCount, currentPage]);
+
+    // Calculate exercise statistics
+    useEffect(() => {
+        if (trainings.length > 0) {
+            const exerciseCounts = trainings.map(t => Object.keys(t.exercises).length);
+            const stats = {
+                min: Math.min(...exerciseCounts),
+                max: Math.max(...exerciseCounts),
+                avg: Math.round(exerciseCounts.reduce((a, b) => a + b, 0) / exerciseCounts.length)
+            };
+            setExerciseStats(stats);
+        } else {
+            setExerciseStats({ max: 0, min: 0, avg: 0 });
+        }
+    }, [trainings]);
+
+  
 
     return (
         <section
-            className="relative p-5 mt-12 mx-auto bg-stone-400 opacity-60 h-[730px] rounded-[32px] w-[672px] max-md:mx-auto max-md:my-12 max-md:h-auto max-md:w-[90%] max-sm:p-2.5 flex flex-col"
+            className="relative p-10 bg-gradient-to-br from-stone-800 to-stone-900 min-h-[800px] rounded-[32px] w-full flex flex-col shadow-2xl border border-stone-700/30"
         >
-            <h2 className="mt-6 text-4xl italic text-center text-black max-sm:text-3xl">
-                Your personal records
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/50 to-transparent rounded-[32px] pointer-events-none" />
+            
+            <h2 className="relative text-5xl font-bold text-center text-white mb-12 tracking-wide">
+                Training History
             </h2>
 
-            <div className="flex relative items-center mt-16">
-                <div className="ml-10 text-3xl text-white max-sm:text-2xl">
-                    Current weight
+            <div className="relative flex items-center bg-stone-800/50 p-6 rounded-xl border border-stone-700/30">
+                <div className="text-3xl text-white font-medium">
+                    Current Weight
                 </div>
-                <div className="absolute text-3xl italic text-white opacity-30 bg-zinc-600 h-[39px] right-[54px] w-[102px] max-sm:text-2xl">
-                    {weight !== null ? weight : "Loading..."} {/* Show weight or loading state */}
+                <div className="ml-auto text-3xl font-bold text-white bg-gradient-to-r from-blue-500/20 to-blue-600/20 px-6 py-2 rounded-lg border border-blue-500/30">
+                    {weight !== null ? `${weight} kg` : "Loading..."}
                 </div>
             </div>
 
-            <div className="mt-4 mb-2 px-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="relative mt-6 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex-grow max-w-md">
                     <input
                         type="text"
                         placeholder="Search by date or exercise"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="px-3 py-1 border border-gray-300 rounded bg-white text-black"
-                        style={{ minWidth: "210px" }}
+                            className="w-full px-5 py-4 text-lg border border-stone-700/30 rounded-xl bg-stone-800/50 text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
-                    <div className="flex space-x-2">
+                    </div>
+                    <div className="flex space-x-3">
                         <button
                             onClick={() => handleSort("date")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "date" ? "bg-stone-700" : "bg-stone-600"
+                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                                sortField === "date" 
+                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
+                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
                             }`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("pr")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "pr" ? "bg-stone-700" : "bg-stone-600"
+                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                                sortField === "pr" 
+                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
+                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
                             }`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("exercises")}
-                            className={`px-2 py-1 rounded text-black ${
-                                sortField === "exercises" ? "bg-stone-700" : "bg-stone-600"
+                            className={`px-5 py-3 rounded-xl text-lg text-black transition-all duration-200 ${
+                                sortField === "exercises" 
+                                    ? "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30" 
+                                    : "bg-stone-800/50 border border-stone-700/30 hover:border-blue-500/30"
                             }`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -421,102 +394,20 @@ const PersonalRecordsCard: React.FC<{
                 </div>
             </div>
 
-
-            {trainingToDelete !== null && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                        <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
-                        <p className="mb-6">Are you sure you want to delete this training session?</p>
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
-                                onClick={cancelDelete}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-red-500 text-black rounded-md hover:bg-red-600 transition"
-                                onClick={confirmDelete}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {updateFormOpen !== null && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full max-h-screen overflow-y-auto">
-                        <h3 className="text-xl font-bold mb-4">Update Training Session</h3>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Date:</label>
-                            <input
-                                type="text"
-                                value={updateFormData.date}
-                                onChange={(e) => handleUpdateInputChange(e, "date")}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Exercises:</label>
-                            {updateFormData.exercises.map((exercise, idx) => (
-                                <div key={idx} className="flex mb-2 space-x-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Exercise name"
-                                        value={exercise.name}
-                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
-                                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md"
-                                    />
-                                    <input
-                                        type="number min=0"
-                                        placeholder="Weight (kg)"
-                                        value={exercise.weight}
-                                        onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
-                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeExerciseField(idx)}
-                                        className="px-3 py-2 bg-red-500 text-black rounded-md hover:bg-red-600 transition"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))}
-                            <button
-                                type="button"
-                                onClick={addExerciseField}
-                                className="mt-2 px-4 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition"
-                            >
-                                Add Exercise
-                            </button>
-                        </div>
-                        <div className="flex justify-end space-x-4 mt-6">
-                            <button
-                                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition"
-                                onClick={cancelUpdateForm}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-green-500 text-black rounded-md hover:bg-green-600 transition"
-                                onClick={submitUpdateForm}
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="flex-grow overflow-y-auto max-h-96 mt-2">
+            <div className="relative flex-grow overflow-y-auto max-h-[400px] mt-4 pr-2 custom-scrollbar">
                 {filteredAndSortedTrainings.length === 0 ? (
                     trainings.length === 0 ? (
-                        <p className="text-center text-white text-xl">No training sessions added yet.</p>
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                            <p className="text-stone-400 text-2xl mb-4">No training sessions added yet</p>
+                            <button
+                                onClick={onNavigateToTrainingSelector}
+                                className="px-6 py-3 text-xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-black rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
+                            >
+                                Add Your First Session
+                            </button>
+                        </div>
                     ) : (
-                        <p className="text-center text-white text-xl">No matching training sessions found.</p>
+                        <p className="text-center text-stone-400 text-2xl">No matching training sessions found.</p>
                     )
                 ) : (
                     currentTrainings.map(({ training, originalIndex }) => {
@@ -527,42 +418,50 @@ const PersonalRecordsCard: React.FC<{
                         const prText = `${prExercise[0]}: ${prExercise[1]} kg`;
                         const exerciseCount = Object.keys(training.exercises).length;
 
-                        // Determine the background color based on exercise count
-                        let statHighlight = "bg-stone-600"; // default
+                        let statHighlight = "bg-stone-800/50";
+                        let borderColor = "border-stone-700/30";
                         if (exerciseCount === exerciseStats.max) {
-                            statHighlight = "bg-green-700"; // max - green
+                            statHighlight = "bg-gradient-to-r from-green-500/10 to-green-600/10";
+                            borderColor = "border-green-500/30";
                         } else if (exerciseCount === exerciseStats.min) {
-                            statHighlight = "bg-red-700"; // min - red
+                            statHighlight = "bg-gradient-to-r from-red-500/10 to-red-600/10";
+                            borderColor = "border-red-500/30";
                         } else if (exerciseCount === exerciseStats.avg) {
-                            statHighlight = "bg-orange-500"; // average - yellow
+                            statHighlight = "bg-gradient-to-r from-orange-500/10 to-orange-600/10";
+                            borderColor = "border-orange-500/30";
                         }
 
                         return (
                             <div
                                 key={originalIndex}
-                                className={`mb-4 bg-stone-500 rounded-lg overflow-hidden ${
-                                    expandedTraining === originalIndex ? "border-2 border-white" : ""
+                                className={`mb-5 rounded-xl overflow-hidden border ${borderColor} transition-all duration-200 ${
+                                    expandedTraining === originalIndex ? "ring-2 ring-blue-500/50" : ""
                                 }`}
                             >
-                                <div className={`p-3 ${statHighlight}`}>
+                                <div className={`p-5 ${statHighlight}`}>
                                     <div className="flex justify-between items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow"
                                             onClick={() => toggleExpandTraining(originalIndex)}
                                         >
-                                        <span className="text-white font-bold mr-2 whitespace-nowrap">
+                                            <div className="flex flex-col mr-6">
+                                                <span className="text-white font-bold text-xl">
                                             {training.date}
                                         </span>
-                                            <span className="text-white mr-2 truncate max-w-xs">
-                                                Exercises: {exerciseCount} | PR: {prText}
+                                                <span className="text-stone-400 text-lg mt-1">
+                                                    {exerciseCount} exercises
                                             </span>
-                                                                <span className="text-white">
+                                            </div>
+                                            <div className="flex-grow">
+                                                <div className="text-white font-medium text-xl">PR: {prText}</div>
+                                            </div>
+                                            <span className="text-stone-400 ml-4 text-2xl">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
-                                        <div className="flex space-x-2 flex-shrink-0">
+                                        <div className="flex space-x-3 ml-6">
                                             <button
-                                                className="text-sm px-2 py-0.5 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition whitespace-nowrap"
+                                                className="px-5 py-2.5 text-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-white rounded-lg border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
@@ -571,10 +470,10 @@ const PersonalRecordsCard: React.FC<{
                                                 Update
                                             </button>
                                             <button
-                                                className="text-sm px-2 py-0.5 bg-red-500 text-black rounded-md hover:bg-red-600 transition whitespace-nowrap"
+                                                className="px-5 py-2.5 text-lg bg-gradient-to-r from-red-500/20 to-red-600/20 text-white rounded-lg border border-red-500/30 hover:border-red-400/50 transition-all duration-200"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDelete(training); // Pass both the training object and index
+                                                    handleDelete(training);
                                                 }}
                                             >
                                                 Delete
@@ -583,16 +482,16 @@ const PersonalRecordsCard: React.FC<{
                                     </div>
                                 </div>
                                 {expandedTraining === originalIndex && (
-                                    <div className="p-4 bg-stone-500">
-                                        <h4 className="text-white font-semibold mb-2">Exercises:</h4>
-                                        <div className="grid grid-cols-2 gap-2">
+                                    <div className="p-5 bg-stone-800/30">
+                                        <h4 className="text-white font-semibold text-xl mb-4">Exercises:</h4>
+                                        <div className="grid grid-cols-2 gap-4">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="bg-stone-600 p-2 rounded flex justify-between"
+                                                    className="bg-stone-800/50 p-4 rounded-lg flex justify-between items-center border border-stone-700/30"
                                                 >
-                                                    <span className="text-white truncate mr-2">{exercise}</span>
-                                                    <span className="text-white font-bold whitespace-nowrap">
+                                                    <span className="text-white text-lg truncate mr-3">{exercise}</span>
+                                                    <span className="text-white font-bold text-lg whitespace-nowrap px-4 py-2 bg-stone-700/50 rounded-md">
                                                         {weight} kg
                                                     </span>
                                                 </div>
@@ -606,42 +505,145 @@ const PersonalRecordsCard: React.FC<{
                 )}
             </div>
 
-            {/*Legend*/}
-            <div className="flex justify-center space-x-4 text-sm text-white mb-2">
+            <div className="relative mt-4 pt-4 border-t border-stone-700/30">
+                <div className="flex justify-center space-x-6 text-sm text-stone-400 mb-4">
                 <div className="flex items-center">
-                    <div className="w-3 h-3 bg-green-700 rounded-full mr-1"></div>
+                        <div className="w-3 h-3 bg-gradient-to-r from-green-500/50 to-green-600/50 rounded-full mr-2"></div>
                     <span>Most exercises ({exerciseStats.max})</span>
                 </div>
                 <div className="flex items-center">
-                    <div className="w-3 h-3 bg-yellow-700 rounded-full mr-1"></div>
+                        <div className="w-3 h-3 bg-gradient-to-r from-orange-500/50 to-orange-600/50 rounded-full mr-2"></div>
                     <span>Average ({exerciseStats.avg})</span>
                 </div>
                 <div className="flex items-center">
-                    <div className="w-3 h-3 bg-red-700 rounded-full mr-1"></div>
+                        <div className="w-3 h-3 bg-gradient-to-r from-red-500/50 to-red-600/50 rounded-full mr-2"></div>
                     <span>Least exercises ({exerciseStats.min})</span>
                 </div>
             </div>
 
             <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
 
-            <div className="mt-5">
+                <div className="mt-6 space-y-3">
                 <button
-                    className="w-full mt-2.5 text-3xl italic text-center text-black max-sm:text-2xl"
+                        className="w-full py-3 text-xl font-bold text-center text-black bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200"
                     onClick={onNavigateToTrainingSelector}
                 >
-                    Add training session
+                        Add Training Session
                 </button>
                 <button
-                    className="w-full mt-2.5 text-3xl italic text-center text-black max-sm:text-2xl"
+                        className="w-full py-3 text-xl font-bold text-center text-black bg-gradient-to-r from-stone-700/20 to-stone-800/20 rounded-xl border border-stone-700/30 hover:border-stone-600/50 transition-all duration-200"
                     onClick={onNavigateToMetricsSection}
                 >
                     Edit Metrics
                 </button>
             </div>
+            </div>
 
-            <div
-                className="absolute h-px bg-indigo-700 left-[110px] top-[107px] w-[510px] max-sm:w-4/5 max-sm:left-[10%]"
-            />
+            {trainingToDelete !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-stone-800 p-8 rounded-xl shadow-2xl max-w-md w-full border border-stone-700/30">
+                        <h3 className="text-2xl font-bold mb-4 text-white">Confirm Delete</h3>
+                        <p className="mb-6 text-stone-300">Are you sure you want to delete this training session?</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                className="px-6 py-2 bg-stone-700/50 text-black rounded-lg hover:bg-stone-700/70 transition-all duration-200"
+                                onClick={cancelDelete}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-6 py-2 bg-red-500/80 text-black rounded-lg hover:bg-red-500 transition-all duration-200"
+                                onClick={confirmDelete}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {updateFormOpen !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-stone-800 p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-screen overflow-y-auto border border-stone-700/30">
+                        <h3 className="text-2xl font-bold mb-6 text-white">Update Training Session</h3>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium mb-2 text-stone-300">Date:</label>
+                            <input
+                                type="text"
+                                value={updateFormData.date}
+                                onChange={(e) => handleUpdateInputChange(e, "date")}
+                                className="w-full px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium mb-2 text-stone-300">Exercises:</label>
+                            {updateFormData.exercises.map((exercise, idx) => (
+                                <div key={idx} className="flex mb-3 space-x-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Exercise name"
+                                        value={exercise.name}
+                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
+                                        className="flex-grow px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                                    />
+                                    <input
+                                        type="number min=0"
+                                        placeholder="Weight (kg)"
+                                        value={exercise.weight}
+                                        onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
+                                        className="w-24 px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeExerciseField(idx)}
+                                        className="px-4 py-2 bg-red-500/80 text-black rounded-lg hover:bg-red-500 transition-all duration-200"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={addExerciseField}
+                                className="mt-3 px-4 py-2 bg-blue-500/80 text-black rounded-lg hover:bg-blue-500 transition-all duration-200"
+                            >
+                                Add Exercise
+                            </button>
+                        </div>
+                        <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                className="px-6 py-2 bg-stone-700/50 text-black rounded-lg hover:bg-stone-700/70 transition-all duration-200"
+                                onClick={cancelUpdateForm}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-6 py-2 bg-green-500/80 text-black rounded-lg hover:bg-green-500 transition-all duration-200"
+                                onClick={submitUpdateForm}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(0, 0, 0, 0.1);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+            `}</style>
         </section>
     );
 };

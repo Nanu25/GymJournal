@@ -5,16 +5,22 @@ import WelcomeHeader from "./WelcomeHeader";
 import PersonalRecordsCard from "./PersonalRecordsCard";
 import PRSection from "./PRSection";
 import TrainingSelector from "./TrainingSelector";
+import CrownIcon from "./icons/CrownIcon";
 
 interface TrainingEntry {
   date: string;
   exercises: { [key: string]: number };
 }
 
-const DashboardPage = ({ onLogout, onNavigateToMetricsSection}) => {
-  const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
+interface DashboardPageProps {
+    onLogout: () => void;
+    onNavigateToMetricsSection: () => void;
+}
 
+const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMetricsSection }) => {
+  const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
   const [isAddingTraining, setIsAddingTraining] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleNavigateToTrainingSelector = () => {
     setIsAddingTraining(true);
@@ -54,8 +60,8 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection}) => {
       <div
           className="min-h-screen w-full overflow-y-auto"
           style={{
-            background:
-                "linear-gradient(to bottom, #09205A 31%, #4E6496 90%, #C2D8FB 100%)",
+            background: "linear-gradient(180deg, #09205A 0%, #1E3A8A 50%, #2563EB 100%)",
+            backgroundAttachment: "fixed"
           }}
       >
         {isAddingTraining ? (
@@ -64,32 +70,47 @@ const DashboardPage = ({ onLogout, onNavigateToMetricsSection}) => {
                 onSaveTraining={handleSaveTraining}
             />
         ) : (
-            <main className="relative p-5 w-full max-sm:hidden">
-              <WelcomeHeader username="username" />
+            <>
+                <main className="container mx-auto px-6 py-8 max-w-[1920px]">
+                    {/* Header Section */}
+                    <div className="flex justify-between items-center mb-12">
+                        <WelcomeHeader username="username" />
+                    </div>
 
-              <div className="flex flex-col md:flex-row justify-between">
-                <div className="md:w-2/3 min-h-[600px]">
-                  <PersonalRecordsCard
-                      setTrainings={setTrainings}
-                      onNavigateToMetricsSection={onNavigateToMetricsSection}
-                      onNavigateToTrainingSelector={handleNavigateToTrainingSelector}
-                      onTrainingChange={handleTrainingsChanged}
-                  />
-                </div>
-                <div className="md:w-1/3 flex justify-center">
-                  <PRSection
-                     trainings={trainings}
-                  />
-                </div>
-              </div>
-            </main>
+                    {/* Main Content Section with 60/40 split */}
+                    <div className="flex gap-8">
+                        {/* Left Section - PersonalRecordsCard (60%) */}
+                        <div className="flex-[6]">
+                            <PersonalRecordsCard
+                                trainings={trainings}
+                                setTrainings={setTrainings}
+                                onNavigateToMetricsSection={onNavigateToMetricsSection}
+                                onNavigateToTrainingSelector={handleNavigateToTrainingSelector}
+                                onTrainingChange={handleTrainingsChanged}
+                            />
+                        </div>
+
+                        {/* Right Section - PRSection (40%) */}
+                        <div className="flex-[4] relative">
+                            {/* <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10">
+                                <CrownIcon />
+                            </div> */}
+                            <PRSection
+                                trainings={trainings}
+                            />
+                        </div>
+                    </div>
+                </main>
+                <footer className="w-full bg-[#0f172a] text-white p-6 mt-12">
+                  <div className="container mx-auto text-center">
+                      <p className="text-sm font-medium">
+                          © 2025 Fitness Journal | Created by Grancea Alexandru
+                      </p>
+                  </div>
+              </footer>
+
+                          </>
         )}
-
-        <footer className="w-full bg-black text-white p-4 text-center">
-          <p className="text-sm">
-            © 2025 Fitness Journal | Created by Grancea Alexandru
-          </p>
-        </footer>
       </div>
   );
 };
