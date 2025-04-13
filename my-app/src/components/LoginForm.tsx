@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
-  onNavigateToRegistration: () => void; // New prop for navigation
+  onNavigateToRegistration: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -13,57 +13,86 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    // Login functionality would be implemented here
     console.log("Login button clicked", { email, password });
     onLoginSuccess();
   };
 
   const handleSignup = () => {
-    // Navigate to registration page
     onNavigateToRegistration();
   };
 
   return (
     <section className="w-full px-4 md:px-8 lg:px-12 mb-16">
-      <div className="flex flex-col gap-5 max-w-[386px] mx-auto md:mx-0">
-        <div className="flex items-center bg-zinc-300 border-[none] h-[67px] w-full">
+      <div className="flex flex-col gap-6 max-w-[386px] mx-auto md:mx-0">
+        {/* Email Input */}
+        <div className="group relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 rounded-xl blur-xl opacity-75 group-hover:opacity-100 transition-all duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl opacity-50 group-hover:opacity-75 transition-all duration-500"></div>
           <input
             type="email"
             placeholder="Email..."
             aria-label="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="px-5 py-0 text-2xl md:text-3xl lg:text-4xl text-black opacity-50 border-[none] size-full"
+            className="relative w-full h-[67px] px-6 text-lg text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 placeholder:text-white/30"
           />
+          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+            <svg className="w-6 h-6 text-blue-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+            </svg>
+          </div>
         </div>
-        <div className="flex items-center bg-zinc-300 border-[none] h-[67px] w-full">
+
+        {/* Password Input */}
+        <div className="group relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 rounded-xl blur-xl opacity-75 group-hover:opacity-100 transition-all duration-500"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 rounded-xl opacity-50 group-hover:opacity-75 transition-all duration-500"></div>
           <input
             type="password"
             placeholder="Password..."
             aria-label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="px-5 py-0 text-2xl md:text-3xl lg:text-4xl text-black opacity-50 border-[none] size-full"
+            className="relative w-full h-[67px] px-6 text-lg text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 placeholder:text-white/30"
           />
+          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+            <svg className="w-6 h-6 text-purple-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleLogin}
-          className="mt-5 text-2xl md:text-3xl lg:text-4xl text-black cursor-pointer bg-gray-950 border-[none] h-[54px] w-[180px]"
-        >
-          Login
-        </button>
-        <p className="mt-5 text-lg md:text-xl text-black">
-          <span>If you don't have an account, click </span>
+
+        {/* Login Button */}
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <button
             type="button"
-            onClick={handleSignup}
-            className="text-red-600 cursor-pointer"
-            id="signup-button"
+            onClick={handleLogin}
+            className="relative w-full h-[54px] text-lg font-medium text-white bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300"
           >
-            here to sing in
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <span>Login</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </span>
           </button>
-        </p>
+        </div>
+
+        {/* Sign Up Link */}
+        <div className="relative mt-6 text-center">
+          <p className="text-lg text-white/70">
+            <span>If you don't have an account, click </span>
+            <button
+              type="button"
+              onClick={handleSignup}
+              className="text-blue-400 hover:text-blue-300 font-medium cursor-pointer transition-colors duration-300"
+              id="signup-button"
+            >
+              here to sign in
+            </button>
+          </p>
+        </div>
       </div>
     </section>
   );

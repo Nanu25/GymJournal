@@ -19,7 +19,7 @@ interface TrainingEntry {
     exercises: { [key: string]: number };
 }
 
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#22D3EE", "#F97316", "#C4B5FD", "#A855F7"];
 
 interface PRSectionProps {
     trainings: TrainingEntry[];
@@ -157,14 +157,48 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
                                                     dataKey="value"
                                                     labelLine={false}
                                                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                    onMouseEnter={(data, index) => {
+                                                        const cell = document.querySelector(`.recharts-pie-sector-${index}`);
+                                                        if (cell) {
+                                                            cell.classList.add('scale-110');
+                                                            cell.classList.add('transition-transform');
+                                                            cell.classList.add('duration-200');
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(data, index) => {
+                                                        const cell = document.querySelector(`.recharts-pie-sector-${index}`);
+                                                        if (cell) {
+                                                            cell.classList.remove('scale-110');
+                                                        }
+                                                    }}
                                                 >
                                                     {pieChartData.map((entry, index) => (
                                                         <Cell
                                                             key={`cell-${index}`}
                                                             fill={COLORS[index % COLORS.length]}
+                                                            className="cursor-pointer hover:shadow-lg transition-all duration-200"
                                                         />
                                                     ))}
                                                 </Pie>
+                                                <Tooltip
+                                                    content={({ payload }) => {
+                                                        if (payload && payload.length > 0) {
+                                                            const data = payload[0];
+                                                            return (
+                                                                <div className="bg-[#1a2234] p-4 rounded-xl border border-blue-500/10 shadow-lg">
+                                                                    <p className="text-white font-bold">{data.name}</p>
+                                                                    <p className="text-blue-300">
+                                                                        {data.value} exercises
+                                                                        <span className="text-blue-200/70 ml-2">
+                                                                            ({(data.payload.percent * 100).toFixed(1)}%)
+                                                                        </span>
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    }}
+                                                />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
