@@ -25,25 +25,20 @@ function GymJournalRegistration({
 
   return (
     <div
-      className="min-h-screen w-full overflow-y-auto flex flex-col"
+      className="min-h-screen w-full flex flex-col pt-10 pb-10"
       style={{
         background:
           "linear-gradient(to bottom, #09205A 31%, #4E6496 90%, #C2D8FB 100%)",
       }}
     >
-      <main className="flex flex-col md:flex-row justify-between p-5 w-full flex-grow">
-        <div className="w-full md:w-1/2 mb-10 md:mb-0">
-          <WelcomeSection />
+      <main className="flex justify-center items-center flex-grow p-5 w-full overflow-y-auto">
+        <div className="w-full md:w-1/2">
           <RegistrationForm onNavigateToLogin={handleNavigateToLogin} />
-        </div>
-        <div className="w-full md:w-1/2 relative">
-          <RightSection />
-          <DecorativeElements />
         </div>
       </main>
 
       {/* Footer - fixed at the bottom */}
-      <footer className="w-full bg-black text-white p-4 text-center mt-auto">
+      <footer className="w-full bg-black text-white p-4 text-center">
         <p className="text-sm">
           © 2025 Fitness Journal | Created by Grancea Alexandru
         </p>
