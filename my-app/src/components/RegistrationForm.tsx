@@ -26,7 +26,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
   };
 
   return (
-    <>
+    <div className="space-y-8">
       <WelcomeSection />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -254,7 +254,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
           </p>
         </div>
       </form>
-    </>
+    </div>
   );
 };
 
