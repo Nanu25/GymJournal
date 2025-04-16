@@ -2,40 +2,80 @@
 import React, { useState } from "react";
 import { ChevronRight, UserPlus, Scale, Ruler, Calendar, Users, Clock, Repeat, Calendar as CalendarIcon, User } from "lucide-react";
 import WelcomeSection from "./WelcomeSection";
+import { api, UserData } from "../services/api";
 
 interface RegistrationFormProps {
   onNavigateToLogin: () => void;
 }
 
 const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState<UserData>({
+    name: "",
+    email: "",
+    password: "",
+    weight: undefined,
+    height: undefined,
+    gender: "",
+    age: undefined,
+    timesPerWeek: undefined,
+    timePerSession: undefined,
+    repRange: "",
+  });
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [timesPerWeek, setTimesPerWeek] = useState("");
-  const [timePerSession, setTimePerSession] = useState("");
-  const [repRange, setRepRange] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration form submitted");
+    setError(null);
+
+    if (formData.password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await api.auth.register(formData);
+      if (response.success) {
+        // Handle successful registration (e.g., redirect to login)
+        onNavigateToLogin();
+      } else {
+        setError(response.error || "Registration failed");
+      }
+    } catch (err) {
+      setError("An error occurred during registration");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-8">
       <WelcomeSection />
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+        
         <div>
           <label className="block text-sm font-medium text-blue-200/90 mb-1">Name</label>
           <div className="relative">
             <input 
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
               placeholder="Your name"
               required
@@ -51,8 +91,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
           <div className="relative">
             <input 
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
               placeholder="your@email.com"
               required
@@ -70,8 +111,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
           <div className="relative">
             <input 
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
               placeholder="••••••••"
               required
@@ -83,7 +125,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
             </div>
           </div>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-blue-200/90 mb-1">Confirm Password</label>
           <div className="relative">
@@ -97,137 +139,128 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-blue-200/90 mb-1">Weight</label>
+            <label className="block text-sm font-medium text-blue-200/90 mb-1">Weight (kg)</label>
             <div className="relative">
               <input 
-                type="text"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                type="number"
+                name="weight"
+                value={formData.weight || ''}
+                onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                placeholder="kg"
+                placeholder="e.g. 75"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Scale className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-blue-200/90 mb-1">Height</label>
+            <label className="block text-sm font-medium text-blue-200/90 mb-1">Height (cm)</label>
             <div className="relative">
               <input 
-                type="text"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
+                type="number"
+                name="height"
+                value={formData.height || ''}
+                onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                placeholder="cm"
+                placeholder="e.g. 180"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Ruler className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
           </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
+
           <div>
             <label className="block text-sm font-medium text-blue-200/90 mb-1">Age</label>
             <div className="relative">
               <input 
-                type="text"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
+                type="number"
+                name="age"
+                value={formData.age || ''}
+                onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                placeholder="years"
+                placeholder="e.g. 25"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Calendar className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-blue-200/90 mb-1">Gender</label>
             <div className="relative">
-              <select 
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10 appearance-none"
-              >
-                <option value="" disabled selected className="bg-slate-800">Select gender</option>
-                <option value="male" className="bg-slate-800">Male</option>
-                <option value="female" className="bg-slate-800">Female</option>
-                <option value="other" className="bg-slate-800">Other</option>
-              </select>
+              <input 
+                type="text"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
+                placeholder="e.g. Male/Female/Other"
+              />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Users className="h-5 w-5 text-blue-300/50" />
               </div>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <ChevronRight className="h-5 w-5 text-blue-300/50" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-blue-200/90 mb-1">Training Frequency (times/week)</label>
+            <div className="relative">
+              <input 
+                type="number"
+                name="timesPerWeek"
+                value={formData.timesPerWeek || ''}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
+                placeholder="e.g. 3"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <CalendarIcon className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
           </div>
-        </div>
-        
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-blue-200/90 mb-4">Training Preferences</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-blue-200/90 mb-1">Times/Week</label>
-              <div className="relative">
-                <input 
-                  type="number"
-                  value={timesPerWeek}
-                  onChange={(e) => setTimesPerWeek(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                  placeholder="times"
-                  min="1"
-                  max="7"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <CalendarIcon className="h-5 w-5 text-blue-300/50" />
-                </div>
+
+          <div>
+            <label className="block text-sm font-medium text-blue-200/90 mb-1">Time per Session (minutes)</label>
+            <div className="relative">
+              <input 
+                type="number"
+                name="timePerSession"
+                value={formData.timePerSession || ''}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
+                placeholder="e.g. 60"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Clock className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-blue-200/90 mb-1">Time/Session</label>
-              <div className="relative">
-                <input 
-                  type="number"
-                  value={timePerSession}
-                  onChange={(e) => setTimePerSession(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                  placeholder="minutes"
-                  min="1"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Clock className="h-5 w-5 text-blue-300/50" />
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-blue-200/90 mb-1">Repetition Range</label>
-              <div className="relative">
-                <input 
-                  type="text"
-                  value={repRange}
-                  onChange={(e) => setRepRange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                  placeholder="e.g. 8-12"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Repeat className="h-5 w-5 text-blue-300/50" />
-                </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-blue-200/90 mb-1">Repetition Range</label>
+            <div className="relative">
+              <input 
+                type="text"
+                name="repRange"
+                value={formData.repRange}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
+                placeholder="e.g. 8-12"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Repeat className="h-5 w-5 text-blue-300/50" />
               </div>
             </div>
           </div>
@@ -235,10 +268,11 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
         
         <button 
           type="submit"
-          className="w-full py-3 px-4 mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:outline-none transition-all flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+          className="w-full py-3 px-4 mt-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:outline-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UserPlus className="h-5 w-5" />
-          Create Account
+          {isSubmitting ? 'Creating Account...' : 'Create Account'}
         </button>
         
         <div className="text-center mt-4">

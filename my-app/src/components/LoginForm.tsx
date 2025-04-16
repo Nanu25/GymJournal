@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { api } from "../services/api";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -11,10 +12,28 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = () => {
-    console.log("Login button clicked", { email, password });
-    onLoginSuccess();
+  const handleLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await api.auth.login({ email, password });
+      if (response.success) {
+        // Store the token in localStorage
+        localStorage.setItem('token', response.data?.token || '');
+        localStorage.setItem('user', JSON.stringify(response.data?.user || {}));
+        onLoginSuccess();
+      } else {
+        setError(response.error || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred during login");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSignup = () => {
@@ -24,6 +43,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <section className="w-full px-4 md:px-8 lg:px-12 mb-16">
       <div className="flex flex-col gap-6 max-w-[386px] mx-auto md:mx-0">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Email Input */}
         <div className="group relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 rounded-xl blur-xl opacity-75 group-hover:opacity-100 transition-all duration-500"></div>
@@ -63,15 +88,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
 
         {/* Login Button */}
-        <div className="relative group">
+        <div className="group relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <button
             type="button"
             onClick={handleLogin}
-            className="relative w-full h-[54px] text-lg font-medium text-white bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300"
+            disabled={isSubmitting}
+            className="relative w-full h-[54px] text-lg font-medium text-white bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              <span>Login</span>
+              <span>{isSubmitting ? 'Logging in...' : 'Login'}</span>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
