@@ -15,11 +15,18 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@nestjs/typeorm": "^11.0.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.0",
-    "multer": "^1.4.5-lts.2"
+    "multer": "^1.4.5-lts.2",
+    "pg": "^8.14.1",
+    "typeorm": "^0.3.22"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

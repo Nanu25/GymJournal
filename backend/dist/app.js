@@ -10,6 +10,8 @@ const multer_1 = __importDefault(require("multer"));
 const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
 const fs_1 = __importDefault(require("fs"));
+const database_1 = require("./config/database");
+const auth_controller_1 = require("./controllers/auth.controller");
 // Ensure 'uploads/' directory exists
 if (!fs_1.default.existsSync('uploads')) {
     fs_1.default.mkdirSync('uploads');
@@ -58,7 +60,6 @@ app.get('/api/download/:filename', (req, res, next) => {
         }
     });
 });
-// Add this to backend/src/app.ts
 // Get all videos endpoint
 app.get('/api/videos', (req, res) => {
     try {
@@ -89,10 +90,28 @@ app.get('/api/videos', (req, res) => {
 // Middleware
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// Initialize database connection
+database_1.AppDataSource.initialize()
+    .then(() => {
+    console.log('Database connection established');
+})
+    .catch((error) => {
+    console.error('Error during database initialization:', error);
+});
 // Routes
 app.use('/api/trainings', trainingroutes_1.default);
 app.use('/api/user', userroutes_1.default);
-const PORT = Number(process.env.PORT) || 3000;
+app.post('/api/auth/register', auth_controller_1.AuthController.register);
+app.post('/api/auth/login', auth_controller_1.AuthController.login);
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+    });
+});
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
