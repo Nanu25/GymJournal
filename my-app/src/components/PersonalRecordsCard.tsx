@@ -108,9 +108,17 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
         }
 
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
+
             const encodedDate = encodeURIComponent(trainingToDelete.date);
             const response = await fetch(`/api/trainings/${encodedDate}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (!response.ok) {
@@ -212,10 +220,16 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             });
 
             try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
                 const response = await fetch(`/api/trainings/${updateFormData.date}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         exercises: exercisesObject,
