@@ -13,9 +13,10 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'alexinfo',
     database: process.env.DB_NAME || 'fitness_journal',
-    synchronize: true, // Set to false in production
+    synchronize: true,
     logging: true,
     entities: [User_1.User, Training_1.Training, Exercise_1.Exercise, TrainingExercise_1.TrainingExercise],
     subscribers: [],
     migrations: [],
 });
+//# sourceMappingURL=database.js.map

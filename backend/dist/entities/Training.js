@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Training = void 0;
-// Training.ts
 const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
 const TrainingExercise_1 = require("./TrainingExercise");
@@ -43,3 +42,4 @@ __decorate([
 exports.Training = Training = __decorate([
     (0, typeorm_1.Entity)('trainings')
 ], Training);
+//# sourceMappingURL=Training.js.map

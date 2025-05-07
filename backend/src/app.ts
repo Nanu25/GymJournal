@@ -23,21 +23,20 @@ interface MulterRequest extends Request {
 
 // Configure multer storage
 const storage = multer.diskStorage({
-    destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
         cb(null, 'uploads/');
     },
-    filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    },
+    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+        cb(null, file.originalname);
+    }
 });
 
 // File filter to allow only video files
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype.startsWith('video/')) {
         cb(null, true);
     } else {
-        cb(new Error('Only video files are allowed!'));
+        cb(new Error('Only video files are allowed'));
     }
 };
 
@@ -51,7 +50,7 @@ const upload = multer({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Upload video endpoint
-app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, next: NextFunction): void => {
+app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, _next: NextFunction): void => {
     if (!req.file) {
         res.status(400).json({ message: 'No file uploaded.' });
         return;
@@ -61,7 +60,7 @@ app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Respon
 });
 
 // Download video endpoint
-app.get('/api/download/:filename', (req: Request, res: Response, next: NextFunction): void => {
+app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunction): void => {
     const filePath: string = path.join(__dirname, 'uploads', req.params.filename);
 
     res.download(filePath, (err: Error | null) => {
@@ -72,31 +71,21 @@ app.get('/api/download/:filename', (req: Request, res: Response, next: NextFunct
 });
 
 // Get all videos endpoint
-app.get('/api/videos', (req: Request, res: Response): void => {
+app.get('/api/videos', (_req: Request, res: Response): void => {
     try {
         const uploadsDir = path.join(__dirname, 'uploads');
         fs.readdir(uploadsDir, (err, files) => {
             if (err) {
-                return res.status(500).json({ message: 'Error reading uploads directory' });
+                console.error('Error reading directory:', err);
+                res.status(500).json({ message: 'Error reading videos directory' });
+                return;
             }
-
-            const videoFiles = files
-                .filter(file => file.match(/\.(mp4|mov|avi|wmv|mkv|webm)$/i))
-                .map(fileName => {
-                    const stats = fs.statSync(path.join(uploadsDir, fileName));
-                    return {
-                        fileName: fileName,
-                        filePath: `/uploads/${fileName}`,
-                        uploadDate: stats.mtime.toISOString()
-                    };
-                })
-                .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
-
-            res.json(videoFiles);
+            const videoFiles = files.filter(file => file.match(/\.(mp4|mov|avi)$/i));
+            res.status(200).json(videoFiles);
         });
     } catch (error) {
-        console.error('Error getting videos:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
@@ -120,7 +109,7 @@ app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(err.stack);
     res.status(500).json({
         success: false,

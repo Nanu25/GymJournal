@@ -16,7 +16,10 @@ class AuthService {
             throw new Error('Email already exists');
         }
         const hashedPassword = await bcrypt_1.default.hash(userData.password, 10);
-        const user = userRepository.create(Object.assign(Object.assign({}, userData), { password: hashedPassword }));
+        const user = userRepository.create({
+            ...userData,
+            password: hashedPassword,
+        });
         await userRepository.save(user);
         const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
         return { user, token };
@@ -35,3 +38,4 @@ class AuthService {
     }
 }
 exports.AuthService = AuthService;
+//# sourceMappingURL=auth.service.js.map

@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 let userMetrics = { weight: 0 }; // Default weight is 0
 
 // Get user metrics
-export const getUserMetrics = (req: Request, res: Response) => {
+export const getUserMetrics = (_req: Request, res: Response) => {
     res.status(200).json(userMetrics);
 };
 export const updateUserMetrics = (req: Request, res: Response): void => {

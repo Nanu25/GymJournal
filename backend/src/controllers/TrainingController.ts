@@ -15,11 +15,6 @@ declare global {
     }
 }
 
-interface TrainingEntry {
-    date: string;
-    exercises: { [key: string]: number };
-}
-
 interface FormattedTraining {
     date: string;
     exercises: { [key: string]: number };
@@ -214,13 +209,16 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
     try {
         const { date } = req.params;
         const trainingDate = new Date(date);
+        
+        // First find the training with its relations
         const training = await trainingRepository.findOne({ 
             where: { 
                 date: Between(
                     new Date(trainingDate.setHours(0, 0, 0, 0)),
                     new Date(trainingDate.setHours(23, 59, 59, 999))
                 )
-            } 
+            },
+            relations: ['trainingExercises']
         });
         
         if (!training) {
@@ -228,9 +226,16 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
             return;
         }
 
+        // Delete all related training exercises first
+        if (training.trainingExercises && training.trainingExercises.length > 0) {
+            await trainingExerciseRepository.remove(training.trainingExercises);
+        }
+
+        // Then delete the training
         await trainingRepository.remove(training);
         res.status(200).json({ message: 'Training deleted successfully' });
     } catch (error) {
+        console.error('Error deleting training:', error);
         res.status(500).json({ message: 'Error deleting training', error });
     }
 };
