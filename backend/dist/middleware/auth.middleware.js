@@ -9,16 +9,15 @@ const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) {
-        res.status(401).json({ message: 'No token provided' });
-        return;
+        return res.status(401).json({ error: 'No token provided' });
     }
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        req.user = decoded;
+        req.user = { id: decoded.userId };
         next();
     }
     catch (error) {
-        res.status(403).json({ message: 'Invalid token' });
+        return res.status(403).json({ error: 'Invalid token' });
     }
 };
 exports.authenticateToken = authenticateToken;
