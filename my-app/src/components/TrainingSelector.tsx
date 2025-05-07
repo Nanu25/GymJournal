@@ -77,23 +77,31 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 exercises: filteredData,
             };
 
+            // Get the token from localStorage
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Not authenticated. Please log in again.');
+            }
+
             const response = await fetch("/api/trainings", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(trainingEntry),
             });
 
             if (!response.ok) {
-                throw new Error("Failed to save training");
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to save training");
             }
 
             const savedTraining = await response.json();
             onTrainingAdded(savedTraining);
         } catch (error) {
             console.error("Error saving training:", error);
-            alert("Failed to save training. Please try again.");
+            alert(error instanceof Error ? error.message : "Failed to save training. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

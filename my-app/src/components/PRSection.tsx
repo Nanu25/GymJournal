@@ -40,7 +40,7 @@ interface BarChartData {
     totalWeight: number;
 }
 
-const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
+const PRSection: React.FC<PRSectionProps> = ({ trainings }) => {
     const [pieChartData, setPieChartData] = useState<PieChartData[]>([]);
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
     const [lineChartData, setLineChartData] = useState<LineChartData[]>([]);
@@ -52,47 +52,74 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
     useEffect(() => {
         const fetchMuscleGroupData = async () => {
             try {
-                await new Promise(resolve => setTimeout(resolve, 100));
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
 
-                const response = await fetch('/api/trainings/muscle-group-distribution');
+                const response = await fetch('/api/trainings/muscle-group-distribution', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
                 if (!response.ok) {
                     throw new Error(`Server responded with status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                setPieChartData(data);
+                // Transform the data into the correct format for the pie chart
+                const transformedData = Object.entries(data).map(([name, value]) => ({
+                    name,
+                    value: Number(value)
+                }));
+                setPieChartData(transformedData);
+                setIsLoading(false);
             } catch (error) {
                 console.error('Error fetching muscle group distribution:', error);
+                setIsLoading(false);
             }
         };
 
         fetchMuscleGroupData();
-    }, [trainings]); // Only fetch once on component mount or add dependencies if needed
+    }, [trainings]);
 
-    // Update the useEffect in your PRSection.tsx
+    // Update the useEffect for exercise progress
     useEffect(() => {
         if (selectedExercise) {
-            // Show loading state if needed
             setIsLoading(true);
 
-            // Fetch data from the backend
-            fetch(`/api/trainings/exercise-progress/${encodeURIComponent(selectedExercise)}`)
-                .then(response => {
+            const fetchExerciseProgress = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('Not authenticated');
+                    }
+
+                    const response = await fetch(
+                        `/api/trainings/exercise-progress/${encodeURIComponent(selectedExercise)}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    );
+
                     if (!response.ok) {
                         throw new Error('Failed to fetch exercise progress data');
                     }
-                    return response.json();
-                })
-                .then(data => {
+
+                    const data = await response.json();
                     setLineChartData(data);
-                    setIsLoading(false);
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error fetching exercise progress:', error);
                     setLineChartData([]);
+                } finally {
                     setIsLoading(false);
-                });
+                }
+            };
+
+            fetchExerciseProgress();
         } else {
             setLineChartData([]);
         }
@@ -102,8 +129,21 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
     useEffect(() => {
         const fetchTotalWeightData = async () => {
             try {
-                const response = await fetch("/api/trainings/total-weight");
-                if (!response.ok) throw new Error("Failed to fetch total weight data");
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
+                const response = await fetch("/api/trainings/total-weight", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch total weight data");
+                }
+
                 const data = await response.json();
                 setBarChartData(data);
             } catch (error) {
@@ -112,23 +152,44 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
         };
 
         fetchTotalWeightData();
-    }, [trainings]); // Add trainings as dependency to re-fetch when data changes
+    }, [trainings]);
 
     // Update the exercise list with backend data
     useEffect(() => {
         const fetchExerciseList = async () => {
             try {
-                const response = await fetch("/api/trainings/exercises");
-                if (!response.ok) throw new Error("Failed to fetch exercise list");
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
+                const response = await fetch('/api/trainings/exercises', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch exercise list');
+                }
+
                 const data = await response.json();
                 setExerciseList(data);
             } catch (error) {
-                console.error("Error fetching exercise list:", error);
+                console.error('Error fetching exercise list:', error);
             }
         };
 
         fetchExerciseList();
-    }, [trainings]); // Add trainings as dependency
+    }, [trainings]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-blue-300">Loading statistics...</div>
+            </div>
+        );
+    }
 
     return (
         <aside className="h-full">
@@ -244,10 +305,12 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
                                                     dataKey="date" 
                                                     stroke="#64748B"
                                                     tick={{ fill: "#64748B" }}
+                                                    tickFormatter={(date) => new Date(date).toLocaleDateString()}
                                                 />
                                                 <YAxis 
                                                     stroke="#64748B"
                                                     tick={{ fill: "#64748B" }}
+                                                    tickFormatter={(value) => `${value}kg`}
                                                 />
                                                 <Tooltip 
                                                     contentStyle={{ 
@@ -257,6 +320,8 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
                                                     }}
                                                     labelStyle={{ color: "#64748B" }}
                                                     itemStyle={{ color: "#10B981" }}
+                                                    formatter={(value: number) => [`${value}kg`, 'Weight']}
+                                                    labelFormatter={(date) => new Date(date).toLocaleDateString()}
                                                 />
                                             </LineChart>
                                         </ResponsiveContainer>
@@ -291,10 +356,12 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
                                                     dataKey="date" 
                                                     stroke="#64748B"
                                                     tick={{ fill: "#64748B" }}
+                                                    tickFormatter={(date) => new Date(date).toLocaleDateString()}
                                                 />
                                                 <YAxis 
                                                     stroke="#64748B"
                                                     tick={{ fill: "#64748B" }}
+                                                    tickFormatter={(value) => `${value}kg`}
                                                 />
                                                 <Tooltip 
                                                     contentStyle={{ 
@@ -304,6 +371,8 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings = [] }) => {
                                                     }}
                                                     labelStyle={{ color: "#64748B" }}
                                                     itemStyle={{ color: "#8B5CF6" }}
+                                                    formatter={(value: number) => [`${value}kg`, 'Total Weight']}
+                                                    labelFormatter={(date) => new Date(date).toLocaleDateString()}
                                                 />
                                                 <defs>
                                                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">

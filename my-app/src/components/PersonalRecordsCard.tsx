@@ -273,9 +273,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             if (sortDirection) params.sortDirection = sortDirection;
 
             const query = new URLSearchParams(params).toString();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('Not authenticated');
+                return;
+            }
 
             try {
-                const response = await fetch(`/api/trainings?${query}`);
+                const response = await fetch(`/api/trainings?${query}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
                 if (!response.ok) {
                     throw new Error(`Server responded with status: ${response.status}`);

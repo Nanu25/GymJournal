@@ -42,7 +42,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMet
     useEffect(() => {
         const fetchTrainings = async () => {
             try {
-                const response = await fetch("/api/trainings");
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+                const response = await fetch("/api/trainings", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error("Failed to fetch trainings");
                 }
@@ -66,8 +74,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMet
 
     const handleTrainingAdded = async (newTraining: TrainingEntry) => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
             // Fetch the updated list of trainings after adding a new one
-            const response = await fetch("/api/trainings");
+            const response = await fetch("/api/trainings", {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!response.ok) {
                 throw new Error("Failed to fetch updated trainings");
             }
