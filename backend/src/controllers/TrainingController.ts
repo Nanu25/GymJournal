@@ -1,255 +1,393 @@
 import { Request, Response } from 'express';
-const mockTrainings = require("../data/mockTrainings.json");
-const muscleGroupMappingData = require("../data/muscleGroupMappingData.json");
+import { Training } from '../entities/Training';
+import { Exercise } from '../entities/Exercise';
+import { TrainingExercise } from '../entities/TrainingExercise';
+import { AppDataSource } from '../config/database';
+import { Between } from 'typeorm';
 
-// Define the structure for TrainingEntry
-interface TrainingEntry {
+declare global {
+    namespace Express {
+        interface Request {
+            user?: {
+                id: string;
+            };
+        }
+    }
+}
+
+interface FormattedTraining {
     date: string;
     exercises: { [key: string]: number };
 }
 
-let trainings: TrainingEntry[] = mockTrainings; // Load mock data into the variable
+const trainingRepository = AppDataSource.getRepository(Training);
+const exerciseRepository = AppDataSource.getRepository(Exercise);
+const trainingExerciseRepository = AppDataSource.getRepository(TrainingExercise);
 
-export {trainings};
+export const getAllTrainings = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { searchTerm, sortField, sortDirection } = req.query;
 
-export const getAllTrainings = (req: Request, res: Response): void => {
-    const { searchTerm, sortField, sortDirection } = req.query;
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
 
-    let result = [...trainings];
+        // Create query builder
+        const queryBuilder = AppDataSource
+            .getRepository(Training)
+            .createQueryBuilder('training')
+            .leftJoinAndSelect('training.trainingExercises', 'trainingExercise')
+            .leftJoinAndSelect('trainingExercise.exercise', 'exercise')
+            .where('training.userId = :userId', { userId: req.user.id });
 
-    // Apply filtering
-    if (searchTerm) {
-        const lowerSearchTerm = searchTerm.toString().toLowerCase();
-        result = result.filter(training =>
-            training.date.toLowerCase().includes(lowerSearchTerm) ||
-            Object.keys(training.exercises).some(exercise =>
-                exercise.toLowerCase().includes(lowerSearchTerm)
-            )
-        );
+        // Apply filter if searchTerm exists
+        if (searchTerm) {
+            const term = `%${searchTerm}%`;
+
+            queryBuilder.andWhere(
+                '(CAST(training.date AS TEXT) LIKE :term OR exercise.name LIKE :term)',
+                { term }
+            );
+        }
+
+        if (sortField === 'date') {
+            queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
+        }
+
+        const trainings = await queryBuilder.getMany();
+
+        // Transform data to match frontend expectations
+        const formattedTrainings: FormattedTraining[] = trainings.map((training: Training) => {
+            const exercises: { [key: string]: number } = {};
+
+            training.trainingExercises.forEach((te: TrainingExercise) => {
+                exercises[te.exercise.name] = te.weight;
+            });
+
+            // Ensure date is properly formatted
+            const date = training.date instanceof Date 
+                ? training.date.toISOString().split('T')[0]
+                : new Date(training.date).toISOString().split('T')[0];
+
+            return {
+                date,
+                exercises
+            };
+        });
+
+        // Apply additional sorting that requires the transformed data
+        if (sortField === 'pr') {
+            formattedTrainings.sort((a: FormattedTraining, b: FormattedTraining) => {
+                const prA = Object.values(a.exercises).length > 0 ? Math.max(...Object.values(a.exercises).map(Number)) : 0;
+                const prB = Object.values(b.exercises).length > 0 ? Math.max(...Object.values(b.exercises).map(Number)) : 0;
+                return sortDirection === 'asc' ? prA - prB : prB - prA;
+            });
+        } else if (sortField === 'exercises') {
+            formattedTrainings.sort((a: FormattedTraining, b: FormattedTraining) => {
+                const comparison = Object.keys(a.exercises).length - Object.keys(b.exercises).length;
+                return sortDirection === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        res.status(200).json(formattedTrainings);
+    } catch (error) {
+        console.error('Error fetching trainings:', error);
+        res.status(500).json({ message: 'Error fetching trainings' });
     }
+};
 
-    // Apply sorting
-    if (sortField) {
-        result.sort((a, b) => {
-            let comparison = 0;
-            if (sortField === "date") {
-                comparison = a.date.localeCompare(b.date);
-            } else if (sortField === "pr") {
-                const prA = Object.values(a.exercises).length > 0 ? Math.max(...Object.values(a.exercises)) : 0;
-                const prB = Object.values(b.exercises).length > 0 ? Math.max(...Object.values(b.exercises)) : 0;
-                comparison = prA - prB;
-            } else if (sortField === "exercises") {
-                comparison = Object.keys(a.exercises).length - Object.keys(b.exercises).length;
+export const createTraining = async (req: Request, res: Response): Promise<void> => {
+    try {
+        // console.log('Request body:', req.body);
+        // console.log('User:', req.user);
+
+        const { date, exercises } = req.body;
+
+        // Validate required fields
+        if (!date) {
+            console.error('Missing date in request');
+            res.status(400).json({ message: 'Date is required' });
+            return;
+        }
+
+        if (!exercises || Object.keys(exercises).length === 0) {
+            console.error('Missing exercises in request');
+            res.status(400).json({ message: 'At least one exercise is required' });
+            return;
+        }
+
+        if (!req.user?.id) {
+            console.error('No user ID found in request');
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        //check if the date is unique
+        const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
+        if (existingTraining) {
+            res.status(400).json({ message: 'Training for this date already exists' });
+            return;
+        }
+
+        // Create new training
+        const training = new Training();
+        training.date = new Date(date);
+        training.userId = req.user.id;
+
+
+        // Save training first to get ID
+        const savedTraining = await trainingRepository.save(training);
+
+        // Process exercises
+        const trainingExercises: TrainingExercise[] = [];
+
+        for (const [exerciseName, weight] of Object.entries(exercises)) {
+            // console.log('Processing exercise:', { exerciseName, weight });
+
+            if (isNaN(Number(weight)) || Number(weight) <= 0) {
+                console.warn(`Invalid weight for exercise ${exerciseName}: ${weight}`);
+                continue;
             }
-            return sortDirection === "asc" ? comparison : -comparison;
-        });
-    }
 
-    res.status(200).json(result);
-};
+            // Find or create exercise
+            let exercise = await exerciseRepository.findOne({ where: { name: exerciseName } });
+            if (!exercise) {
+                // console.log(`Creating new exercise: ${exerciseName}`);
+                exercise = new Exercise();
+                exercise.name = exerciseName;
+                exercise.muscleGroup = 'Other'; // Default muscle group
+                await exerciseRepository.save(exercise);
+            }
 
+            // Create training exercise relationship
+            const trainingExercise = new TrainingExercise();
+            trainingExercise.training = savedTraining;
+            trainingExercise.exercise = exercise;
+            trainingExercise.weight = Number(weight);
+            trainingExercise.trainingId = savedTraining.id;
+            trainingExercise.exerciseId = exercise.id;
 
-export function validateDate(dateString: string): { isValid: boolean; message?: string } {
-    // Check if the date string matches the YYYY-MM-DD pattern
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(dateString)) {
-        return { isValid: false, message: 'Date must be in YYYY-MM-DD format' };
-    }
-
-    // Parse the date to check if it's a valid date
-    const parsedDate = new Date(dateString);
-    if (isNaN(parsedDate.getTime())) {
-        return { isValid: false, message: 'Invalid date provided' };
-    }
-
-    // Extract components to verify each part is valid
-    const [year, month, day] = dateString.split('-').map(Number);
-    const reconstructedDate = new Date(year, month - 1, day); // Month is 0-indexed in JavaScript
-
-    // Check if the date components match after reconstruction
-    // This catches invalid dates like "2023-02-31" (Feb 31st doesn't exist)
-    if (reconstructedDate.getFullYear() !== year ||
-        reconstructedDate.getMonth() !== month - 1 ||
-        reconstructedDate.getDate() !== day) {
-        return { isValid: false, message: 'Invalid date: date components out of range' };
-    }
-
-    return { isValid: true };
-}
-
-export const createTraining = (req: Request, res: Response): void => {
-    const { date, exercises } = req.body;
-
-    if (!date || !exercises) {
-        res.status(400).json({ message: 'Date and exercises are required' });
-        return;
-    }
-
-    const dateValidation = validateDate(date);
-    if (!dateValidation.isValid) {
-        res.status(400).json({ message: dateValidation.message });
-        return;
-    }
-
-
-    const invalidExercises: string[] = [];
-
-    Object.entries(exercises).forEach(([exercise, value]) => {
-        if (isNaN(Number(value))) {
-            invalidExercises.push(`${exercise} has non-numeric value`);
+            trainingExercises.push(trainingExercise);
         }
-        else if (Number(value) <= 0) {
-            invalidExercises.push(`${exercise} has zero or negative value`);
+
+        if (trainingExercises.length === 0) {
+            console.error('No valid exercises to save');
+            // Clean up the training if no exercises were valid
+            await trainingRepository.remove(savedTraining);
+            res.status(400).json({ message: 'No valid exercises provided' });
+            return;
         }
-    });
 
-    if (invalidExercises.length > 0) {
-        res.status(400).json({
-            message: 'Invalid exercise values detected',
-            details: invalidExercises
+        // Save all training exercises
+        // console.log('Saving training exercises:', trainingExercises);
+        await trainingExerciseRepository.save(trainingExercises);
+
+        // Return formatted response
+        const formattedExercises: { [key: string]: number } = {};
+        trainingExercises.forEach(te => {
+            formattedExercises[te.exercise.name] = te.weight;
         });
-        return;
-    }
 
-    // Filter zero values if needed
-    const filteredExercises = Object.entries(exercises)
-        .filter(([_, value]) => Number(value) > 0)
-        .reduce((acc, [key, value]) => {
-            acc[key] = Number(value);
-            return acc;
-        }, {} as Record<string, number>);
-
-    // Check if any exercises remain after filtering
-    if (Object.keys(filteredExercises).length === 0) {
-        res.status(400).json({ message: 'At least one exercise with positive value is required' });
-        return;
-    }
-
-    const newTraining: TrainingEntry = {
-        date,
-        exercises: filteredExercises,
-    };
-
-    trainings.push(newTraining);
-    res.status(201).json(newTraining);
-};
-
-export const deleteTraining = (req: Request, res: Response): void => {
-    const decodedDate = decodeURIComponent(req.params.date);
-
-    const dateValidation = validateDate(decodedDate);
-    if (!dateValidation.isValid) {
-        res.status(400).json({ message: dateValidation.message });
-        return;
-    }
-    const trainingIndex = trainings.findIndex(t => t.date === decodedDate);
-    console.log('Found at index:', trainingIndex);
-
-    if (trainingIndex === -1) {
-        // @ts-ignore
-        return res.status(404).json({ message: 'Training not found' });
-    }
-
-    const deletedTraining = trainings.splice(trainingIndex, 1)[0];
-    res.status(200).json({ message: 'Training deleted', deletedTraining });
-};
-
-// Update a training by date
-export const updateTrainingByDate = (req: Request, res: Response): void => {
-    const { date } = req.params;
-    const { exercises } = req.body;
-
-    const dateValidation = validateDate(date);
-    if (!dateValidation.isValid) {
-        res.status(400).json({ message: dateValidation.message });
-        return;
-    }
-
-    // Find the training with the matching date
-    const trainingIndex = trainings.findIndex(training => training.date === date);
-
-    // Validate if the training exists
-    if (trainingIndex === -1) {
-        res.status(404).json({ message: 'Training not found' });
-        return;
-    }
-
-    // Validate the request body
-    if (!exercises || Object.keys(exercises).length === 0) {
-        res.status(400).json({ message: 'At least one exercise is required' });
-        return;
-    }
-
-    // Update the training with the new exercises
-    trainings[trainingIndex] = { date, exercises };
-
-    res.status(200).json(trainings[trainingIndex]);
-};
-
-
-const muscleGroupMapping = muscleGroupMappingData as { [key: string]: string };
-export const getMuscleGroupDistribution = (req: Request, res: Response): void => {
-    const muscleGroupCounts: { [key: string]: number } = {};
-
-    trainings.forEach((training) => {
-        Object.keys(training.exercises).forEach((exercise) => {
-            const muscleGroup = muscleGroupMapping[exercise] || "Other";
-            muscleGroupCounts[muscleGroup] = (muscleGroupCounts[muscleGroup] || 0) + 1;
+        res.status(201).json({
+            id: savedTraining.id,
+            date: savedTraining.date.toISOString().split('T')[0],
+            exercises: formattedExercises
         });
-    });
-
-    const data = Object.entries(muscleGroupCounts).map(([name, value]) => ({
-        name,
-        value,
-    }));
-
-    res.status(200).json(data);
-};
-
-export const getExerciseProgressData = (req: Request, res: Response): void => {
-    const { exercise } = req.params;
-
-    if (!exercise) {
-        res.status(400).json({ message: 'Exercise name is required' });
-        return;
+    } catch (error) {
+        console.error('Detailed error creating training:', error);
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+        }
+        res.status(500).json({ 
+            message: 'Error creating training', 
+            error: error instanceof Error ? error.message : 'Unknown error',
+            details: error instanceof Error ? error.stack : undefined
+        });
     }
-
-    // Filter trainings with the selected exercise, extract date and weight, and sort by date
-    const progressData = trainings
-        .filter((training) => exercise in training.exercises)
-        .map((training) => ({
-            date: training.date,
-            weight: training.exercises[exercise],
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-
-    res.status(200).json(progressData);
 };
 
-export const getTotalWeightPerSession = (req: Request, res: Response): void => {
-    const data = trainings
-        .map((training) => ({
-            date: training.date,
-            totalWeight: Object.values(training.exercises).reduce(
-                (sum, weight) => sum + weight,
-                0
-            ),
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+export const deleteTraining = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { date } = req.params;
+        const trainingDate = new Date(date);
+        
+        // First find the training with its relations
+        const training = await trainingRepository.findOne({ 
+            where: { 
+                date: Between(
+                    new Date(trainingDate.setHours(0, 0, 0, 0)),
+                    new Date(trainingDate.setHours(23, 59, 59, 999))
+                )
+            },
+            relations: ['trainingExercises']
+        });
+        
+        if (!training) {
+            res.status(404).json({ message: 'Training not found' });
+            return;
+        }
 
-    res.status(200).json(data);
+        // Delete all related training exercises first
+        if (training.trainingExercises && training.trainingExercises.length > 0) {
+            await trainingExerciseRepository.remove(training.trainingExercises);
+        }
+
+        // Then delete the training
+        await trainingRepository.remove(training);
+        res.status(200).json({ message: 'Training deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting training:', error);
+        res.status(500).json({ message: 'Error deleting training', error });
+    }
 };
 
-// Get unique exercises for dropdown
-export const getUniqueExercises = (req: Request, res: Response): void => {
-    const allExercises = new Set<string>();
+export const updateTrainingByDate = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { date } = req.params;
+        const trainingDate = new Date(date);
+        const training = await trainingRepository.findOne({ 
+            where: { 
+                date: Between(
+                    new Date(trainingDate.setHours(0, 0, 0, 0)),
+                    new Date(trainingDate.setHours(23, 59, 59, 999))
+                )
+            } 
+        });
+        
+        if (!training) {
+            res.status(404).json({ message: 'Training not found' });
+            return;
+        }
 
-    trainings.forEach((training) => {
-        Object.keys(training.exercises).forEach((exercise) =>
-            allExercises.add(exercise)
-        );
-    });
+        Object.assign(training, req.body);
+        const updatedTraining = await trainingRepository.save(training);
+        res.status(200).json(updatedTraining);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating training', error });
+    }
+};
 
-    const exerciseList = Array.from(allExercises);
-    res.status(200).json(exerciseList);
+export const getMuscleGroupDistribution = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
+
+        const muscleGroupCounts: { [key: string]: number } = {};
+
+        trainings.forEach((training: Training) => {
+            training.trainingExercises.forEach((te: TrainingExercise) => {
+                const muscleGroup = te.exercise.muscleGroup || 'Other';
+                muscleGroupCounts[muscleGroup] = (muscleGroupCounts[muscleGroup] || 0) + 1;
+            });
+        });
+
+        res.status(200).json(muscleGroupCounts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error getting muscle group distribution', error });
+    }
+};
+
+export const getExerciseProgressData = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const { exercise } = req.params;
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
+
+        const progressData = trainings
+            .filter((training: Training) => 
+                training.trainingExercises.some((te: TrainingExercise) => 
+                    te.exercise.name === exercise
+                )
+            )
+            .map((training: Training) => {
+                const exerciseData = training.trainingExercises.find((te: TrainingExercise) => 
+                    te.exercise.name === exercise
+                );
+                const date = training.date instanceof Date 
+                    ? training.date.toISOString().split('T')[0]
+                    : new Date(training.date).toISOString().split('T')[0];
+                
+                return {
+                    date,
+                    weight: Number(exerciseData?.weight || 0)
+                };
+            })
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        res.status(200).json(progressData);
+    } catch (error) {
+        console.error('Error getting exercise progress data:', error);
+        res.status(500).json({ message: 'Error getting exercise progress data', error });
+    }
+};
+
+export const getTotalWeightPerSession = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises']
+        });
+
+        const totalWeightData = trainings.map((training: Training) => {
+            const totalWeight = training.trainingExercises.reduce((sum, te) => sum + te.weight, 0);
+            const date = training.date instanceof Date 
+                ? training.date.toISOString().split('T')[0]
+                : new Date(training.date).toISOString().split('T')[0];
+            
+            return {
+                date,
+                totalWeight: Number(totalWeight)
+            };
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        res.status(200).json(totalWeightData);
+    } catch (error) {
+        console.error('Error getting total weight per session:', error);
+        res.status(500).json({ message: 'Error getting total weight per session', error });
+    }
+};
+
+export const getUniqueExercises = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
+
+        const uniqueExercises = new Set<string>();
+        trainings.forEach((training: Training) => {
+            training.trainingExercises.forEach((te: TrainingExercise) => {
+                uniqueExercises.add(te.exercise.name);
+            });
+        });
+
+        res.status(200).json(Array.from(uniqueExercises));
+    } catch (error) {
+        res.status(500).json({ message: 'Error getting unique exercises', error });
+    }
 };

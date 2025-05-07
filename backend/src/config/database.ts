@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
 import { User } from '../entities/User';
+import { Training } from '../entities/Training';
+import { Exercise } from '../entities/Exercise';
+import { TrainingExercise } from '../entities/TrainingExercise';
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
@@ -10,7 +13,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME || 'fitness_journal',
     synchronize: true, // Set to false in production
     logging: true,
-    entities: [User],
+    entities: [User, Training, Exercise, TrainingExercise],
     subscribers: [],
     migrations: [],
 }); 

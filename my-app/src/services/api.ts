@@ -2,6 +2,15 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
 
+// Add axios interceptor to include auth token in all requests
+axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export interface UserData {
     name: string;
     email: string;

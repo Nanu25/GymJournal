@@ -10,3 +10,4 @@ const TrainingSchema = new mongoose_1.default.Schema({
     exercises: { type: Map, of: Number, required: true }
 });
 exports.Training = mongoose_1.default.model('Training', TrainingSchema);
+//# sourceMappingURL=Training.js.map
