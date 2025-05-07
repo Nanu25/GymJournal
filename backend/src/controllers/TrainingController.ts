@@ -44,13 +44,13 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
         // Apply filter if searchTerm exists
         if (searchTerm) {
             const term = `%${searchTerm}%`;
+
             queryBuilder.andWhere(
                 '(CAST(training.date AS TEXT) LIKE :term OR exercise.name LIKE :term)',
                 { term }
             );
         }
 
-        // Apply sorting
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
         }
@@ -99,8 +99,8 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
 
 export const createTraining = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log('Request body:', req.body);
-        console.log('User:', req.user);
+        // console.log('Request body:', req.body);
+        // console.log('User:', req.user);
 
         const { date, exercises } = req.body;
 
@@ -123,25 +123,27 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             return;
         }
 
+        //check if the date is unique
+        const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
+        if (existingTraining) {
+            res.status(400).json({ message: 'Training for this date already exists' });
+            return;
+        }
+
         // Create new training
         const training = new Training();
         training.date = new Date(date);
         training.userId = req.user.id;
 
-        console.log('Creating training with data:', {
-            date: training.date,
-            userId: training.userId
-        });
 
         // Save training first to get ID
         const savedTraining = await trainingRepository.save(training);
-        console.log('Saved training:', savedTraining);
 
         // Process exercises
         const trainingExercises: TrainingExercise[] = [];
 
         for (const [exerciseName, weight] of Object.entries(exercises)) {
-            console.log('Processing exercise:', { exerciseName, weight });
+            // console.log('Processing exercise:', { exerciseName, weight });
 
             if (isNaN(Number(weight)) || Number(weight) <= 0) {
                 console.warn(`Invalid weight for exercise ${exerciseName}: ${weight}`);
@@ -151,7 +153,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             // Find or create exercise
             let exercise = await exerciseRepository.findOne({ where: { name: exerciseName } });
             if (!exercise) {
-                console.log(`Creating new exercise: ${exerciseName}`);
+                // console.log(`Creating new exercise: ${exerciseName}`);
                 exercise = new Exercise();
                 exercise.name = exerciseName;
                 exercise.muscleGroup = 'Other'; // Default muscle group
@@ -178,7 +180,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         }
 
         // Save all training exercises
-        console.log('Saving training exercises:', trainingExercises);
+        // console.log('Saving training exercises:', trainingExercises);
         await trainingExerciseRepository.save(trainingExercises);
 
         // Return formatted response

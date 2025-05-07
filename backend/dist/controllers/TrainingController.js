@@ -68,8 +68,6 @@ exports.getAllTrainings = getAllTrainings;
 const createTraining = async (req, res) => {
     var _a;
     try {
-        console.log('Request body:', req.body);
-        console.log('User:', req.user);
         const { date, exercises } = req.body;
         if (!date) {
             console.error('Missing date in request');
@@ -86,25 +84,23 @@ const createTraining = async (req, res) => {
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
+        const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
+        if (existingTraining) {
+            res.status(400).json({ message: 'Training for this date already exists' });
+            return;
+        }
         const training = new Training_1.Training();
         training.date = new Date(date);
         training.userId = req.user.id;
-        console.log('Creating training with data:', {
-            date: training.date,
-            userId: training.userId
-        });
         const savedTraining = await trainingRepository.save(training);
-        console.log('Saved training:', savedTraining);
         const trainingExercises = [];
         for (const [exerciseName, weight] of Object.entries(exercises)) {
-            console.log('Processing exercise:', { exerciseName, weight });
             if (isNaN(Number(weight)) || Number(weight) <= 0) {
                 console.warn(`Invalid weight for exercise ${exerciseName}: ${weight}`);
                 continue;
             }
             let exercise = await exerciseRepository.findOne({ where: { name: exerciseName } });
             if (!exercise) {
-                console.log(`Creating new exercise: ${exerciseName}`);
                 exercise = new Exercise_1.Exercise();
                 exercise.name = exerciseName;
                 exercise.muscleGroup = 'Other';
@@ -124,7 +120,6 @@ const createTraining = async (req, res) => {
             res.status(400).json({ message: 'No valid exercises provided' });
             return;
         }
-        console.log('Saving training exercises:', trainingExercises);
         await trainingExerciseRepository.save(trainingExercises);
         const formattedExercises = {};
         trainingExercises.forEach(te => {
