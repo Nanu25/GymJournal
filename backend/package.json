@@ -12,13 +12,15 @@
     "test:coverage": "jest --coverage",
     "test:db": "jest db.test.ts",
     "import-trainings": "ts-node src/scripts/importTrainings.ts",
-    "prestart": "npm run build"
+    "prestart": "npm run build",
+    "populate-db": "ts-node src/scripts/populateDatabase.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@faker-js/faker": "^9.7.0",
     "@nestjs/typeorm": "^11.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
