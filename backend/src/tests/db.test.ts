@@ -15,7 +15,6 @@ describe('Database Operations', () => {
     let testTrainingExercise: TrainingExercise;
 
     beforeAll(async () => {
-        // Initialize database connection
         await AppDataSource.initialize();
         
         // Get repositories
@@ -55,7 +54,6 @@ describe('Database Operations', () => {
     });
 
     afterEach(async () => {
-        // Clean up only the test training and exercise data
         if (testTrainingExercise?.id) {
             await trainingExerciseRepository.delete({ id: testTrainingExercise.id });
         }
