@@ -33,7 +33,6 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        // Create query builder
         const queryBuilder = AppDataSource
             .getRepository(Training)
             .createQueryBuilder('training')
@@ -41,7 +40,6 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             .leftJoinAndSelect('trainingExercise.exercise', 'exercise')
             .where('training.userId = :userId', { userId: req.user.id });
 
-        // Apply filter if searchTerm exists
         if (searchTerm) {
             const term = `%${searchTerm}%`;
 
