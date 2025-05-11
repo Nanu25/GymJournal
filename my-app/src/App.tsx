@@ -4,6 +4,7 @@ import DashboardPage from "./components/DashboardPage";
 import GymJournalRegistration from "./components/GymJournalRegistration";
 import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
 import TrainingSelector from "@/components/TrainingSelector.tsx";
+import { ActivityLogs } from "./components/ActivityLogs";
 
 
 interface TrainingSessionData {
@@ -56,9 +57,12 @@ const App = () => {
         setCurrentPage("trainingSelector");
     }
 
+    const navigateToActivityLogs = () => {
+        setCurrentPage("activityLogs");
+    };
 
     return (
-        <div className="w-screen h-screen overflow-hidden flex flex-col">
+        <div className="w-screen h-screen flex flex-col">
             {currentPage === "login" && (
                 <LoginPage
                     onLoginSuccess={navigateToDashboard}
@@ -68,10 +72,10 @@ const App = () => {
             {currentPage === "dashboard" && (
                 <DashboardPage
                     onLogout={navigateToLogin}
-                    onNavigateToMetricsSection={navigateToMetricsSection} // Pass the navigation function
+                    onNavigateToMetricsSection={navigateToMetricsSection}
                     navigateToTrainingSelector={navigateToTrainingSelector}
-                    weight={weight} // Pass the weight state to the DashboardPage component
-                    // trainingSessions={trainingSessions}
+                    onNavigateToActivityLogs={navigateToActivityLogs}
+                    weight={weight}
                 />
             )}
             {currentPage === "registration" && (
@@ -87,7 +91,24 @@ const App = () => {
                     onBackToDashboard={navigateToDashboard}
                 />
             )}
-
+            {currentPage === "activityLogs" && (
+                <div className="flex flex-col h-full">
+                    <div className="bg-white border-b border-gray-200 px-4 py-3">
+                        <button 
+                            onClick={navigateToDashboard}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            <svg className="mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Dashboard
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                        <ActivityLogs />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

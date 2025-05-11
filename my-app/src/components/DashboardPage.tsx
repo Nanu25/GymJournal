@@ -14,9 +14,14 @@ interface TrainingEntry {
 interface DashboardPageProps {
     onLogout: () => void;
     onNavigateToMetricsSection: () => void;
+    onNavigateToActivityLogs: () => void;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMetricsSection }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ 
+    onLogout, 
+    onNavigateToMetricsSection,
+    onNavigateToActivityLogs 
+}) => {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
     const [username, setUsername] = useState<string>("");
@@ -109,7 +114,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, onNavigateToMet
                 <>
                     <header className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-b border-blue-500/10  top-0 z-50">
                         <div className="container mx-auto px-6 py-4">
-                            <WelcomeHeader username={username} onLogout={onLogout} />
+                            <div className="flex justify-between items-center">
+                                <WelcomeHeader username={username} onLogout={onLogout} />
+                                <button
+                                    onClick={onNavigateToActivityLogs}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                >
+                                    View Activity Logs
+                                </button>
+                            </div>
                         </div>
                     </header>
 
