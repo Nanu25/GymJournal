@@ -29,15 +29,29 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("/api/user");
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+                console.log('Fetching user data with token:', token);
+                const response = await fetch("/api/user", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error("Failed to fetch user data");
                 }
                 const data = await response.json();
-                setUsername(data.username || "User");
+                console.log('Received user data:', data);
+                if (data.name) {
+                    setUsername(data.name);
+                } else {
+                    console.error('No name in user data:', data);
+                }
             } catch (error) {
                 console.error("Error fetching user data:", error);
-                setUsername("User");
+                setUsername("");
             }
         };
 
@@ -125,7 +139,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                             </div>
                         </div>
                     </header>
-
+ 
                     <main className="container mx-auto px-6 py-8">
                         <div className="flex flex-col lg:flex-row gap-8">
                             <div className="w-full lg:w-[60%]">
@@ -150,6 +164,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                             </p>
                         </div>
                     </footer>
+                    
                 </>
             )}
         </div>

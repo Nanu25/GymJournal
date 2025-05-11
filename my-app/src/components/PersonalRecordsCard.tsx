@@ -81,19 +81,28 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     useEffect(() => {
         const fetchWeight = async () => {
             try {
-                const response = await fetch("/api/user"); // Adjust the endpoint if needed
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+                const response = await fetch("/api/user", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error("Failed to fetch weight");
                 }
                 const data = await response.json();
-                setWeight(data.weight); // Set the weight from the backend (e.g., 75)
+                console.log('Received user data in PersonalRecordsCard:', data);
+                setWeight(data.weight || 0);
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                setWeight(0); // Fallback to 0 if there's an error
+                setWeight(0);
             }
         };
         fetchWeight();
-    }, []); // Empty array means this runs once when the component mounts
+    }, []);
 
     // Function to handle initial delete button click
     const handleDelete = (training: TrainingEntry) => {
@@ -660,7 +669,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
                 }

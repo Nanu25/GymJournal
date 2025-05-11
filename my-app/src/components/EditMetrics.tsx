@@ -22,11 +22,23 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch('/api/user');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
+        const response = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!response.ok) throw new Error('Failed to fetch metrics');
         const data = await response.json();
-        setNewWeight(data.weight.toString());
-        // Set other fields if expanded later
+        setNewWeight(data.weight?.toString() || '');
+        setHeight(data.height?.toString() || '');
+        setAge(data.age?.toString() || '');
+        setTimesPerWeek(data.timesPerWeek?.toString() || '');
+        setTimePerSession(data.timePerSession?.toString() || '');
+        setRepetitionRange(data.repRange || '');
       } catch (error) {
         console.error('Error fetching metrics:', error);
       }
@@ -34,7 +46,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
     fetchMetrics();
   }, []);
 
-  // Handle edit by sending updated weight to backend
+  // Handle edit by sending updated metrics to backend
   const handleEdit = async () => {
     const weightNum = parseFloat(newWeight);
     if (isNaN(weightNum) || weightNum <= 0) {
@@ -43,18 +55,32 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
       const response = await fetch('/api/user', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weight: weightNum }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          weight: weightNum,
+          height: parseFloat(height) || undefined,
+          age: parseInt(age) || undefined,
+          timesPerWeek: parseInt(timesPerWeek) || undefined,
+          timePerSession: parseInt(timePerSession) || undefined,
+          repRange: repetitionRange || undefined
+        }),
       });
-      if (!response.ok) throw new Error('Failed to update weight');
+      if (!response.ok) throw new Error('Failed to update metrics');
       const updatedData = await response.json();
       console.log('Updated metrics:', updatedData);
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);
-      alert('Failed to update weight');
+      alert('Failed to update metrics');
     }
   };
 
