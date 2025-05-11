@@ -8,8 +8,6 @@ import activityLogRoutes from './routes/activityLog.routes';
 import fs from 'fs';
 import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/auth.controller';
-import { ActivityLoggerMiddleware } from './middleware/ActivityLoggerMiddleware';
-import { ActionType } from './entities/ActivityLog';
 import { authenticateToken } from './middleware/auth';
 
 // Ensure 'uploads/' directory exists
@@ -106,44 +104,11 @@ AppDataSource.initialize()
         console.error('Error during database initialization:', error);
     });
 
-// Apply activity logging middleware to existing routes
-app.use('/api/trainings', 
-    authenticateToken,
-    (req, res, next) => {
-        if (req.method === 'GET') {
-            ActivityLoggerMiddleware.logActivity(ActionType.READ)(req, res, next);
-        } else if (req.method === 'POST') {
-            ActivityLoggerMiddleware.logActivity(ActionType.CREATE)(req, res, next);
-        } else if (req.method === 'PUT') {
-            ActivityLoggerMiddleware.logActivity(ActionType.UPDATE)(req, res, next);
-        } else if (req.method === 'DELETE') {
-            ActivityLoggerMiddleware.logActivity(ActionType.DELETE)(req, res, next);
-        } else {
-            next();
-        }
-    },
-    trainingRoutes
-);
+// Add user routes with authentication
+app.use('/api/user', authenticateToken, userRoutes);
 
-app.use('/api/user', 
-    authenticateToken,
-    (req, res, next) => {
-        if (req.method === 'GET') {
-            ActivityLoggerMiddleware.logActivity(ActionType.READ)(req, res, next);
-        } else if (req.method === 'POST') {
-            ActivityLoggerMiddleware.logActivity(ActionType.CREATE)(req, res, next);
-        } else if (req.method === 'PUT') {
-            ActivityLoggerMiddleware.logActivity(ActionType.UPDATE)(req, res, next);
-        } else if (req.method === 'DELETE') {
-            ActivityLoggerMiddleware.logActivity(ActionType.DELETE)(req, res, next);
-        } else {
-            next();
-        }
-    },
-    userRoutes
-);
-
-app.post('/api/auth/register', ActivityLoggerMiddleware.logActivity(ActionType.CREATE), AuthController.register);
+// Add training routes with authentication
+app.use('/api/trainings', authenticateToken, trainingRoutes);
 
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
