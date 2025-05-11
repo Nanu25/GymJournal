@@ -9,9 +9,13 @@ const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
+const activityLog_routes_1 = __importDefault(require("./routes/activityLog.routes"));
 const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
+const ActivityLoggerMiddleware_1 = require("./middleware/ActivityLoggerMiddleware");
+const ActivityLog_1 = require("./entities/ActivityLog");
+const auth_1 = require("./middleware/auth");
 if (!fs_1.default.existsSync('uploads')) {
     fs_1.default.mkdirSync('uploads');
 }
@@ -80,9 +84,42 @@ database_1.AppDataSource.initialize()
     .catch((error) => {
     console.error('Error during database initialization:', error);
 });
-app.use('/api/trainings', trainingroutes_1.default);
-app.use('/api/user', userroutes_1.default);
-app.post('/api/auth/register', auth_controller_1.AuthController.register);
+app.use('/api/trainings', auth_1.authenticateToken, (req, res, next) => {
+    if (req.method === 'GET') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.READ)(req, res, next);
+    }
+    else if (req.method === 'POST') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.CREATE)(req, res, next);
+    }
+    else if (req.method === 'PUT') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.UPDATE)(req, res, next);
+    }
+    else if (req.method === 'DELETE') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.DELETE)(req, res, next);
+    }
+    else {
+        next();
+    }
+}, trainingroutes_1.default);
+app.use('/api/user', auth_1.authenticateToken, (req, res, next) => {
+    if (req.method === 'GET') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.READ)(req, res, next);
+    }
+    else if (req.method === 'POST') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.CREATE)(req, res, next);
+    }
+    else if (req.method === 'PUT') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.UPDATE)(req, res, next);
+    }
+    else if (req.method === 'DELETE') {
+        ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.DELETE)(req, res, next);
+    }
+    else {
+        next();
+    }
+}, userroutes_1.default);
+app.post('/api/auth/register', ActivityLoggerMiddleware_1.ActivityLoggerMiddleware.logActivity(ActivityLog_1.ActionType.CREATE), auth_controller_1.AuthController.register);
+app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
 app.use((err, _req, res, _next) => {
     console.error(err.stack);

@@ -6,6 +6,7 @@ const User_1 = require("../entities/User");
 const Training_1 = require("../entities/Training");
 const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
+const ActivityLog_1 = require("../entities/ActivityLog");
 exports.AppDataSource = new typeorm_1.DataSource({
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -15,7 +16,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     database: process.env.DB_NAME || 'fitness_journal',
     synchronize: true,
     logging: true,
-    entities: [User_1.User, Training_1.Training, Exercise_1.Exercise, TrainingExercise_1.TrainingExercise],
+    entities: [User_1.User, Training_1.Training, Exercise_1.Exercise, TrainingExercise_1.TrainingExercise, ActivityLog_1.ActivityLog],
     subscribers: [],
     migrations: [],
 });

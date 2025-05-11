@@ -36,6 +36,9 @@ export class User extends BaseEntity {
     @Column({ length: 20, nullable: true })
     repRange?: string;
 
+    @Column({ type: 'boolean', default: false })
+    isAdmin!: boolean;
+
     @CreateDateColumn()
     createdAt!: Date;
 
