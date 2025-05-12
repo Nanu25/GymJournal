@@ -25,6 +25,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
     const [username, setUsername] = useState<string>("");
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    useEffect(() => {
+        console.log('isAdmin value changed:', isAdmin);
+    }, [isAdmin]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -44,14 +49,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 }
                 const data = await response.json();
                 console.log('Received user data:', data);
+                
+                // Set username
                 if (data.name) {
                     setUsername(data.name);
                 } else {
                     console.error('No name in user data:', data);
                 }
+
+                // Handle isAdmin
+                console.log('Raw isAdmin value from API:', data.isAdmin);
+                const adminStatus = data.isAdmin === true;
+                console.log('Processed admin status:', adminStatus);
+                setIsAdmin(adminStatus);
             } catch (error) {
                 console.error("Error fetching user data:", error);
                 setUsername("");
+                setIsAdmin(false);
             }
         };
 
@@ -130,12 +144,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                         <div className="container mx-auto px-6 py-4">
                             <div className="flex justify-between items-center">
                                 <WelcomeHeader username={username} onLogout={onLogout} />
-                                <button
-                                    onClick={onNavigateToActivityLogs}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                >
-                                    View Activity Logs
-                                </button>
+                                
+                                    <button
+                                        onClick={onNavigateToActivityLogs}
+                                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    >
+                                        View Activity Logs
+                                    </button>
                             </div>
                         </div>
                     </header>

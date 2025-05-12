@@ -51,7 +51,7 @@ export function ActivityLogs() {
 
     if (error) {
         return (
-            <div className="h-full bg-gray-50 p-6">
+            <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 shadow-sm">
                         {error}
@@ -62,9 +62,9 @@ export function ActivityLogs() {
     }
 
     return (
-        <div className="h-full bg-gray-50">
+        <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="bg-white rounded-xl shadow-sm">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div className="px-6 py-5 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
@@ -97,60 +97,58 @@ export function ActivityLogs() {
                     ) : (
                         <div className="overflow-x-auto">
                             <div className="inline-block min-w-full align-middle">
-                                <div className="overflow-hidden">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
-                                                    Time
-                                                </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
-                                                    User ID
-                                                </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
-                                                    Action
-                                                </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
-                                                    Entity
-                                                </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
-                                                    Details
-                                                </th>
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Time
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                User ID
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Action
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Entity
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Details
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {logs.map((log) => (
+                                            <tr key={log.id} className="hover:bg-gray-50 transition-colors duration-150">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {new Date(log.timestamp).toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {log.userId}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        ${log.action === 'create' ? 'bg-green-100 text-green-800' : 
+                                                          log.action === 'update' ? 'bg-blue-100 text-blue-800' :
+                                                          log.action === 'delete' ? 'bg-red-100 text-red-800' :
+                                                          'bg-gray-100 text-gray-800'}`}>
+                                                        {log.action}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {log.entityType}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    <div className="max-h-40 overflow-y-auto">
+                                                        <pre className="text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                            {JSON.stringify(log.details, null, 2)}
+                                                        </pre>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {logs.map((log) => (
-                                                <tr key={log.id} className="hover:bg-gray-50 transition-colors duration-150">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {new Date(log.timestamp).toLocaleString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {log.userId}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                            ${log.action === 'create' ? 'bg-green-100 text-green-800' : 
-                                                              log.action === 'update' ? 'bg-blue-100 text-blue-800' :
-                                                              log.action === 'delete' ? 'bg-red-100 text-red-800' :
-                                                              'bg-gray-100 text-gray-800'}`}>
-                                                            {log.action}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {log.entityType}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-900">
-                                                        <div className="max-h-40 overflow-y-auto">
-                                                            <pre className="text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                                {JSON.stringify(log.details, null, 2)}
-                                                            </pre>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
