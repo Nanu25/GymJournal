@@ -92,7 +92,8 @@ const getUser = async (req, res) => {
             age: user.age,
             timesPerWeek: user.timesPerWeek,
             timePerSession: user.timePerSession,
-            repRange: user.repRange
+            repRange: user.repRange,
+            isAdmin: user.isAdmin
         });
     }
     catch (error) {

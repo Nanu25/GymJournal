@@ -98,7 +98,8 @@ export const getUser = async (req: Request, res: Response) => {
             age: user.age,
             timesPerWeek: user.timesPerWeek,
             timePerSession: user.timePerSession,
-            repRange: user.repRange
+            repRange: user.repRange,
+            isAdmin: user.isAdmin
         });
     } catch (error) {
         console.error('Error fetching user:', error);
