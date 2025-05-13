@@ -234,38 +234,56 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error('Not authenticated');
                 }
 
-                const response = await fetch(`/api/trainings/${updateFormData.date}`, {
+                // Ensure the date is in YYYY-MM-DD format
+                const formattedDate = new Date(updateFormData.date).toISOString().split('T')[0];
+                console.log('Making update request with data:', {
+                    date: formattedDate,
+                    exercises: exercisesObject
+                });
+
+                const response = await fetch(`/api/trainings/${formattedDate}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
+                        date: formattedDate,
                         exercises: exercisesObject,
                     }),
                 });
 
+                const responseData = await response.json();
+
                 if (!response.ok) {
-                    throw new Error('Failed to update training');
+                    console.error('Update request failed:', responseData);
+                    throw new Error(responseData.message || 'Failed to update training');
                 }
 
-                const updatedData = await response.json();
+                // Fetch the updated list of trainings
+                const updatedResponse = await fetch('/api/trainings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-                // Update the local trainings array
-                const updatedTrainings = trainings.map(training =>
-                    training.date === updateFormData.date ? updatedData : training
-                );
+                if (!updatedResponse.ok) {
+                    const errorData = await updatedResponse.json();
+                    console.error('Failed to fetch updated trainings:', errorData);
+                    throw new Error('Failed to fetch updated trainings');
+                }
 
-                setTrainings(updatedTrainings);
+                const updatedData = await updatedResponse.json();
+                setTrainings(updatedData);
 
                 if (onTrainingChange) {
-                    onTrainingChange(updatedTrainings);
+                    onTrainingChange(updatedData);
                 }
 
                 setUpdateFormOpen(null);
             } catch (error) {
-                console.error('Error updating training:', error);
-                alert('Failed to update training. Please try again.');
+                console.error('Error in update process:', error);
+                alert(`Failed to update training: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     };
