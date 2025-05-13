@@ -4,9 +4,11 @@ import path from 'path';
 import multer from 'multer';
 import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
+import activityLogRoutes from './routes/activityLog.routes';
 import fs from 'fs';
 import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/auth.controller';
+import { authenticateToken } from './middleware/auth';
 
 // Ensure 'uploads/' directory exists
 if (!fs.existsSync('uploads')) {
@@ -102,10 +104,16 @@ AppDataSource.initialize()
         console.error('Error during database initialization:', error);
     });
 
+// Add user routes with authentication
+app.use('/api/user', authenticateToken, userRoutes);
+
+// Add training routes with authentication
+app.use('/api/trainings', authenticateToken, trainingRoutes);
+
+// Add activity log routes (admin only)
+app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
+
 // Routes
-app.use('/api/trainings', trainingRoutes);
-app.use('/api/user', userRoutes);
-app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
 
 // Error handling middleware

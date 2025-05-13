@@ -81,19 +81,28 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     useEffect(() => {
         const fetchWeight = async () => {
             try {
-                const response = await fetch("/api/user"); // Adjust the endpoint if needed
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+                const response = await fetch("/api/user", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error("Failed to fetch weight");
                 }
                 const data = await response.json();
-                setWeight(data.weight); // Set the weight from the backend (e.g., 75)
+                console.log('Received user data in PersonalRecordsCard:', data);
+                setWeight(data.weight || 0);
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                setWeight(0); // Fallback to 0 if there's an error
+                setWeight(0);
             }
         };
         fetchWeight();
-    }, []); // Empty array means this runs once when the component mounts
+    }, []);
 
     // Function to handle initial delete button click
     const handleDelete = (training: TrainingEntry) => {
@@ -225,38 +234,56 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error('Not authenticated');
                 }
 
-                const response = await fetch(`/api/trainings/${updateFormData.date}`, {
+                // Ensure the date is in YYYY-MM-DD format
+                const formattedDate = new Date(updateFormData.date).toISOString().split('T')[0];
+                console.log('Making update request with data:', {
+                    date: formattedDate,
+                    exercises: exercisesObject
+                });
+
+                const response = await fetch(`/api/trainings/${formattedDate}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
+                        date: formattedDate,
                         exercises: exercisesObject,
                     }),
                 });
 
+                const responseData = await response.json();
+
                 if (!response.ok) {
-                    throw new Error('Failed to update training');
+                    console.error('Update request failed:', responseData);
+                    throw new Error(responseData.message || 'Failed to update training');
                 }
 
-                const updatedData = await response.json();
+                // Fetch the updated list of trainings
+                const updatedResponse = await fetch('/api/trainings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-                // Update the local trainings array
-                const updatedTrainings = trainings.map(training =>
-                    training.date === updateFormData.date ? updatedData : training
-                );
+                if (!updatedResponse.ok) {
+                    const errorData = await updatedResponse.json();
+                    console.error('Failed to fetch updated trainings:', errorData);
+                    throw new Error('Failed to fetch updated trainings');
+                }
 
-                setTrainings(updatedTrainings);
+                const updatedData = await updatedResponse.json();
+                setTrainings(updatedData);
 
                 if (onTrainingChange) {
-                    onTrainingChange(updatedTrainings);
+                    onTrainingChange(updatedData);
                 }
 
                 setUpdateFormOpen(null);
             } catch (error) {
-                console.error('Error updating training:', error);
-                alert('Failed to update training. Please try again.');
+                console.error('Error in update process:', error);
+                alert(`Failed to update training: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     };
@@ -660,7 +687,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 </div>
             )}
 
-            <style jsx>{`
+            <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
                 }

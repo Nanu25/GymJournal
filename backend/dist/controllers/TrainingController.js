@@ -171,24 +171,90 @@ const deleteTraining = async (req, res) => {
 };
 exports.deleteTraining = deleteTraining;
 const updateTrainingByDate = async (req, res) => {
+    var _a;
     try {
+        console.log('Update request received:', { params: req.params, body: req.body });
         const { date } = req.params;
-        const trainingDate = new Date(date);
+        const { exercises } = req.body;
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+            console.log('No user ID found in request');
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+        console.log('Finding training for date range:', { startDate, endDate });
         const training = await trainingRepository.findOne({
             where: {
-                date: (0, typeorm_1.Between)(new Date(trainingDate.setHours(0, 0, 0, 0)), new Date(trainingDate.setHours(23, 59, 59, 999)))
-            }
+                date: (0, typeorm_1.Between)(startDate, endDate),
+                userId: req.user.id
+            },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
         });
         if (!training) {
+            console.log('Training not found for date:', date);
             res.status(404).json({ message: 'Training not found' });
             return;
         }
-        Object.assign(training, req.body);
-        const updatedTraining = await trainingRepository.save(training);
-        res.status(200).json(updatedTraining);
+        console.log('Found training:', training);
+        if (training.trainingExercises && training.trainingExercises.length > 0) {
+            console.log('Deleting existing training exercises:', training.trainingExercises);
+            await trainingExerciseRepository.remove(training.trainingExercises);
+        }
+        const trainingExercises = [];
+        for (const [exerciseName, weight] of Object.entries(exercises)) {
+            if (isNaN(Number(weight)) || Number(weight) <= 0) {
+                console.log('Skipping invalid weight for exercise:', { exerciseName, weight });
+                continue;
+            }
+            let exercise = await exerciseRepository.findOne({ where: { name: exerciseName } });
+            if (!exercise) {
+                console.log('Creating new exercise:', exerciseName);
+                exercise = new Exercise_1.Exercise();
+                exercise.name = exerciseName;
+                exercise.muscleGroup = 'Other';
+                await exerciseRepository.save(exercise);
+            }
+            const trainingExercise = new TrainingExercise_1.TrainingExercise();
+            trainingExercise.training = training;
+            trainingExercise.exercise = exercise;
+            trainingExercise.weight = Number(weight);
+            trainingExercise.trainingId = training.id;
+            trainingExercise.exerciseId = exercise.id;
+            trainingExercises.push(trainingExercise);
+        }
+        if (trainingExercises.length === 0) {
+            console.log('No valid exercises to save');
+            res.status(400).json({ message: 'No valid exercises provided' });
+            return;
+        }
+        console.log('Saving new training exercises:', trainingExercises);
+        await trainingExerciseRepository.save(trainingExercises);
+        const formattedExercises = {};
+        trainingExercises.forEach(te => {
+            formattedExercises[te.exercise.name] = te.weight;
+        });
+        const dateObj = training.date instanceof Date ? training.date : new Date(training.date);
+        const response = {
+            id: training.id,
+            date: dateObj.toISOString().split('T')[0],
+            exercises: formattedExercises
+        };
+        console.log('Sending response:', response);
+        res.status(200).json(response);
     }
     catch (error) {
-        res.status(500).json({ message: 'Error updating training', error });
+        console.error('Error updating training:', error);
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+        }
+        res.status(500).json({
+            message: 'Error updating training',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            details: error instanceof Error ? error.stack : undefined
+        });
     }
 };
 exports.updateTrainingByDate = updateTrainingByDate;
