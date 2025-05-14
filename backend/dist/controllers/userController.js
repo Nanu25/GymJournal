@@ -25,7 +25,8 @@ const getUserMetrics = async (req, res) => {
             age: user.age || 0,
             timesPerWeek: user.timesPerWeek || 0,
             timePerSession: user.timePerSession || 0,
-            repRange: user.repRange || ''
+            repRange: user.repRange || '',
+            isAdmin: user.isAdmin || false
         });
     }
     catch (error) {
