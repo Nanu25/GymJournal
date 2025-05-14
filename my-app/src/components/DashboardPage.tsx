@@ -145,12 +145,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                             <div className="flex justify-between items-center">
                                 <WelcomeHeader username={username} onLogout={onLogout} />
                                 
+                                {/* Only show to admin users */}
+                                {isAdmin && (
                                     <button
                                         onClick={onNavigateToActivityLogs}
                                         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                                     >
                                         View Activity Logs
                                     </button>
+                                )}
                             </div>
                         </div>
                     </header>
