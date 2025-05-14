@@ -2,48 +2,49 @@ import React from 'react';
 
 const RightSection = () => {
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-8 h-full">
+    <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-8 h-full flex flex-col justify-center">
       <h2 className="text-2xl font-bold text-white mb-4">Track Your Progress</h2>
       <p className="text-blue-200/70 mb-6">
-        Join thousands of fitness enthusiasts who are transforming their bodies and minds with our advanced tracking tools.
+        Discover smarter ways to reach your fitness goals with our advanced tools.
       </p>
-      <div className="space-y-6">
+      <div className="space-y-6 flex-1 flex flex-col justify-center">
         <FeatureCard
           icon={<CheckIcon />}
           title="Personalized Workouts"
-          description="Custom plans tailored to your goals and fitness level."
+          description="Get custom workout plans tailored to your goals and fitness level."
           color="blue"
         />
         <FeatureCard
           icon={<ChartIcon />}
           title="Progress Tracking"
-          description="Visual metrics and analytics to monitor your fitness journey."
+          description="See your progress with clear visual stats and analytics."
           color="purple"
         />
         <FeatureCard
           icon={<CommunityIcon />}
           title="Community Support"
-          description="Connect with like-minded fitness enthusiasts for motivation."
+          description="Connect with others for motivation and support."
           color="emerald"
         />
       </div>
-
+      {/* Testimonials Section */}
       <div className="mt-8 pt-6 border-t border-white/10">
-        <div className="flex items-center space-x-4">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-sm"></div>
-            <img
-              src="https://source.unsplash.com/100x100/?portrait"
-              className="relative rounded-full w-full h-full object-cover border-2 border-white/10"
-              alt="User"
-            />
-          </div>
-          <div>
-            <p className="text-white font-medium">Maria Rodriguez</p>
-            <p className="text-blue-200/70 text-sm">
-              "This app has completely transformed my fitness routine. I've never been more consistent!"
-            </p>
-          </div>
+        <div className="flex flex-col gap-6 md:flex-row md:gap-4 items-center justify-between">
+          <Testimonial
+            name="Maria Rodriguez"
+            text="This app has completely transformed my fitness routine. I've never been more consistent!"
+            icon={<UserIcon1 />}
+          />
+          <Testimonial
+            name="James Lee"
+            text="Tracking my progress visually keeps me motivated every week."
+            icon={<UserIcon2 />}
+          />
+          <Testimonial
+            name="Sofia Chen"
+            text="The community support is amazing—I'm never alone on my journey!"
+            icon={<UserIcon3 />}
+          />
         </div>
       </div>
     </div>
@@ -69,6 +70,55 @@ const FeatureCard = ({ icon, title, description, color }) => {
     </div>
   );
 };
+
+type TestimonialProps = {
+  name: string;
+  text: string;
+  icon: React.ReactNode;
+};
+
+const Testimonial = ({ name, text, icon }: TestimonialProps) => (
+  <div className="flex items-center space-x-3 bg-white/5 rounded-xl p-4 shadow-inner w-full md:w-auto">
+    <div className="relative w-12 h-12 flex-shrink-0">{icon}</div>
+    <div>
+      <p className="text-white font-medium leading-tight">{name}</p>
+      <p className="text-blue-200/70 text-sm mt-1">{text}</p>
+    </div>
+  </div>
+);
+
+const UserIcon1 = () => (
+  <div className="relative w-12 h-12">
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-sm"></div>
+    <img
+      src="https://randomuser.me/api/portraits/women/44.jpg"
+      className="relative rounded-full w-full h-full object-cover border-2 border-white/10"
+      alt="Maria Rodriguez"
+    />
+  </div>
+);
+
+const UserIcon2 = () => (
+  <div className="relative w-12 h-12">
+    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full blur-sm"></div>
+    <img
+      src="https://randomuser.me/api/portraits/men/32.jpg"
+      className="relative rounded-full w-full h-full object-cover border-2 border-white/10"
+      alt="James Lee"
+    />
+  </div>
+);
+
+const UserIcon3 = () => (
+  <div className="relative w-12 h-12">
+    <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-sm"></div>
+    <img
+      src="https://randomuser.me/api/portraits/women/68.jpg"
+      className="relative rounded-full w-full h-full object-cover border-2 border-white/10"
+      alt="Sofia Chen"
+    />
+  </div>
+);
 
 const CheckIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">

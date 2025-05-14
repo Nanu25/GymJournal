@@ -89,12 +89,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
         {/* Login Button */}
         <div className="group relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-700 via-purple-300 to-blue-300 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <button
             type="button"
             onClick={handleLogin}
             disabled={isSubmitting}
-            className="relative w-full h-[54px] text-lg font-medium text-white bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative w-full h-[54px] text-lg font-medium text-black bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <span>{isSubmitting ? 'Logging in...' : 'Login'}</span>
@@ -112,7 +112,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <button
               type="button"
               onClick={handleSignup}
-              className="text-blue-400 hover:text-blue-300 font-medium cursor-pointer transition-colors duration-300"
+              className="text-blue-300 hover:text-blue-300 font-medium cursor-pointer transition-colors duration-300"
               id="signup-button"
             >
               here to sign in

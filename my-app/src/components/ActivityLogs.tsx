@@ -11,10 +11,35 @@ interface ActivityLog {
     timestamp: string;
 }
 
+interface MonitoredUser {
+    id: string;
+    userId: string;
+    username: string;
+    reason: string;
+    detectedAt: string;
+}
+
 export function ActivityLogs() {
     const [logs, setLogs] = useState<ActivityLog[]>([]);
     const [error, setError] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
+    const [monitoredUsers, setMonitoredUsers] = useState<MonitoredUser[]>([]);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchMonitoredUsers = async (token: string) => {
+        try {
+            setRefreshing(true);
+            const monitoredResp = await axios.get('http://localhost:3000/api/monitored-users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setMonitoredUsers(monitoredResp.data);
+        } catch (err) {
+            setMonitoredUsers([]);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     useEffect(() => {
         const fetchLogs = async () => {
@@ -26,12 +51,24 @@ export function ActivityLogs() {
                     return;
                 }
 
+                // Fetch user info to check admin
+                const userResp = await axios.get('/api/user', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setIsAdmin(userResp.data.isAdmin === true);
+
+                // Fetch activity logs
                 const response = await axios.get('http://localhost:3000/api/activity-logs', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 setLogs(response.data);
+
+                // If admin, fetch monitored users
+                if (userResp.data.isAdmin === true) {
+                    fetchMonitoredUsers(token);
+                }
             } catch (err: any) {
                 console.error('Error fetching logs:', err);
                 if (err.response?.status === 401) {
@@ -49,6 +86,26 @@ export function ActivityLogs() {
         fetchLogs();
     }, []);
 
+    const handleRefreshMonitored = async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            await fetchMonitoredUsers(token);
+        }
+    };
+
+    const handleDeleteMonitoredUser = async (id: string) => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+            await axios.delete(`http://localhost:3000/api/monitored-users/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setMonitoredUsers(prev => prev.filter(user => user.id !== id));
+        } catch (err) {
+            alert('Failed to delete monitored user.');
+        }
+    };
+
     if (error) {
         return (
             <div className="min-h-screen bg-gray-50 p-6">
@@ -64,6 +121,54 @@ export function ActivityLogs() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {isAdmin && (
+                    <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-xl font-bold text-yellow-800">Monitored Users (Suspicious Activity)</h3>
+                            <button
+                                className="px-3 py-1 bg-yellow-200 text-yellow-900 rounded hover:bg-yellow-300 text-sm font-semibold"
+                                onClick={handleRefreshMonitored}
+                                disabled={refreshing}
+                            >
+                                {refreshing ? 'Refreshing...' : 'Refresh'}
+                            </button>
+                        </div>
+                        {monitoredUsers.length === 0 ? (
+                            <div className="text-yellow-700 text-sm">No monitored users detected.</div>
+                        ) : (
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-yellow-100">
+                                    <tr>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">User ID</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Username</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Reason</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Detected At</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {monitoredUsers.map(user => (
+                                        <tr key={user.id}>
+                                            <td className="px-4 py-2 text-sm text-gray-900">{user.userId}</td>
+                                            <td className="px-4 py-2 text-sm text-gray-900">{user.username}</td>
+                                            <td className="px-4 py-2 text-sm text-gray-900">{user.reason}</td>
+                                            <td className="px-4 py-2 text-sm text-gray-900">{new Date(user.detectedAt).toLocaleString()}</td>
+                                            <td className="px-2 py-2 text-sm text-gray-900">
+                                                <button
+                                                    className="text-red-500 hover:text-red-700 font-bold text-lg px-2 focus:outline-none"
+                                                    title="Remove from monitored list"
+                                                    onClick={() => handleDeleteMonitoredUser(user.id)}
+                                                >
+                                                    ×
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                )}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div className="px-6 py-5 border-b border-gray-200">
                         <div className="flex items-center justify-between">
