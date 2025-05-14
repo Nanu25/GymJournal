@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = exports.updateTrainingByDate = exports.deleteTraining = exports.createTraining = exports.getAllTrainings = void 0;
 const Training_1 = require("../entities/Training");
@@ -7,6 +10,8 @@ const TrainingExercise_1 = require("../entities/TrainingExercise");
 const database_1 = require("../config/database");
 const typeorm_1 = require("typeorm");
 const ActivityLog_1 = require("../entities/ActivityLog");
+const muscleGroupMappingData_json_1 = __importDefault(require("../data/muscleGroupMappingData.json"));
+const muscleGroupMappingData = muscleGroupMappingData_json_1.default;
 const trainingRepository = database_1.AppDataSource.getRepository(Training_1.Training);
 const exerciseRepository = database_1.AppDataSource.getRepository(Exercise_1.Exercise);
 const trainingExerciseRepository = database_1.AppDataSource.getRepository(TrainingExercise_1.TrainingExercise);
@@ -105,7 +110,7 @@ const createTraining = async (req, res) => {
             if (!exercise) {
                 exercise = new Exercise_1.Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
             const trainingExercise = new TrainingExercise_1.TrainingExercise();
@@ -232,7 +237,7 @@ const updateTrainingByDate = async (req, res) => {
                 console.log('Creating new exercise:', exerciseName);
                 exercise = new Exercise_1.Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
             const trainingExercise = new TrainingExercise_1.TrainingExercise();

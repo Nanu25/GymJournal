@@ -5,6 +5,8 @@ import { TrainingExercise } from '../entities/TrainingExercise';
 import { AppDataSource } from '../config/database';
 import { Between } from 'typeorm';
 import { ActivityLog, ActionType } from '../entities/ActivityLog';
+import muscleGroupMappingDataJson from '../data/muscleGroupMappingData.json';
+const muscleGroupMappingData = muscleGroupMappingDataJson as Record<string, string>;
 
 declare global {
     namespace Express {
@@ -156,7 +158,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
                 // console.log(`Creating new exercise: ${exerciseName}`);
                 exercise = new Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other'; // Default muscle group
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
 
@@ -318,7 +320,7 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
                 console.log('Creating new exercise:', exerciseName);
                 exercise = new Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
 
