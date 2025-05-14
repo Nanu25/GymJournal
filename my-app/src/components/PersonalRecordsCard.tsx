@@ -76,6 +76,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
+    const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
 
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
@@ -102,6 +103,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             }
         };
         fetchWeight();
+    }, []);
+
+    // Fetch exercise options from backend on mount
+    useEffect(() => {
+        fetch("/api/exercises")
+            .then(res => res.json())
+            .then(data => {
+                // Flatten all exercises into a single array
+                const allExercises = data.flatMap((cat: { exercises: string[] }) => cat.exercises);
+                setExerciseOptions(allExercises);
+            })
+            .catch(err => console.error("Failed to fetch exercises for update form:", err));
     }, []);
 
     // Function to handle initial delete button click
@@ -638,15 +651,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             <label className="block text-sm font-medium mb-2 text-stone-300">Exercises:</label>
                             {updateFormData.exercises.map((exercise, idx) => (
                                 <div key={idx} className="flex mb-3 space-x-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Exercise name"
+                                    <select
                                         value={exercise.name}
                                         onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
                                         className="flex-grow px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
-                                    />
+                                    >
+                                        <option value="" disabled>Select exercise</option>
+                                        {exerciseOptions.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
                                     <input
-                                        type="number min=0"
+                                        type="number" min="0"
                                         placeholder="Weight (kg)"
                                         value={exercise.weight}
                                         onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
