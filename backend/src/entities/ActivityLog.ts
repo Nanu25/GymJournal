@@ -30,7 +30,7 @@ export class ActivityLog {
     entityType!: string;
 
     @Column({ type: 'uuid', nullable: true })
-    entityId!: string;
+    entityId!: string | null;
 
     @Column({ type: 'jsonb', nullable: true })
     details!: Record<string, any>;
