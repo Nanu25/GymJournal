@@ -20,6 +20,8 @@ const getAllTrainings = async (req, res) => {
     var _a;
     try {
         const { searchTerm, sortField, sortDirection } = req.query;
+        const page = parseInt(req.query.page || '1', 10);
+        const limit = parseInt(req.query.limit || '5', 10);
         if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
             res.status(401).json({ message: 'User not authenticated' });
             return;
@@ -64,7 +66,17 @@ const getAllTrainings = async (req, res) => {
                 return sortDirection === 'asc' ? comparison : -comparison;
             });
         }
-        res.status(200).json(formattedTrainings);
+        const total = formattedTrainings.length;
+        const pageCount = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedData = formattedTrainings.slice(start, end);
+        res.status(200).json({
+            data: paginatedData,
+            total,
+            page,
+            pageCount
+        });
     }
     catch (error) {
         console.error('Error fetching trainings:', error);

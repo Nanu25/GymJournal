@@ -31,6 +31,8 @@ const activityLogRepository = AppDataSource.getRepository(ActivityLog);
 export const getAllTrainings = async (req: Request, res: Response): Promise<void> => {
     try {
         const { searchTerm, sortField, sortDirection } = req.query;
+        const page = parseInt((req.query.page as string) || '1', 10);
+        const limit = parseInt((req.query.limit as string) || '5', 10);
 
         if (!req.user?.id) {
             res.status(401).json({ message: 'User not authenticated' });
@@ -92,7 +94,19 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             });
         }
 
-        res.status(200).json(formattedTrainings);
+        // Pagination
+        const total = formattedTrainings.length;
+        const pageCount = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedData = formattedTrainings.slice(start, end);
+
+        res.status(200).json({
+            data: paginatedData,
+            total,
+            page,
+            pageCount
+        });
     } catch (error) {
         console.error('Error fetching trainings:', error);
         res.status(500).json({ message: 'Error fetching trainings' });

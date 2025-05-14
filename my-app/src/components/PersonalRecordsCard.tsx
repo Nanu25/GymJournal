@@ -77,6 +77,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
     const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+    const [pageCount, setPageCount] = useState(0);
 
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
@@ -287,10 +288,10 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const updatedData = await updatedResponse.json();
-                setTrainings(updatedData);
+                setTrainings(Array.isArray(updatedData) ? updatedData : []);
 
                 if (onTrainingChange) {
-                    onTrainingChange(updatedData);
+                    onTrainingChange(Array.isArray(updatedData) ? updatedData : []);
                 }
 
                 setUpdateFormOpen(null);
@@ -325,6 +326,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             if (searchTerm) params.searchTerm = searchTerm;
             if (sortField) params.sortField = sortField;
             if (sortDirection) params.sortDirection = sortDirection;
+            params.page = (currentPage + 1).toString(); // backend is 1-based
+            params.limit = itemsPerPage.toString();
 
             const query = new URLSearchParams(params).toString();
             const token = localStorage.getItem('token');
@@ -345,36 +348,23 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const data = await response.json();
-                setTrainings(data);
+                setTrainings(Array.isArray(data.data) ? data.data : []);
+                setPageCount(data.pageCount);
             } catch (error) {
                 console.error('Error fetching trainings:', error);
             }
         };
         fetchTrainings();
-    }, [searchTerm, sortField, sortDirection]);
+    // eslint-disable-next-line
+    }, [searchTerm, sortField, sortDirection, currentPage]);
 
-    const filteredAndSortedTrainings = trainings.map((training, originalIndex) => ({
-        training,
-        originalIndex
-    }));
-
-    // Handle pagination
-    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
+    const currentTrainings = Array.isArray(trainings)
+        ? trainings.map((training, originalIndex) => ({ training, originalIndex }))
+        : [];
 
     useEffect(() => {
         setCurrentPage(0);
     }, [searchTerm, sortField, sortDirection]);
-
-    useEffect(() => {
-        if (pageCount > 0 && currentPage >= pageCount) {
-            setCurrentPage(pageCount - 1);
-        } else if (pageCount === 0) {
-            setCurrentPage(0);
-        }
-    }, [pageCount, currentPage]);
 
     // Calculate exercise statistics
     useEffect(() => {
