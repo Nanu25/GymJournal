@@ -4,6 +4,9 @@ import { Exercise } from '../entities/Exercise';
 import { TrainingExercise } from '../entities/TrainingExercise';
 import { AppDataSource } from '../config/database';
 import { Between } from 'typeorm';
+import { ActivityLog, ActionType } from '../entities/ActivityLog';
+import muscleGroupMappingDataJson from '../data/muscleGroupMappingData.json';
+const muscleGroupMappingData = muscleGroupMappingDataJson as Record<string, string>;
 
 declare global {
     namespace Express {
@@ -23,6 +26,7 @@ interface FormattedTraining {
 const trainingRepository = AppDataSource.getRepository(Training);
 const exerciseRepository = AppDataSource.getRepository(Exercise);
 const trainingExerciseRepository = AppDataSource.getRepository(TrainingExercise);
+const activityLogRepository = AppDataSource.getRepository(ActivityLog);
 
 export const getAllTrainings = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -154,7 +158,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
                 // console.log(`Creating new exercise: ${exerciseName}`);
                 exercise = new Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other'; // Default muscle group
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
 
@@ -180,6 +184,16 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         // Save all training exercises
         // console.log('Saving training exercises:', trainingExercises);
         await trainingExerciseRepository.save(trainingExercises);
+
+        // Log activity
+        await activityLogRepository.save({
+            userId: req.user!.id,
+            action: ActionType.CREATE,
+            entityType: 'Training',
+            entityId: savedTraining.id,
+            details: { date, exercises },
+            timestamp: new Date(),
+        });
 
         // Return formatted response
         const formattedExercises: { [key: string]: number } = {};
@@ -233,6 +247,15 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
 
         // Then delete the training
         await trainingRepository.remove(training);
+        // Log activity
+        await activityLogRepository.save({
+            userId: req.user!.id,
+            action: ActionType.DELETE,
+            entityType: 'Training',
+            entityId: training.id,
+            details: { date: training.date, exercises: training.trainingExercises },
+            timestamp: new Date(),
+        });
         res.status(200).json({ message: 'Training deleted successfully' });
     } catch (error) {
         console.error('Error deleting training:', error);
@@ -297,7 +320,7 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
                 console.log('Creating new exercise:', exerciseName);
                 exercise = new Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
 
@@ -321,6 +344,16 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
         console.log('Saving new training exercises:', trainingExercises);
         // Save new training exercises
         await trainingExerciseRepository.save(trainingExercises);
+
+        // Log activity
+        await activityLogRepository.save({
+            userId: req.user!.id,
+            action: ActionType.UPDATE,
+            entityType: 'Training',
+            entityId: training.id,
+            details: { date, exercises },
+            timestamp: new Date(),
+        });
 
         // Format response
         const formattedExercises: { [key: string]: number } = {};

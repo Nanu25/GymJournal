@@ -9,6 +9,8 @@ const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
 const User_1 = require("../entities/User");
 const mockTrainings_json_1 = __importDefault(require("../data/mockTrainings.json"));
+const muscleGroupMappingData_json_1 = __importDefault(require("../data/muscleGroupMappingData.json"));
+const muscleGroupMappingData = muscleGroupMappingData_json_1.default;
 const trainingRepository = database_1.AppDataSource.getRepository(Training_1.Training);
 const exerciseRepository = database_1.AppDataSource.getRepository(Exercise_1.Exercise);
 const trainingExerciseRepository = database_1.AppDataSource.getRepository(TrainingExercise_1.TrainingExercise);
@@ -17,7 +19,7 @@ async function importTrainings() {
     try {
         await database_1.AppDataSource.initialize();
         console.log('Database connection initialized');
-        const user = await userRepository.findOne({ where: {} });
+        const user = await userRepository.findOne({ where: { email: 'alex@gmail.com' } });
         if (!user) {
             throw new Error('No user found in the database');
         }
@@ -34,7 +36,7 @@ async function importTrainings() {
                     if (!exercise) {
                         exercise = new Exercise_1.Exercise();
                         exercise.name = exerciseName;
-                        exercise.muscleGroup = 'Other';
+                        exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                         await exerciseRepository.save(exercise);
                         console.log(`Created new exercise: ${exerciseName}`);
                     }
