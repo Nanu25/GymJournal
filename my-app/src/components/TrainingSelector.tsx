@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DividerLine from "./DividerLine";
 import MetricInput from "./MetricInput";
 
@@ -21,31 +21,28 @@ interface TrainingData {
 const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, onCancel }) => {
     const [trainingData, setTrainingData] = useState<TrainingData>({});
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-    const [activeCategory, setActiveCategory] = useState("Chest");
+    const [exerciseCategories, setExerciseCategories] = useState<{ category: string; exercises: string[] }[]>([]);
+    const [activeCategory, setActiveCategory] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const exerciseCategories = [
-        {
-            name: "Chest",
-            exercises: ["Dumbbell Press", "Incline Dumbbell", "Dumbbell Flys", "Chest Press", "Push-ups"],
-        },
-        {
-            name: "Back",
-            exercises: ["Pullup", "Dumbbell Row", "Cable Row", "Lat Pulldown", "Deadlift", "Back Extensions"],
-        },
-        {
-            name: "Legs",
-            exercises: ["Squats", "Leg Curl", "Calf Raises", "Leg Press", "Lunges"],
-        },
-        {
-            name: "Arms",
-            exercises: ["Biceps Curl", "Cable Triceps Pushdown", "Overhead Triceps", "Hammer Curls", "Dips"],
-        },
-        {
-            name: "Shoulders",
-            exercises: ["Shoulder Press", "Lateral Raises", "Front Raises", "Shrugs", "Face Pulls"],
-        },
-    ];
+    useEffect(() => {
+        fetch("/api/exercises")
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch exercises");
+                return res.json();
+            })
+            .then(data => {
+                setExerciseCategories(data);
+                if (data.length > 0) setActiveCategory(data[0].category);
+                setLoading(false);
+            })
+            .catch(err => {
+                setError("Failed to fetch exercises");
+                setLoading(false);
+            });
+    }, []);
 
     const handleExerciseChange = (exercise: string, value: number) => {
         setTrainingData(prev => ({
@@ -117,7 +114,13 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                         <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
                             Add Training Session
                         </h2>
-
+                        {loading && (
+                            <div className="text-blue-200 text-center py-8">Loading exercises...</div>
+                        )}
+                        {error && (
+                            <div className="text-red-500 text-center py-8">{error}</div>
+                        )}
+                        {!loading && !error && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-6">
                                 <div className="flex-1">
@@ -141,15 +144,15 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                             <div className="flex flex-wrap gap-2">
                                 {exerciseCategories.map((category) => (
                                     <button
-                                        key={category.name}
-                                        onClick={() => setActiveCategory(category.name)}
+                                        key={category.category}
+                                        onClick={() => setActiveCategory(category.category)}
                                         className={`px-4 py-2 rounded-xl text-lg transition-all duration-200 ${
-                                            activeCategory === category.name
+                                            activeCategory === category.category
                                                 ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20"
                                                 : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
                                         }`}
                                     >
-                                        {category.name}
+                                        {category.category}
                                     </button>
                                 ))}
                             </div>
@@ -160,7 +163,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {exerciseCategories
-                                        .find((cat) => cat.name === activeCategory)
+                                        .find((cat) => cat.category === activeCategory)
                                         ?.exercises.map((exercise) => (
                                             <div key={exercise} className="bg-[#0f172a] p-4 rounded-xl border border-blue-500/10">
                                                 <label className="block text-blue-200 mb-2">
@@ -199,6 +202,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                 </button>
                             </div>
                         </div>
+                        )}
                     </div>
                 </div>
             </div>

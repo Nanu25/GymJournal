@@ -9,6 +9,8 @@ import fs from 'fs';
 import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
+import monitoredUserRoutes from './routes/monitoredUser.routes';
+import exerciseRoutes from './routes/exerciseroutes';
 
 // Ensure 'uploads/' directory exists
 if (!fs.existsSync('uploads')) {
@@ -113,8 +115,16 @@ app.use('/api/trainings', authenticateToken, trainingRoutes);
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 
+// Add monitored user routes
+app.use('/api/monitored-users', monitoredUserRoutes);
+
+// Add exercise routes
+app.use('/api/exercises', exerciseRoutes);
+
 // Routes
 app.post('/api/auth/login', AuthController.login);
+
+app.post('/api/auth/register', AuthController.register);
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
