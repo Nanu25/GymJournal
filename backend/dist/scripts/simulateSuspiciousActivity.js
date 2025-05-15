@@ -8,7 +8,7 @@ const userRepository = database_1.AppDataSource.getRepository(User_1.User);
 async function simulateSuspiciousActivity() {
     await database_1.AppDataSource.initialize();
     console.log('Simulating suspicious activity...');
-    const user = await userRepository.findOne({ where: { email: 'ion@gmail.com' } });
+    const user = await userRepository.findOne({ where: { email: 'nanu@gmail.com' } });
     if (!user) {
         console.error('User not found');
         return;

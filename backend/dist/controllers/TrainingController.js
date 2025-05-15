@@ -39,6 +39,9 @@ const getAllTrainings = async (req, res) => {
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
         }
+        else {
+            queryBuilder.orderBy('training.date', 'DESC');
+        }
         const trainings = await queryBuilder.getMany();
         const formattedTrainings = trainings.map((training) => {
             const exercises = {};

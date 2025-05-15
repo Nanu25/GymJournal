@@ -55,8 +55,12 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             );
         }
 
+        // Apply sorting
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
+        } else {
+            // Default sorting by date in descending order if no other sort is specified
+            queryBuilder.orderBy('training.date', 'DESC');
         }
 
         const trainings = await queryBuilder.getMany();
