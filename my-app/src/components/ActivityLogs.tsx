@@ -26,6 +26,7 @@ export function ActivityLogs() {
     const [monitoredUsers, setMonitoredUsers] = useState<MonitoredUser[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
 
     const fetchMonitoredUsers = async (token: string) => {
         try {
@@ -106,6 +107,35 @@ export function ActivityLogs() {
         }
     };
 
+    const handleDeleteUser = async (userId: string) => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+            await axios.delete(`http://localhost:3000/api/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            // Remove from monitored users list
+            setMonitoredUsers(prev => prev.filter(user => user.userId !== userId));
+            
+            // Also remove from monitored users in the backend
+            try {
+                const monitoredUserId = monitoredUsers.find(user => user.userId === userId)?.id;
+                if (monitoredUserId) {
+                    await axios.delete(`http://localhost:3000/api/monitored-users/${monitoredUserId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+            } catch (err) {
+                console.error('Error removing from monitored users:', err);
+            }
+
+            setShowConfirmDelete(null);
+        } catch (err) {
+            alert('Failed to delete user.');
+        }
+    };
+
     if (error) {
         return (
             <div className="min-h-screen bg-gray-50 p-6">
@@ -143,7 +173,7 @@ export function ActivityLogs() {
                                         <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Username</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Reason</th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Detected At</th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider"></th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -153,7 +183,7 @@ export function ActivityLogs() {
                                             <td className="px-4 py-2 text-sm text-gray-900">{user.username}</td>
                                             <td className="px-4 py-2 text-sm text-gray-900">{user.reason}</td>
                                             <td className="px-4 py-2 text-sm text-gray-900">{new Date(user.detectedAt).toLocaleString()}</td>
-                                            <td className="px-2 py-2 text-sm text-gray-900">
+                                            <td className="px-2 py-2 text-sm text-gray-900 flex items-center space-x-2">
                                                 <button
                                                     className="text-red-500 hover:text-red-700 font-bold text-lg px-2 focus:outline-none"
                                                     title="Remove from monitored list"
@@ -161,6 +191,36 @@ export function ActivityLogs() {
                                                 >
                                                     ×
                                                 </button>
+                                                <button
+                                                    className="text-sm px-2 py-1 bg-red-600 text-red rounded hover:bg-red-700 focus:outline-none"
+                                                    onClick={() => setShowConfirmDelete(user.userId)}
+                                                >
+                                                    Delete User
+                                                </button>
+                                                {showConfirmDelete === user.userId && (
+                                                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                                                            <h3 className="text-lg font-bold text-red-600 mb-4">Confirm User Deletion</h3>
+                                                            <p className="text-red-500 mb-6">
+                                                                Are you sure you want to permanently delete this user? This action cannot be undone.
+                                                            </p>
+                                                            <div className="flex justify-end space-x-3">
+                                                                <button
+                                                                    className="px-4 py-2 bg-gray-200 text-red-800 rounded hover:bg-gray-300"
+                                                                    onClick={() => setShowConfirmDelete(null)}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    className="px-4 py-2 bg-red-600 text-red rounded hover:bg-red-700"
+                                                                    onClick={() => handleDeleteUser(user.userId)}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
