@@ -422,7 +422,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "date" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -432,7 +432,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "pr" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -442,7 +442,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "exercises" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -501,9 +501,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                 }`}
                             >
                                 <div className={`p-6 ${statHighlight}`}>
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                         <div
-                                            className="flex items-center cursor-pointer flex-grow"
+                                            className="flex items-center cursor-pointer flex-grow w-full"
                                             onClick={() => toggleExpandTraining(originalIndex)}
                                         >
                                             <div className="flex flex-col mr-6">
@@ -517,13 +517,13 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                             <div className="flex-grow">
                                                 <div className="text-white font-medium text-xl">PR: {prText}</div>
                                             </div>
-                                            <span className="text-blue-200/70 ml-4 text-2xl transition-transform duration-200">
+                                            <span className="text-blue-200/70 ml-10 text-2xl transition-transform duration-200">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
-                                        <div className="flex space-x-4 ml-6">
+                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto mt-4 sm:mt-0">
                                             <button
-                                                className="px-6 py-3 text-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-white rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200 shadow-lg shadow-blue-500/10"
+                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow hover:border-blue-300"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
@@ -532,7 +532,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                                 Update
                                             </button>
                                             <button
-                                                className="px-6 py-3 text-lg bg-gradient-to-r from-red-500/20 to-red-600/20 text-white rounded-xl border border-red-500/30 hover:border-red-400/50 transition-all duration-200 shadow-lg shadow-red-500/10"
+                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl border border-red-400 transition-all duration-200 shadow hover:border-red-300"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(training);
@@ -593,7 +593,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         Add Training Session
                     </button>
                     <button
-                        className="w-full py-4 text-xl font-bold text-center text-blue-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                        className="w-full py-4 text-xl font-bold text-center text-black-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
                         onClick={onNavigateToMetricsSection}
                     >
                         Edit Metrics
