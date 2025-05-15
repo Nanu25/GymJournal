@@ -140,26 +140,34 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 />
             ) : (
                 <>
-                    <header className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-b border-blue-500/10  top-0 z-50">
-                        <div className="container mx-auto px-6 py-4">
-                            <div className="flex justify-between items-center">
-                                <WelcomeHeader username={username} onLogout={onLogout} />
-                                
-                                {/* Only show to admin users */}
-                                {isAdmin && (
+                    {/* Responsive Header */}
+                    <header className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-b border-blue-500/10 top-0 z-50">
+                        <div className="container mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <WelcomeHeader username={username} />
+                                <div className="flex items-center space-x-2 sm:space-x-4 ml-0 sm:ml-8">
+                                    {isAdmin && (
+                                        <button
+                                            onClick={onNavigateToActivityLogs}
+                                            className="px-4 py-2 text-sm sm:text-base bg-blue-500 text-black rounded hover:bg-blue-600 min-w-[44px] min-h-[44px]"
+                                        >
+                                            View Activity Logs
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={onNavigateToActivityLogs}
-                                        className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-600"
+                                        onClick={onLogout}
+                                        className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-lg font-bold text-black bg-white rounded-xl shadow hover:bg-blue-100 border border-blue-100 transition-all duration-200 min-w-[44px] min-h-[44px] mr-2"
                                     >
-                                        View Activity Logs
+                                        Logout
                                     </button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </header>
- 
-                    <main className="container mx-auto px-6 py-8">
-                        <div className="flex flex-col lg:flex-row gap-8">
+
+                    {/* Responsive Main Content */}
+                    <main className="container mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-8">
+                        <div className="flex flex-col lg:flex-row gap-y-8 lg:gap-x-8">
                             <div className="w-full lg:w-[60%]">
                                 <PersonalRecordsCard
                                     trainings={trainings}
@@ -175,14 +183,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                         </div>
                     </main>
 
+                    {/* Responsive Footer */}
                     <footer className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-t border-blue-500/10 mt-12">
-                        <div className="container mx-auto px-6 py-4">
-                            <p className="text-center text-blue-200/70 font-medium">
+                        <div className="container mx-auto px-2 sm:px-4 md:px-6 py-4">
+                            <p className="text-center text-xs sm:text-sm md:text-base text-blue-200/70 font-medium">
                                 © 2025 Fitness Journal | Created by Grancea Alexandru
                             </p>
                         </div>
                     </footer>
-                    
                 </>
             )}
         </div>

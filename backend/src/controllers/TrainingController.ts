@@ -55,8 +55,11 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             );
         }
 
+        // Apply sorting
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
+        } else {
+            queryBuilder.orderBy('training.date', 'DESC');
         }
 
         const trainings = await queryBuilder.getMany();
@@ -115,8 +118,7 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
 
 export const createTraining = async (req: Request, res: Response): Promise<void> => {
     try {
-        // console.log('Request body:', req.body);
-        // console.log('User:', req.user);
+
 
         const { date, exercises } = req.body;
 
@@ -195,11 +197,9 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             return;
         }
 
-        // Save all training exercises
-        // console.log('Saving training exercises:', trainingExercises);
+  
         await trainingExerciseRepository.save(trainingExercises);
 
-        // Log activity
         await activityLogRepository.save({
             userId: req.user!.id,
             action: ActionType.CREATE,
@@ -283,7 +283,6 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
         const { date } = req.params;
         const { exercises } = req.body;
         
-        // Create date objects for the start and end of the day
         const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
         
@@ -314,13 +313,11 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
 
         console.log('Found training:', training);
 
-        // Delete existing training exercises
         if (training.trainingExercises && training.trainingExercises.length > 0) {
             console.log('Deleting existing training exercises:', training.trainingExercises);
             await trainingExerciseRepository.remove(training.trainingExercises);
         }
 
-        // Create new training exercises
         const trainingExercises: TrainingExercise[] = [];
         for (const [exerciseName, weight] of Object.entries(exercises)) {
             if (isNaN(Number(weight)) || Number(weight) <= 0) {
