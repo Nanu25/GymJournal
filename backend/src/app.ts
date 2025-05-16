@@ -117,17 +117,12 @@ app.use('/api/trainings', authenticateToken, trainingRoutes);
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 
-// Routes
+// Auth route
 app.post('/api/auth/login', AuthController.login);
 
-// For any routes that don't match the API, serve the React app
+// Fallback: serve index.html for any non-API route (for React Router)
 app.get('*', (req: Request, res: Response) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-        return;
-    }
-    
-    // Serve the index.html from public directory for all other routes
+    if (req.path.startsWith('/api/')) return;
     res.sendFile(path.join(publicDir, 'index.html'));
 });
 
