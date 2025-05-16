@@ -517,7 +517,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                             <div className="flex-grow">
                                                 <div className="text-white font-medium text-xl">PR: {prText}</div>
                                             </div>
-                                            <span className="text-blue-200/70 ml-10 text-2xl transition-transform duration-200">
+                                            <span className="text-blue-200/70 ml-6 mr-4 text-2xl transition-transform duration-200">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
