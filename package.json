@@ -1,6 +1,14 @@
 {
-  "dependencies": {
-    "axios": "^1.8.4",
-    "zustand": "^5.0.3"
-  }
-}
+  "name": "gym-journal-app",
+  "version": "1.0.0",
+  "description": "Gym Journal Application",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "cd backend && node dist/app.js",
+    "build": "cd backend && npm install && npm run build",
+    "heroku-postbuild": "npm run build"
+  },
+  "cacheDirectories": ["backend/node_modules"]
+} 
