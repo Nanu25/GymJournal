@@ -10,5 +10,5 @@
     "build": "echo 'Using pre-compiled JavaScript'",
     "heroku-postbuild": "cd my-app && npm install && npm run build && cd ../backend && npm install"
   },
-  "cacheDirectories": ["backend/node_modules"]
+  "cacheDirectories": ["backend/node_modules", "my-app/node_modules"]
 }
