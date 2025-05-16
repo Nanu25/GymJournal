@@ -14,13 +14,19 @@ const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
-if (!fs_1.default.existsSync('uploads')) {
-    fs_1.default.mkdirSync('uploads');
+const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
+if (!fs_1.default.existsSync(uploadsDir)) {
+    fs_1.default.mkdirSync(uploadsDir, { recursive: true });
 }
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.get('/', (_req, res) => {
+    res.json({ message: 'Gym Journal API is running' });
+});
 const storage = multer_1.default.diskStorage({
     destination: (_req, _file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadsDir);
     },
     filename: (_req, file, cb) => {
         cb(null, file.originalname);
@@ -39,7 +45,7 @@ const upload = (0, multer_1.default)({
     limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: fileFilter,
 });
-app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'uploads')));
+app.use('/uploads', express_1.default.static(uploadsDir));
 app.post('/api/upload', upload.single('video'), (req, res, _next) => {
     if (!req.file) {
         res.status(400).json({ message: 'No file uploaded.' });
@@ -48,7 +54,7 @@ app.post('/api/upload', upload.single('video'), (req, res, _next) => {
     res.json({ fileName: req.file.filename, filePath: `/uploads/${req.file.filename}` });
 });
 app.get('/api/download/:filename', (req, res, _next) => {
-    const filePath = path_1.default.join(__dirname, 'uploads', req.params.filename);
+    const filePath = path_1.default.join(uploadsDir, req.params.filename);
     res.download(filePath, (err) => {
         if (err) {
             res.status(404).json({ message: 'File not found.' });
@@ -57,7 +63,6 @@ app.get('/api/download/:filename', (req, res, _next) => {
 });
 app.get('/api/videos', (_req, res) => {
     try {
-        const uploadsDir = path_1.default.join(__dirname, 'uploads');
         fs_1.default.readdir(uploadsDir, (err, files) => {
             if (err) {
                 console.error('Error reading directory:', err);
@@ -73,15 +78,6 @@ app.get('/api/videos', (_req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-database_1.AppDataSource.initialize()
-    .then(() => {
-    console.log('Database connection established');
-})
-    .catch((error) => {
-    console.error('Error during database initialization:', error);
-});
 app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
@@ -93,8 +89,16 @@ app.use((err, _req, res, _next) => {
         error: 'Internal server error',
     });
 });
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+database_1.AppDataSource.initialize()
+    .then(() => {
+    console.log('Database connection established');
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+})
+    .catch((error) => {
+    console.error('Error during database initialization:', error);
+    process.exit(1);
 });
 //# sourceMappingURL=app.js.map
