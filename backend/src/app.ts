@@ -10,9 +10,10 @@ import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
 
-// Ensure 'uploads/' directory exists
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
+// Ensure 'uploads/' directory exists in both development and production
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 const app = express();
@@ -34,7 +35,7 @@ interface MulterRequest extends Request {
 // Configure multer storage
 const storage = multer.diskStorage({
     destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-        cb(null, 'uploads/');
+        cb(null, uploadsDir);
     },
     filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
         cb(null, file.originalname);
@@ -57,7 +58,7 @@ const upload = multer({
     fileFilter: fileFilter,
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Upload video endpoint
 app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, _next: NextFunction): void => {
@@ -71,7 +72,7 @@ app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Respon
 
 // Download video endpoint
 app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunction): void => {
-    const filePath: string = path.join(__dirname, 'uploads', req.params.filename);
+    const filePath: string = path.join(uploadsDir, req.params.filename);
 
     res.download(filePath, (err: Error | null) => {
         if (err) {
@@ -83,7 +84,6 @@ app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunc
 // Get all videos endpoint
 app.get('/api/videos', (_req: Request, res: Response): void => {
     try {
-        const uploadsDir = path.join(__dirname, 'uploads');
         fs.readdir(uploadsDir, (err, files) => {
             if (err) {
                 console.error('Error reading directory:', err);
