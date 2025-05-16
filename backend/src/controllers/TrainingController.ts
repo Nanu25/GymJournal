@@ -118,10 +118,7 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
 
 export const createTraining = async (req: Request, res: Response): Promise<void> => {
     try {
-
-
         const { date, exercises } = req.body;
-
         // Validate required fields
         if (!date) {
             console.error('Missing date in request');
@@ -152,7 +149,6 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         const training = new Training();
         training.date = new Date(date);
         training.userId = req.user.id;
-
 
         // Save training first to get ID
         const savedTraining = await trainingRepository.save(training);
