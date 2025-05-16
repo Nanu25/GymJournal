@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcrypt_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userRepository = database_1.AppDataSource.getRepository(User_1.User);
 class AuthService {
