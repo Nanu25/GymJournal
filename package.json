@@ -8,7 +8,7 @@
   "scripts": {
     "start": "cd backend && node dist/app.js",
     "build": "echo 'Using pre-compiled JavaScript'",
-    "heroku-postbuild": "cd backend && npm install --production"
+    "heroku-postbuild": "cd my-app && npm install && npm run build && cd ../backend && npm install"
   },
   "cacheDirectories": ["backend/node_modules"]
 }
