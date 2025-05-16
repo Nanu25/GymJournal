@@ -31,10 +31,15 @@ app.use(express.json());
 // Serve static files from the public directory
 app.use(express.static(publicDir));
 
-// Root path handler
-// app.get('/', (_req: Request, res: Response) => {
-//     res.json({ message: 'Gym Journal API is running' });
-// });
+// Root path handler - serve the React app
+app.get('/', (_req: Request, res: Response) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// API status endpoint
+app.get('/api/status', (_req: Request, res: Response) => {
+    res.json({ message: 'Gym Journal API is running' });
+});
 
 // Define a request type that includes the `file` property for multer
 interface MulterRequest extends Request {
