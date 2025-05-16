@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --skipLibCheck && vite build",
+    "postbuild": "cp -r dist/* ../backend/public/ || echo 'No public directory in backend, skipping copy'",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest"
