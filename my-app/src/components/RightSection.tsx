@@ -1,5 +1,12 @@
 import React from 'react';
 
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: 'blue' | 'purple' | 'emerald';
+}
+
 const RightSection = () => {
   return (
     <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-8 h-full">
@@ -50,7 +57,7 @@ const RightSection = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, description, color }) => {
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, color }) => {
   const colors = {
     blue: "bg-blue-500/20 text-blue-400",
     purple: "bg-purple-500/20 text-purple-400",
