@@ -6,14 +6,18 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "tsc && ts-node src/scripts/ensureUploadsDir.ts",
+    "build": "tsc",
+    "postbuild": "ts-node src/scripts/ensureUploadsDir.ts",
+    "heroku-postbuild": "npm install && npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:db": "jest db.test.ts",
     "import-trainings": "ts-node src/scripts/importTrainings.ts",
-    "prestart": "npm run build",
     "populate-db": "ts-node src/scripts/populateDatabase.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [],
   "author": "",
