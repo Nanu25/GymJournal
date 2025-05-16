@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
-    "start": "node dist/app.js",
+    "start": "npm run build && node dist/app.js",
     "dev": "nodemon src/app.ts",
     "build": "tsc",
     "postbuild": "ts-node src/scripts/ensureUploadsDir.ts",
