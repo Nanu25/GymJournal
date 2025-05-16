@@ -15,12 +15,14 @@ interface DashboardPageProps {
     onLogout: () => void;
     onNavigateToMetricsSection: () => void;
     onNavigateToActivityLogs: () => void;
+    navigateToTrainingSelector?: () => void;
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ 
     onLogout, 
     onNavigateToMetricsSection,
     onNavigateToActivityLogs,
+    navigateToTrainingSelector,
 }) => {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
@@ -102,7 +104,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     };
 
     const handleNavigateToTrainingSelector = () => {
-        setShowTrainingSelector(true);
+        if (navigateToTrainingSelector) {
+            navigateToTrainingSelector();
+        } else {
+            setShowTrainingSelector(true);
+        }
     };
 
     const handleTrainingAdded = async () => {

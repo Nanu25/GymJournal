@@ -8,7 +8,6 @@ import { ActivityLogs } from "./components/ActivityLogs";
 
 const App = () => {
     const [currentPage, setCurrentPage] = useState("login");
-    const [weight] = useState(75); // Mock user weight, set an initial value
 
     const navigateToDashboard = () => {
         setCurrentPage("dashboard");
@@ -29,7 +28,7 @@ const App = () => {
 
     const navigateToTrainingSelector = () => {
         setCurrentPage("trainingSelector");
-    }
+    };
 
     const navigateToActivityLogs = () => {
         setCurrentPage("activityLogs");
@@ -48,6 +47,7 @@ const App = () => {
                     onLogout={navigateToLogin}
                     onNavigateToMetricsSection={navigateToMetricsSection}
                     onNavigateToActivityLogs={navigateToActivityLogs}
+                    navigateToTrainingSelector={navigateToTrainingSelector}
                 />
             )}
             {currentPage === "registration" && (
