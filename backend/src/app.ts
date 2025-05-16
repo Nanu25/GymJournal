@@ -15,8 +15,16 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-
 const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Root path handler
+app.get('/', (_req: Request, res: Response) => {
+    res.json({ message: 'Gym Journal API is running' });
+});
 
 // Define a request type that includes the `file` property for multer
 interface MulterRequest extends Request {
@@ -91,19 +99,6 @@ app.get('/api/videos', (_req: Request, res: Response): void => {
     }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Initialize database connection
-AppDataSource.initialize()
-    .then(() => {
-        console.log('Database connection established');
-    })
-    .catch((error) => {
-        console.error('Error during database initialization:', error);
-    });
-
 // Add user routes with authentication
 app.use('/api/user', authenticateToken, userRoutes);
 
@@ -125,7 +120,17 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Initialize database connection
+AppDataSource.initialize()
+    .then(() => {
+        console.log('Database connection established');
+        // Only start the server after database connection is established
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error('Error during database initialization:', error);
+        process.exit(1); // Exit if database connection fails
+    });
