@@ -9,7 +9,7 @@ const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
 const User_1 = require("../entities/User");
 const faker_1 = require("@faker-js/faker");
-const bcrypt_1 = __importDefault(require("bcryptjs"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const trainingRepository = database_1.AppDataSource.getRepository(Training_1.Training);
 const exerciseRepository = database_1.AppDataSource.getRepository(Exercise_1.Exercise);
 const trainingExerciseRepository = database_1.AppDataSource.getRepository(TrainingExercise_1.TrainingExercise);
@@ -32,7 +32,7 @@ const exercises = [
     { name: 'Russian Twists', muscleGroup: 'Core' }
 ];
 async function createUser() {
-    const hashedPassword = await bcrypt_1.default.hash('password123', 10);
+    const hashedPassword = await bcryptjs_1.default.hash('password123', 10);
     const user = new User_1.User();
     user.name = 'Nanu';
     user.email = 'nanu@gmail.com';

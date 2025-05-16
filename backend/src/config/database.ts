@@ -12,6 +12,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
         // Heroku provides a DATABASE_URL in the format:
         // postgres://username:password@host:port/database
         const url = new URL(process.env.DATABASE_URL);
+        console.log(`Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
         return {
             type: 'postgres',
             host: url.hostname,
@@ -26,6 +27,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     }
     
     // Fallback to local development configuration
+    console.log('DATABASE_URL not found, using local development database configuration');
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -36,6 +38,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
     };
 };
 
+// Create and export the data source
 export const AppDataSource = new DataSource({
     ...getDatabaseConfig(),
     synchronize: process.env.NODE_ENV !== 'production', // Only true in development
