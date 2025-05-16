@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "cd backend && node dist/app.js",
-    "build": "cd backend && npm install && npx tsc",
+    "build": "cd backend && npm install",
     "heroku-postbuild": "npm run build"
   },
   "cacheDirectories": ["backend/node_modules"]
