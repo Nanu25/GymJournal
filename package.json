@@ -1,5 +1,5 @@
 {
-  "name": "gym-journal-app",
+  "name": "gymjournal",
   "version": "1.0.0",
   "description": "Gym Journal Application",
   "engines": {
@@ -7,8 +7,8 @@
   },
   "scripts": {
     "start": "cd backend && node dist/app.js",
-    "build": "cd backend && npm install",
-    "heroku-postbuild": "npm run build"
+    "build": "cd backend && npm install && npm run build",
+    "heroku-postbuild": "cd backend && npm install && npm run build"
   },
   "cacheDirectories": ["backend/node_modules"]
-} 
+}
