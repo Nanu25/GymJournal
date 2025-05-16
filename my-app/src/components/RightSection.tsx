@@ -29,7 +29,7 @@ const RightSection = () => {
       </div>
       {/* Testimonials Section */}
       <div className="mt-8 pt-6 border-t border-white/10">
-        <div className="flex flex-col gap-6 md:flex-row md:gap-4 items-center justify-between">
+        <div className="flex flex-col gap-6 xl:flex-row xl:gap-4 items-center justify-between w-full testimonials-stack">
           <Testimonial
             name="Maria Rodriguez"
             text="This app has completely transformed my fitness routine. I've never been more consistent!"
@@ -51,7 +51,14 @@ const RightSection = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, description, color }) => {
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: 'blue' | 'purple' | 'emerald';
+}
+
+const FeatureCard = ({ icon, title, description, color }: FeatureCardProps) => {
   const colors = {
     blue: "bg-blue-500/20 text-blue-400",
     purple: "bg-purple-500/20 text-purple-400",
@@ -78,7 +85,7 @@ type TestimonialProps = {
 };
 
 const Testimonial = ({ name, text, icon }: TestimonialProps) => (
-  <div className="flex items-center space-x-3 bg-white/5 rounded-xl p-4 shadow-inner w-full md:w-auto">
+  <div className="flex items-center space-x-3 bg-white/5 rounded-xl p-4 shadow-inner w-full max-w-xl">
     <div className="relative w-12 h-12 flex-shrink-0">{icon}</div>
     <div>
       <p className="text-white font-medium leading-tight">{name}</p>

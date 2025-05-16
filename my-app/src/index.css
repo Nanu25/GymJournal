@@ -188,3 +188,9 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 75vw) {
+  .testimonials-stack {
+    flex-direction: column !important;
+  }
+}

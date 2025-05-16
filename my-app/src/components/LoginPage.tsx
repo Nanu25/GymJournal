@@ -40,8 +40,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="container mx-auto px-4 flex-grow">
           <main className="flex flex-col md:flex-row justify-between py-8 gap-8 items-stretch h-full min-h-[600px]">
             {/* Left section with form */}
-            <div className="w-full md:w-1/2 md:sticky md:top-8 md:h-fit max-h-screen h-full flex flex-col justify-center">
-              <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-8 overflow-hidden relative h-full flex flex-col justify-center">
+            <div className="w-full md:w-1/2 flex flex-col justify-center">
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-4 sm:p-6 md:p-8 overflow-auto relative h-full flex flex-col justify-center">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-transparent opacity-50"></div>
                 <div className="relative">
                   <WelcomeSection />
