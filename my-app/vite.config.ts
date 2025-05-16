@@ -2,7 +2,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import * as path from 'path';
+// Using a dynamic import for path
+// @ts-ignore
+const path = await import('path');
 
 export default defineConfig({
   plugins: [
@@ -11,12 +13,16 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': '/src',
     },
   },
   server: {
     proxy: {
       '/api': 'http://localhost:3000',
     },
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
   }
 });

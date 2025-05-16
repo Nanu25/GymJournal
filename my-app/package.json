@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --skipLibCheck && vite build",
-    "postbuild": "cp -r dist/* ../backend/public/ || echo 'No public directory in backend, skipping copy'",
+    "postbuild": "node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'dist');const dest=path.join(process.cwd(),'..','backend','public');try{fs.mkdirSync(dest,{recursive:true});const files=fs.readdirSync(src);files.forEach(f=>fs.cpSync?fs.cpSync(path.join(src,f),path.join(dest,f),{recursive:true}):console.log('fs.cpSync not available, please manually copy files'))}catch(e){console.error(e)}\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest"

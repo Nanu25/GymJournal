@@ -16,11 +16,20 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Ensure public directory exists
+const publicDir = path.join(__dirname, '..', 'public');
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+}
+
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the public directory
+app.use(express.static(publicDir));
 
 // Root path handler
 app.get('/', (_req: Request, res: Response) => {
@@ -110,6 +119,17 @@ app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 
 // Routes
 app.post('/api/auth/login', AuthController.login);
+
+// For any routes that don't match the API, serve the React app
+app.get('*', (req: Request, res: Response) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+        return;
+    }
+    
+    // Serve the index.html from public directory for all other routes
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
