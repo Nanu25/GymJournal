@@ -218,7 +218,7 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings }) => {
                                                     dataKey="value"
                                                     labelLine={false}
                                                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                                    onMouseEnter={(data, index) => {
+                                                    onMouseEnter={(_, index) => {
                                                         const cell = document.querySelector(`.recharts-pie-sector-${index}`);
                                                         if (cell) {
                                                             cell.classList.add('scale-110');
@@ -226,14 +226,14 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings }) => {
                                                             cell.classList.add('duration-200');
                                                         }
                                                     }}
-                                                    onMouseLeave={(data, index) => {
+                                                    onMouseLeave={(_, index) => {
                                                         const cell = document.querySelector(`.recharts-pie-sector-${index}`);
                                                         if (cell) {
                                                             cell.classList.remove('scale-110');
                                                         }
                                                     }}
                                                 >
-                                                    {pieChartData.map((entry, index) => (
+                                                    {pieChartData.map((_, index) => (
                                                         <Cell
                                                             key={`cell-${index}`}
                                                             fill={COLORS[index % COLORS.length]}

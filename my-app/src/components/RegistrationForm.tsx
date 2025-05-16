@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronRight, UserPlus, Scale, Ruler, Calendar, Users, Clock, Repeat, Calendar as CalendarIcon, User } from "lucide-react";
+import { UserPlus, Scale, Ruler, Calendar, Users, Clock, Repeat, Calendar as CalendarIcon, User } from "lucide-react";
 import WelcomeSection from "./WelcomeSection";
 import { api, UserData } from "../services/api";
 

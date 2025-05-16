@@ -1,5 +1,3 @@
-import React from "react";
-
 const DecorativeElements = () => {
   return (
     <div className="hidden md:block">

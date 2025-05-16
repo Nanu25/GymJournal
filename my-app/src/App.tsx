@@ -6,35 +6,9 @@ import EditMetrics from "./components/EditMetrics"; // Import EditMetrics compon
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
 
-
-interface TrainingSessionData {
-    id: number;
-    exerciseData: { [exercise: string]: number };
-}
-
 const App = () => {
     const [currentPage, setCurrentPage] = useState("login");
-    const [weight, setWeight] = useState(75); // Mock user weight, set an initial value
-    const [trainingSessions, setTrainingSessions] = useState<TrainingSessionData[]>([
-        {
-            id: 1,
-            exerciseData: {
-                "Dumbbell Press": 50,      // Chest
-                "Incline Dumbbell": 40,    // Chest
-                "Pullup": 10,              // Back
-                "Dumbbell Row": 35,        // Back
-            },
-        },
-        {
-            id: 2,
-            exerciseData: {
-                "Squats": 100,             // Legs
-                "Leg Curl": 60,            // Legs
-                "Biceps Curl": 20,         // Arms
-                "Cable Triceps Pushdown": 25, // Arms
-            },
-        },
-    ]);
+    const [weight] = useState(75); // Mock user weight, set an initial value
 
     const navigateToDashboard = () => {
         setCurrentPage("dashboard");
@@ -73,9 +47,7 @@ const App = () => {
                 <DashboardPage
                     onLogout={navigateToLogin}
                     onNavigateToMetricsSection={navigateToMetricsSection}
-                    navigateToTrainingSelector={navigateToTrainingSelector}
                     onNavigateToActivityLogs={navigateToActivityLogs}
-                    weight={weight}
                 />
             )}
             {currentPage === "registration" && (
@@ -88,7 +60,7 @@ const App = () => {
             )}
             {currentPage === "trainingSelector" && (
                 <TrainingSelector
-                    onBackToDashboard={navigateToDashboard}
+                    onCancel={navigateToDashboard}
                 />
             )}
             {currentPage === "activityLogs" && (

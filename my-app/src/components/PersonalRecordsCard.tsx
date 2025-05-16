@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ReactPaginate from 'react-paginate';
 
 interface PaginationProps {
@@ -51,16 +51,18 @@ interface PersonalRecordsCardProps {
     onNavigateToTrainingSelector: () => void;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
+    weight?: number;
 }
 
 const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     trainings,
     setTrainings,
-          onNavigateToMetricsSection,
-          onNavigateToTrainingSelector,
-          onUpdateTraining,
-          onTrainingChange,
-      }) => {
+    onNavigateToMetricsSection,
+    onNavigateToTrainingSelector,
+    onUpdateTraining,
+    onTrainingChange,
+    weight: propWeight,
+}) => {
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
     const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
@@ -72,7 +74,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 5;
-    const [weight, setWeight] = useState<number | null>(null);
+    const [weight, setWeight] = useState<number | null>(propWeight || null);
     const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
@@ -95,10 +97,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
                 const data = await response.json();
                 console.log('Received user data in PersonalRecordsCard:', data);
-                setWeight(data.weight || 0);
+                if (weight === undefined) {
+                    setWeight(data.weight || 0);
+                }
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                setWeight(0);
+                if (weight === undefined) {
+                    setWeight(0);
+                }
             }
         };
         fetchWeight();
@@ -598,7 +604,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 </div>
             </div>
 
-            {trainingToDelete !== null && (
+            {showDeleteDialog && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-stone-800 p-8 rounded-xl shadow-2xl max-w-md w-full border border-stone-700/30">
                         <h3 className="text-2xl font-bold mb-4 text-white">Confirm Delete</h3>

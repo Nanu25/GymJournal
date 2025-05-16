@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import DividerLine from "./DividerLine";
-import MetricInput from "./MetricInput";
 
 interface TrainingEntry {
     date: string;
@@ -10,8 +8,8 @@ interface TrainingEntry {
 }
 
 interface TrainingSelectorProps {
-    onTrainingAdded: (training: TrainingEntry) => void;
-    onCancel: () => void;
+    onTrainingAdded?: (training: TrainingEntry) => void;
+    onCancel?: () => void;
 }
 
 interface TrainingData {
@@ -98,7 +96,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
             }
 
             const savedTraining = await response.json();
-            onTrainingAdded(savedTraining);
+            onTrainingAdded?.(savedTraining);
         } catch (error) {
             console.error("Error saving training:", error);
             alert(error instanceof Error ? error.message : "Failed to save training. Please try again.");

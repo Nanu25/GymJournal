@@ -20,7 +20,7 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ 
     onLogout, 
     onNavigateToMetricsSection,
-    onNavigateToActivityLogs 
+    onNavigateToActivityLogs,
 }) => {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
@@ -105,7 +105,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         setShowTrainingSelector(true);
     };
 
-    const handleTrainingAdded = async (newTraining: TrainingEntry) => {
+    const handleTrainingAdded = async () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
