@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "tsc && node dist/scripts/ensureUploadsDir.js",
+    "build": "echo 'Using pre-compiled JavaScript'",
+    "local-build": "tsc && node dist/scripts/ensureUploadsDir.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
