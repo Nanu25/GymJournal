@@ -9,7 +9,10 @@ const TrainingExercise_1 = require("../entities/TrainingExercise");
 const ActivityLog_1 = require("../entities/ActivityLog");
 const getDatabaseConfig = () => {
     if (process.env.DATABASE_URL) {
+        // Heroku provides a DATABASE_URL in the format:
+        // postgres://username:password@host:port/database
         const url = new URL(process.env.DATABASE_URL);
+        console.log(`Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
         return {
             type: 'postgres',
             host: url.hostname,
@@ -18,10 +21,12 @@ const getDatabaseConfig = () => {
             password: url.password,
             database: url.pathname.substring(1),
             ssl: {
-                rejectUnauthorized: false
+                rejectUnauthorized: false // Required for Heroku
             }
         };
     }
+    // Fallback to local development configuration
+    console.log('DATABASE_URL not found, using local development database configuration');
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
