@@ -32,9 +32,9 @@ app.use(express.json());
 app.use(express.static(publicDir));
 
 // Root path handler
-app.get('/', (_req: Request, res: Response) => {
-    res.json({ message: 'Gym Journal API is running' });
-});
+// app.get('/', (_req: Request, res: Response) => {
+//     res.json({ message: 'Gym Journal API is running' });
+// });
 
 // Define a request type that includes the `file` property for multer
 interface MulterRequest extends Request {
