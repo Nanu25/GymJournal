@@ -33,9 +33,15 @@ app.use(express.json());
 app.use(express.static(publicDir));
 
 // Root path handler - serve the React app
-app.get('/', (_req: Request, res: Response) => {
+// app.get('/', (_req: Request, res: Response) => {
+//     res.sendFile(path.join(publicDir, 'index.html'));
+// });
+
+app.get('*', (req: Request, res: Response) => {
+    if (req.path.startsWith('/api/')) return;
     res.sendFile(path.join(publicDir, 'index.html'));
 });
+
 
 // API status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
