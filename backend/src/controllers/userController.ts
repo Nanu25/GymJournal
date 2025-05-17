@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User';
+import { ActivityLog } from '../entities/ActivityLog';
 
 // Get user metrics
 export const getUserMetrics = async (req: Request, res: Response) => {
@@ -27,7 +28,8 @@ export const getUserMetrics = async (req: Request, res: Response) => {
             age: user.age || 0,
             timesPerWeek: user.timesPerWeek || 0,
             timePerSession: user.timePerSession || 0,
-            repRange: user.repRange || ''
+            repRange: user.repRange || '',
+            isAdmin: user.isAdmin || false
         });
     } catch (error) {
         console.error('Error fetching user metrics:', error);
@@ -104,5 +106,42 @@ export const getUser = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({ message: 'Error fetching user' });
+    }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+
+        if (!req.user?.id) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const userRepository = AppDataSource.getRepository(User);
+        const activityLogRepository = AppDataSource.getRepository(ActivityLog);
+        const requestingUser = await userRepository.findOne({ where: { id: req.user.id } });
+
+        if (!requestingUser?.isAdmin) {
+            res.status(403).json({ message: 'Only admins can delete users' });
+            return;
+        }
+
+        const userToDelete = await userRepository.findOne({ where: { id: userId } });
+
+        if (!userToDelete) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        // First, delete all activity logs for this user
+        await activityLogRepository.delete({ userId: userId });
+
+        // Then delete the user
+        await userRepository.remove(userToDelete);
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ message: 'Error deleting user' });
     }
 };

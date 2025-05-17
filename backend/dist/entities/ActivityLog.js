@@ -48,7 +48,7 @@ __decorate([
 ], ActivityLog.prototype, "entityType", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], ActivityLog.prototype, "entityId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),

@@ -69,7 +69,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
         )}
         
         <div>
-          <label className="block text-sm font-medium text-blue-200/90 mb-1">Name</label>
+          <label className="block text-sm font-medium text-blue-200/90 mb-1"> Name <span className="text-red-500">*</span></label>
           <div className="relative">
             <input 
               type="text"
@@ -87,7 +87,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-blue-200/90 mb-1">Email</label>
+          <label className="block text-sm font-medium text-blue-200/90 mb-1"> Email<span className="text-red-500">*</span></label>
           <div className="relative">
             <input 
               type="email"
@@ -107,7 +107,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-blue-200/90 mb-1">Password</label>
+          <label className="block text-sm font-medium text-blue-200/90 mb-1"> Password <span className="text-red-500">*</span></label>
           <div className="relative">
             <input 
               type="password"
@@ -286,6 +286,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
               Sign in
             </button>
           </p>
+          <p className="text-xs text-red-400 mt-2">* indicates a mandatory field</p>
         </div>
       </form>
     </div>

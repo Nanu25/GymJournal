@@ -4,6 +4,8 @@ import { Exercise } from '../entities/Exercise';
 import { TrainingExercise } from '../entities/TrainingExercise';
 import { User } from '../entities/User';
 import mockTrainings from '../data/mockTrainings.json';
+import muscleGroupMappingDataJson from '../data/muscleGroupMappingData.json';
+const muscleGroupMappingData = muscleGroupMappingDataJson as Record<string, string>;
 
 const trainingRepository = AppDataSource.getRepository(Training);
 const exerciseRepository = AppDataSource.getRepository(Exercise);
@@ -17,7 +19,7 @@ async function importTrainings() {
         console.log('Database connection initialized');
 
         // Get the first user (or specify a user ID)
-        const user = await userRepository.findOne({ where: {} });
+        const user = await userRepository.findOne({ where: {email: 'alex@gmail.com'} });
         if (!user) {
             throw new Error('No user found in the database');
         }
@@ -43,7 +45,7 @@ async function importTrainings() {
                     if (!exercise) {
                         exercise = new Exercise();
                         exercise.name = exerciseName;
-                        exercise.muscleGroup = 'Other'; // Default muscle group
+                        exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other'; // Default muscle group
                         await exerciseRepository.save(exercise);
                         console.log(`Created new exercise: ${exerciseName}`);
                     }

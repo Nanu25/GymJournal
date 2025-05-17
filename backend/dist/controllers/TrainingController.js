@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = exports.updateTrainingByDate = exports.deleteTraining = exports.createTraining = exports.getAllTrainings = void 0;
 const Training_1 = require("../entities/Training");
@@ -6,13 +9,19 @@ const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
 const database_1 = require("../config/database");
 const typeorm_1 = require("typeorm");
+const ActivityLog_1 = require("../entities/ActivityLog");
+const muscleGroupMappingData_json_1 = __importDefault(require("../data/muscleGroupMappingData.json"));
+const muscleGroupMappingData = muscleGroupMappingData_json_1.default;
 const trainingRepository = database_1.AppDataSource.getRepository(Training_1.Training);
 const exerciseRepository = database_1.AppDataSource.getRepository(Exercise_1.Exercise);
 const trainingExerciseRepository = database_1.AppDataSource.getRepository(TrainingExercise_1.TrainingExercise);
+const activityLogRepository = database_1.AppDataSource.getRepository(ActivityLog_1.ActivityLog);
 const getAllTrainings = async (req, res) => {
     var _a;
     try {
         const { searchTerm, sortField, sortDirection } = req.query;
+        const page = parseInt(req.query.page || '1', 10);
+        const limit = parseInt(req.query.limit || '5', 10);
         if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
             res.status(401).json({ message: 'User not authenticated' });
             return;
@@ -29,6 +38,9 @@ const getAllTrainings = async (req, res) => {
         }
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
+        }
+        else {
+            queryBuilder.orderBy('training.date', 'DESC');
         }
         const trainings = await queryBuilder.getMany();
         const formattedTrainings = trainings.map((training) => {
@@ -57,7 +69,17 @@ const getAllTrainings = async (req, res) => {
                 return sortDirection === 'asc' ? comparison : -comparison;
             });
         }
-        res.status(200).json(formattedTrainings);
+        const total = formattedTrainings.length;
+        const pageCount = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedData = formattedTrainings.slice(start, end);
+        res.status(200).json({
+            data: paginatedData,
+            total,
+            page,
+            pageCount
+        });
     }
     catch (error) {
         console.error('Error fetching trainings:', error);
@@ -103,7 +125,7 @@ const createTraining = async (req, res) => {
             if (!exercise) {
                 exercise = new Exercise_1.Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
             const trainingExercise = new TrainingExercise_1.TrainingExercise();
@@ -121,6 +143,14 @@ const createTraining = async (req, res) => {
             return;
         }
         await trainingExerciseRepository.save(trainingExercises);
+        await activityLogRepository.save({
+            userId: req.user.id,
+            action: ActivityLog_1.ActionType.CREATE,
+            entityType: 'Training',
+            entityId: savedTraining.id,
+            details: { date, exercises },
+            timestamp: new Date(),
+        });
         const formattedExercises = {};
         trainingExercises.forEach(te => {
             formattedExercises[te.exercise.name] = te.weight;
@@ -162,6 +192,14 @@ const deleteTraining = async (req, res) => {
             await trainingExerciseRepository.remove(training.trainingExercises);
         }
         await trainingRepository.remove(training);
+        await activityLogRepository.save({
+            userId: req.user.id,
+            action: ActivityLog_1.ActionType.DELETE,
+            entityType: 'Training',
+            entityId: training.id,
+            details: { date: training.date, exercises: training.trainingExercises },
+            timestamp: new Date(),
+        });
         res.status(200).json({ message: 'Training deleted successfully' });
     }
     catch (error) {
@@ -214,7 +252,7 @@ const updateTrainingByDate = async (req, res) => {
                 console.log('Creating new exercise:', exerciseName);
                 exercise = new Exercise_1.Exercise();
                 exercise.name = exerciseName;
-                exercise.muscleGroup = 'Other';
+                exercise.muscleGroup = muscleGroupMappingData[exerciseName] || 'Other';
                 await exerciseRepository.save(exercise);
             }
             const trainingExercise = new TrainingExercise_1.TrainingExercise();
@@ -232,6 +270,14 @@ const updateTrainingByDate = async (req, res) => {
         }
         console.log('Saving new training exercises:', trainingExercises);
         await trainingExerciseRepository.save(trainingExercises);
+        await activityLogRepository.save({
+            userId: req.user.id,
+            action: ActivityLog_1.ActionType.UPDATE,
+            entityType: 'Training',
+            entityId: training.id,
+            details: { date, exercises },
+            timestamp: new Date(),
+        });
         const formattedExercises = {};
         trainingExercises.forEach(te => {
             formattedExercises[te.exercise.name] = te.weight;

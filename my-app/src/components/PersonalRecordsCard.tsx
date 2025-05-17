@@ -78,6 +78,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
+    const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+    const [pageCount, setPageCount] = useState(0);
 
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
@@ -108,6 +110,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             }
         };
         fetchWeight();
+    }, []);
+
+    // Fetch exercise options from backend on mount
+    useEffect(() => {
+        fetch("/api/exercises")
+            .then(res => res.json())
+            .then(data => {
+                // Flatten all exercises into a single array
+                const allExercises = data.flatMap((cat: { exercises: string[] }) => cat.exercises);
+                setExerciseOptions(allExercises);
+            })
+            .catch(err => console.error("Failed to fetch exercises for update form:", err));
     }, []);
 
     // Function to handle initial delete button click
@@ -280,10 +294,10 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const updatedData = await updatedResponse.json();
-                setTrainings(updatedData);
+                setTrainings(Array.isArray(updatedData) ? updatedData : []);
 
                 if (onTrainingChange) {
-                    onTrainingChange(updatedData);
+                    onTrainingChange(Array.isArray(updatedData) ? updatedData : []);
                 }
 
                 setUpdateFormOpen(null);
@@ -318,6 +332,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             if (searchTerm) params.searchTerm = searchTerm;
             if (sortField) params.sortField = sortField;
             if (sortDirection) params.sortDirection = sortDirection;
+            params.page = (currentPage + 1).toString(); // backend is 1-based
+            params.limit = itemsPerPage.toString();
 
             const query = new URLSearchParams(params).toString();
             const token = localStorage.getItem('token');
@@ -338,36 +354,23 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const data = await response.json();
-                setTrainings(data);
+                setTrainings(Array.isArray(data.data) ? data.data : []);
+                setPageCount(data.pageCount);
             } catch (error) {
                 console.error('Error fetching trainings:', error);
             }
         };
         fetchTrainings();
-    }, [searchTerm, sortField, sortDirection]);
+    // eslint-disable-next-line
+    }, [searchTerm, sortField, sortDirection, currentPage]);
 
-    const filteredAndSortedTrainings = trainings.map((training, originalIndex) => ({
-        training,
-        originalIndex
-    }));
-
-    // Handle pagination
-    const pageCount = Math.ceil(filteredAndSortedTrainings.length / itemsPerPage);
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentTrainings = filteredAndSortedTrainings.slice(startIndex, endIndex);
+    const currentTrainings = Array.isArray(trainings)
+        ? trainings.map((training, originalIndex) => ({ training, originalIndex }))
+        : [];
 
     useEffect(() => {
         setCurrentPage(0);
     }, [searchTerm, sortField, sortDirection]);
-
-    useEffect(() => {
-        if (pageCount > 0 && currentPage >= pageCount) {
-            setCurrentPage(pageCount - 1);
-        } else if (pageCount === 0) {
-            setCurrentPage(0);
-        }
-    }, [pageCount, currentPage]);
 
     // Calculate exercise statistics
     useEffect(() => {
@@ -425,7 +428,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "date" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -435,7 +438,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "pr" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -445,7 +448,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
                                 sortField === "exercises" 
                                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
                             }`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -504,9 +507,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                 }`}
                             >
                                 <div className={`p-6 ${statHighlight}`}>
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                         <div
-                                            className="flex items-center cursor-pointer flex-grow"
+                                            className="flex items-center cursor-pointer flex-grow w-full"
                                             onClick={() => toggleExpandTraining(originalIndex)}
                                         >
                                             <div className="flex flex-col mr-6">
@@ -520,13 +523,13 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                             <div className="flex-grow">
                                                 <div className="text-white font-medium text-xl">PR: {prText}</div>
                                             </div>
-                                            <span className="text-blue-200/70 ml-4 text-2xl transition-transform duration-200">
+                                            <span className="text-blue-200/70 ml-6 mr-4 text-2xl transition-transform duration-200">
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
-                                        <div className="flex space-x-4 ml-6">
+                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto mt-4 sm:mt-0">
                                             <button
-                                                className="px-6 py-3 text-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-white rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200 shadow-lg shadow-blue-500/10"
+                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow hover:border-blue-300"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
@@ -535,7 +538,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                                 Update
                                             </button>
                                             <button
-                                                className="px-6 py-3 text-lg bg-gradient-to-r from-red-500/20 to-red-600/20 text-white rounded-xl border border-red-500/30 hover:border-red-400/50 transition-all duration-200 shadow-lg shadow-red-500/10"
+                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl border border-red-400 transition-all duration-200 shadow hover:border-red-300"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(training);
@@ -596,7 +599,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         Add Training Session
                     </button>
                     <button
-                        className="w-full py-4 text-xl font-bold text-center text-blue-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                        className="w-full py-4 text-xl font-bold text-center text-black-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
                         onClick={onNavigateToMetricsSection}
                     >
                         Edit Metrics
@@ -644,15 +647,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             <label className="block text-sm font-medium mb-2 text-stone-300">Exercises:</label>
                             {updateFormData.exercises.map((exercise, idx) => (
                                 <div key={idx} className="flex mb-3 space-x-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Exercise name"
+                                    <select
                                         value={exercise.name}
                                         onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
                                         className="flex-grow px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
-                                    />
+                                    >
+                                        <option value="" disabled>Select exercise</option>
+                                        {exerciseOptions.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
                                     <input
-                                        type="number min=0"
+                                        type="number" min="0"
                                         placeholder="Weight (kg)"
                                         value={exercise.weight}
                                         onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}

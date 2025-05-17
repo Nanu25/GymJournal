@@ -68,11 +68,22 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings }) => {
                 }
 
                 const data = await response.json();
-                // Transform the data into the correct format for the pie chart
-                const transformedData = Object.entries(data).map(([name, value]) => ({
-                    name,
-                    value: Number(value)
-                }));
+                // Transform the data into the correct format for the pie chart and filter out NaN values
+                const transformedData = Object.entries(data)
+                    .map(([name, value]) => ({
+                        name,
+                        value: Number(value) || 0  // Convert NaN to 0
+                    }))
+                    .filter(item => item.value > 0); // Only include items with values greater than 0
+                
+                // If no valid data, add a placeholder
+                if (transformedData.length === 0) {
+                    transformedData.push({
+                        name: "No exercises recorded",
+                        value: 1
+                    });
+                }
+                
                 setPieChartData(transformedData);
                 setIsLoading(false);
             } catch (error) {
@@ -250,9 +261,6 @@ const PRSection: React.FC<PRSectionProps> = ({ trainings }) => {
                                                                     <p className="text-white font-bold">{data.name}</p>
                                                                     <p className="text-blue-300">
                                                                         {data.value} exercises
-                                                                        <span className="text-blue-200/70 ml-2">
-                                                                            ({(data.payload.percent * 100).toFixed(1)}%)
-                                                                        </span>
                                                                     </p>
                                                                 </div>
                                                             );

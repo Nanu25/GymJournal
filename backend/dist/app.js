@@ -14,6 +14,7 @@ const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
+<<<<<<< HEAD
 const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
@@ -21,6 +22,12 @@ if (!fs_1.default.existsSync(uploadsDir)) {
 const publicDir = path_1.default.join(__dirname, '..', 'public');
 if (!fs_1.default.existsSync(publicDir)) {
     fs_1.default.mkdirSync(publicDir, { recursive: true });
+=======
+const monitoredUser_routes_1 = __importDefault(require("./routes/monitoredUser.routes"));
+const exerciseroutes_1 = __importDefault(require("./routes/exerciseroutes"));
+if (!fs_1.default.existsSync('uploads')) {
+    fs_1.default.mkdirSync('uploads');
+>>>>>>> origin/main
 }
 const app = (0, express_1.default)();
 const corsOptions = {
@@ -102,12 +109,18 @@ app.get('/api/videos', (_req, res) => {
 app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
+app.use('/api/monitored-users', monitoredUser_routes_1.default);
+app.use('/api/exercises', exerciseroutes_1.default);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
+<<<<<<< HEAD
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/'))
         return;
     res.sendFile(path_1.default.join(publicDir, 'index.html'));
 });
+=======
+app.post('/api/auth/register', auth_controller_1.AuthController.register);
+>>>>>>> origin/main
 app.use((err, _req, res, _next) => {
     console.error(err.stack);
     res.status(500).json({
