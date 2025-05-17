@@ -38,6 +38,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 setLoading(false);
             })
             .catch(err => {
+                console.error("Error fetching exercises:", err);
                 setError("Failed to fetch exercises");
                 setLoading(false);
             });
