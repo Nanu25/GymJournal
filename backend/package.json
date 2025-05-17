@@ -44,6 +44,7 @@
     "typescript": "^5.8.3"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^29.5.14",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
