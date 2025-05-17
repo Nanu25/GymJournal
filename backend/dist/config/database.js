@@ -7,6 +7,7 @@ const Training_1 = require("../entities/Training");
 const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
 const ActivityLog_1 = require("../entities/ActivityLog");
+const MonitoredUser_1 = require("../entities/MonitoredUser");
 console.log('[DB_CONFIG] Starting database configuration...');
 const getDatabaseConfig = () => {
     console.log('[DB_CONFIG] Entering getDatabaseConfig()');
@@ -40,7 +41,7 @@ console.log('[DB_CONFIG] Database configuration function defined. Preparing to c
 let appDataSourceInstance;
 try {
     console.log('[DB_CONFIG] Defining entities for DataSource...');
-    const entities = [User_1.User, Training_1.Training, Exercise_1.Exercise, TrainingExercise_1.TrainingExercise, ActivityLog_1.ActivityLog];
+    const entities = [User_1.User, Training_1.Training, Exercise_1.Exercise, TrainingExercise_1.TrainingExercise, ActivityLog_1.ActivityLog, MonitoredUser_1.MonitoredUser];
     console.log('[DB_CONFIG] Entities defined. Number of entities:', entities.length);
     entities.forEach(entity => console.log('[DB_CONFIG] Entity:', entity.name));
     const dbConfig = getDatabaseConfig();

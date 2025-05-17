@@ -7,7 +7,6 @@ import { TrainingExercise } from '../entities/TrainingExercise';
 import { ActivityLog } from '../entities/ActivityLog';
 import { MonitoredUser } from '../entities/MonitoredUser';
 
-<<<<<<< HEAD
 console.log('[DB_CONFIG] Starting database configuration...');
 
 // Parse the DATABASE_URL from Heroku
@@ -49,7 +48,7 @@ let appDataSourceInstance: DataSource;
 
 try {
     console.log('[DB_CONFIG] Defining entities for DataSource...');
-    const entities = [User, Training, Exercise, TrainingExercise, ActivityLog];
+    const entities = [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser];
     console.log('[DB_CONFIG] Entities defined. Number of entities:', entities.length);
     entities.forEach(entity => console.log('[DB_CONFIG] Entity:', entity.name));
 
@@ -74,18 +73,3 @@ try {
 
 // Create and export the data source
 export const AppDataSource = appDataSourceInstance; 
-=======
-export const AppDataSource = new DataSource({
-    type: 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || 'alexinfo',
-    database: process.env.DB_NAME || 'fitness_journal',
-    synchronize: true, // Set to false in production
-    logging: true,
-    entities: [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser],
-    subscribers: [],
-    migrations: [],
-}); 
->>>>>>> origin/main
