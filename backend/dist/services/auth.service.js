@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const bcryptWrapper_1 = __importDefault(require("../utils/bcryptWrapper"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 class AuthService {
     static async register(userData) {
@@ -15,7 +15,7 @@ class AuthService {
         if (existingUser) {
             throw new Error('Email already exists');
         }
-        const hashedPassword = await bcryptjs_1.default.hash(userData.password, 10);
+        const hashedPassword = await bcryptWrapper_1.default.hash(userData.password, 10);
         const user = userRepository.create({
             ...userData,
             password: hashedPassword,
@@ -30,7 +30,7 @@ class AuthService {
         if (!user) {
             throw new Error('User not found');
         }
-        const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
+        const isPasswordValid = await bcryptWrapper_1.default.compare(password, user.password);
         if (!isPasswordValid) {
             throw new Error('Invalid password');
         }

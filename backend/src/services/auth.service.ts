@@ -1,6 +1,6 @@
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User';
-import bcrypt from 'bcryptjs';
+import bcrypt from '../utils/bcryptWrapper';
 import jwt from 'jsonwebtoken';
 
 export class AuthService {
