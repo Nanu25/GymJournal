@@ -14,7 +14,9 @@
     "test:db": "jest db.test.ts",
     "import-trainings": "ts-node src/scripts/importTrainings.ts",
     "populate-db": "ts-node src/scripts/populateDatabase.ts",
-    "db:init": "ts-node src/scripts/initializeDatabase.ts"
+    "db:init": "ts-node src/scripts/initializeDatabase.ts",
+    "db:init:js": "node dist/scripts/initializeDatabase.js",
+    "db:init:simple": "node initDb.js"
   },
   "engines": {
     "node": "18.x"
