@@ -1,14 +1,13 @@
 {
   "name": "gymjournal",
   "version": "1.0.0",
-  "description": "Gym Journal Application",
+  "description": "Gym Journal application",
+  "scripts": {
+    "build": "cd my-app && npm install && npm run build",
+    "start": "cd backend && npm run start"
+  },
   "engines": {
     "node": "18.x"
-  },
-  "scripts": {
-    "start": "cd backend && node dist/app.js",
-    "build": "echo 'Using pre-compiled JavaScript'",
-    "heroku-postbuild": "cd backend && npm install && cd ../my-app && npm install && npm run build"
   },
   "cacheDirectories": ["backend/node_modules", "my-app/node_modules"]
 }

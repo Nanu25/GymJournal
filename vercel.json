@@ -1,0 +1,8 @@
+{
+  "builds": [
+    { "src": "my-app", "use": "@vercel/static-build" }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/my-app/$1" }
+  ]
+} 

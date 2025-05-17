@@ -18,10 +18,31 @@ const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
 }
+const publicDir = path_1.default.join(__dirname, '..', 'public');
+if (!fs_1.default.existsSync(publicDir)) {
+    fs_1.default.mkdirSync(publicDir, { recursive: true });
+}
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
+const corsOptions = {
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://gym-journal-frontend.vercel.app',
+        /\.vercel\.app$/
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
-app.get('/', (_req, res) => {
+app.use(express_1.default.static(publicDir));
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/'))
+        return;
+    res.sendFile(path_1.default.join(publicDir, 'index.html'));
+});
+app.get('/api/status', (_req, res) => {
     res.json({ message: 'Gym Journal API is running' });
 });
 const storage = multer_1.default.diskStorage({
@@ -82,6 +103,11 @@ app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/'))
+        return;
+    res.sendFile(path_1.default.join(publicDir, 'index.html'));
+});
 app.use((err, _req, res, _next) => {
     console.error(err.stack);
     res.status(500).json({
