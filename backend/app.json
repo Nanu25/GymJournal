@@ -1,0 +1,19 @@
+{
+  "name": "Gym Journal",
+  "description": "A fitness tracking application",
+  "repository": "https://github.com/yourusername/gym-journal",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment for the application",
+      "value": "production"
+    }
+  },
+  "scripts": {
+    "postdeploy": "node dist/scripts/ensureUploadsDir.js"
+  }
+} 
