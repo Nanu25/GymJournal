@@ -17,7 +17,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Ensure public directory exists
-const publicDir = path.join(__dirname, '..', 'public');
+const publicDir = path.join(__dirname, '..', 'my-app', 'dist');
+
 if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
