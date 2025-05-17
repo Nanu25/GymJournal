@@ -8,9 +8,9 @@ const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const userRepository = database_1.AppDataSource.getRepository(User_1.User);
 class AuthService {
     static async register(userData) {
+        const userRepository = database_1.AppDataSource.getRepository(User_1.User);
         const existingUser = await userRepository.findOne({ where: { email: userData.email } });
         if (existingUser) {
             throw new Error('Email already exists');
@@ -25,6 +25,7 @@ class AuthService {
         return { user, token };
     }
     static async login(email, password) {
+        const userRepository = database_1.AppDataSource.getRepository(User_1.User);
         const user = await userRepository.findOne({ where: { email } });
         if (!user) {
             throw new Error('User not found');

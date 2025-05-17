@@ -3,10 +3,9 @@ import { User } from '../entities/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const userRepository = AppDataSource.getRepository(User);
-
 export class AuthService {
     static async register(userData: Partial<User>): Promise<{ user: User; token: string }> {
+        const userRepository = AppDataSource.getRepository(User);
         const existingUser = await userRepository.findOne({ where: { email: userData.email } });
         if (existingUser) {
             throw new Error('Email already exists');
@@ -30,6 +29,7 @@ export class AuthService {
     }
 
     static async login(email: string, password: string): Promise<{ user: User; token: string }> {
+        const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });
         if (!user) {
             throw new Error('User not found');
