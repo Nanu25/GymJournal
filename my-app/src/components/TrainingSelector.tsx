@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import DividerLine from "./DividerLine";
-import MetricInput from "./MetricInput";
+
 
 interface TrainingEntry {
     date: string;
