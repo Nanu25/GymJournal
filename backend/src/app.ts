@@ -17,16 +17,28 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Ensure public directory exists
-const publicDir = path.join(__dirname, '..', 'my-app', 'dist');
-
+const publicDir = path.join(__dirname, '..', 'public');
 if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
 
 const app = express();
 
+// CORS Configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173', // Vite dev server
+        'http://localhost:3000',
+        'https://gym-journal-frontend.vercel.app', // Your Vercel frontend URL
+        /\.vercel\.app$/ // Allow any vercel.app subdomain
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from the public directory

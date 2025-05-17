@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = API_BASE_URL;
 
 // Add axios interceptor to include auth token in all requests
 axios.interceptors.request.use((config) => {
