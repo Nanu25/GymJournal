@@ -294,10 +294,21 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const updatedData = await updatedResponse.json();
-                setTrainings(Array.isArray(updatedData) ? updatedData : []);
-
-                if (onTrainingChange) {
-                    onTrainingChange(Array.isArray(updatedData) ? updatedData : []);
+                // Extract trainings from the paginated response
+                if (updatedData.data && Array.isArray(updatedData.data)) {
+                    setTrainings(updatedData.data);
+                    if (onTrainingChange) {
+                        onTrainingChange(updatedData.data);
+                    }
+                    console.log("Updated trainings:", updatedData.data);
+                } else {
+                    // Fallback for backward compatibility
+                    const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
+                    setTrainings(trainingsArray);
+                    if (onTrainingChange) {
+                        onTrainingChange(trainingsArray);
+                    }
+                    console.log("Updated trainings (old format):", trainingsArray);
                 }
 
                 setUpdateFormOpen(null);

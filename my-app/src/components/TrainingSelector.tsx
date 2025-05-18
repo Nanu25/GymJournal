@@ -194,7 +194,14 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
             }
 
             const savedTraining = await response.json();
-            onTrainingAdded?.(savedTraining);
+            console.log("Training saved successfully:", savedTraining);
+            
+            // Call onTrainingAdded to trigger navigation back to dashboard
+            if (onTrainingAdded) {
+                onTrainingAdded(savedTraining);
+            } else {
+                console.warn("No onTrainingAdded callback provided");
+            }
         } catch (error) {
             console.error("Error saving training:", error);
             alert(error instanceof Error ? error.message : "Failed to save training. Please try again.");
