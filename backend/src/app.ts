@@ -144,7 +144,8 @@ app.use('/api/trainings', authenticateToken, trainingRoutes);
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 
-// Auth route
+// Auth routes
+app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
 
 // Fallback: serve index.html for any non-API route (for React Router)
