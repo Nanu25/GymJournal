@@ -155,12 +155,35 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 throw new Error(errorData.message || 'Failed to delete training');
             }
 
-            // Update local state
-            const updatedTrainings = trainings.filter(t => t.date !== trainingToDelete.date);
-            setTrainings(updatedTrainings);
+            // Fetch updated trainings after delete
+            const updatedResponse = await fetch('/api/trainings', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-            if (onTrainingChange) {
-                onTrainingChange(updatedTrainings);
+            if (!updatedResponse.ok) {
+                const errorData = await updatedResponse.json();
+                console.error('Failed to fetch updated trainings:', errorData);
+                throw new Error('Failed to fetch updated trainings');
+            }
+
+            const updatedData = await updatedResponse.json();
+            // Extract trainings from the paginated response
+            if (updatedData.data && Array.isArray(updatedData.data)) {
+                setTrainings(updatedData.data);
+                if (onTrainingChange) {
+                    onTrainingChange(updatedData.data);
+                }
+                console.log("Updated trainings after delete:", updatedData.data);
+            } else {
+                // Fallback for backward compatibility
+                const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
+                setTrainings(trainingsArray);
+                if (onTrainingChange) {
+                    onTrainingChange(trainingsArray);
+                }
+                console.log("Updated trainings after delete (old format):", trainingsArray);
             }
 
             setTrainingToDelete(null);
@@ -186,15 +209,49 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             onUpdateTraining(trainings[index], index);
         } else {
             const training = trainings[index];
-            const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
-                name,
-                weight,
-            }));
-            setUpdateFormData({
-                date: training.date,
-                exercises,
-            });
-            setUpdateFormOpen(index);
+            
+            // Fetch the latest exercises from the API before opening the update form
+            fetch("/api/exercises")
+                .then(res => res.json())
+                .then(data => {
+                    // Flatten all exercises into a single array
+                    const allExercises = Array.isArray(data) 
+                        ? data.flatMap((cat: { exercises: string[] }) => cat.exercises) 
+                        : data.data 
+                            ? data.data.flatMap((cat: { exercises: string[] }) => cat.exercises)
+                            : [];
+                    
+                    setExerciseOptions(allExercises);
+                    console.log("Fetched exercise options for update:", allExercises);
+                    
+                    // Now set up the update form with the training data
+                    const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
+                        name,
+                        weight,
+                    }));
+                    
+                    setUpdateFormData({
+                        date: training.date,
+                        exercises,
+                    });
+                    
+                    setUpdateFormOpen(index);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch exercises for update form:", err);
+                    // Still open the update form even if fetch fails
+                    const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
+                        name,
+                        weight,
+                    }));
+                    
+                    setUpdateFormData({
+                        date: training.date,
+                        exercises,
+                    });
+                    
+                    setUpdateFormOpen(index);
+                });
         }
     };
 
@@ -354,6 +411,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             }
 
             try {
+                console.log(`Fetching trainings with query: ${query}`);
                 const response = await fetch(`/api/trainings?${query}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -365,10 +423,25 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const data = await response.json();
-                setTrainings(Array.isArray(data.data) ? data.data : []);
-                setPageCount(data.pageCount);
+                console.log("Received trainings data:", data);
+                
+                if (data.data && Array.isArray(data.data)) {
+                    setTrainings(data.data);
+                    setPageCount(data.pageCount || 1);
+                    console.log("Trainings set from paginated data:", data.data);
+                } else if (Array.isArray(data)) {
+                    setTrainings(data);
+                    setPageCount(Math.ceil(data.length / itemsPerPage) || 1);
+                    console.log("Trainings set from array data:", data);
+                } else {
+                    console.error("Unexpected data format:", data);
+                    setTrainings([]);
+                    setPageCount(1);
+                }
             } catch (error) {
                 console.error('Error fetching trainings:', error);
+                setTrainings([]);
+                setPageCount(1);
             }
         };
         fetchTrainings();
@@ -664,9 +737,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                         className="flex-grow px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
                                     >
                                         <option value="" disabled>Select exercise</option>
-                                        {exerciseOptions.map((option) => (
-                                            <option key={option} value={option}>{option}</option>
-                                        ))}
+                                        {exerciseOptions.length > 0 ? (
+                                            exerciseOptions.map((option) => (
+                                                <option key={option} value={option}>{option}</option>
+                                            ))
+                                        ) : (
+                                            // If no exercise options are loaded, show current exercise
+                                            <option key={exercise.name} value={exercise.name}>{exercise.name}</option>
+                                        )}
                                     </select>
                                     <input
                                         type="number" min="0"
