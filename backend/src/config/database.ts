@@ -29,14 +29,16 @@ const getDatabaseConfig = (): DataSourceOptions => {
                 ssl: {
                     rejectUnauthorized: false // Required for Heroku
                 },
-                // Optimize connection pool settings
-                poolSize: 20, // Increase from default 10
+                // Connection pool settings
+                poolSize: 20,
                 connectTimeoutMS: 10000,
                 extra: {
-                    // Make idle connections terminate faster 
+                    // PostgreSQL specific settings
                     max: 20,
                     idleTimeoutMillis: 30000, 
-                    connectionTimeoutMillis: 10000
+                    connectionTimeoutMillis: 10000,
+                    // Configure statement timeout to avoid Heroku H12 errors
+                    statement_timeout: 25000 // 25 seconds, below Heroku's 30s timeout
                 }
             };
         } catch (error) {
@@ -79,19 +81,12 @@ try {
         migrations: [],
         cache: {
             duration: 60000 // Cache query results for 1 minute
-        },
-        extra: {
-            // Configure connection timeout
-            connectionTimeout: 10000,
-            // Configure statement timeout (help avoid long-running queries)
-            statement_timeout: 25000 // 25 seconds, below Heroku's 30s timeout
         }
+        // Note: extra is already included in dbConfig, don't duplicate it here
     });
     console.log('[DB_CONFIG] DataSource instance created successfully.');
 } catch (error) {
     console.error('[DB_CONFIG] CRITICAL ERROR during DataSource instantiation:', error);
-    // If an error occurs here, it's before AppDataSource.initialize() is even called
-    // This could be the source of the H10 if it crashes the process
     process.exit(1); // Exit to make it clear this is a fatal startup error
 }
 
