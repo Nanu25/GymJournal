@@ -179,33 +179,44 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
             }
 
             console.log(`Sending training data to: ${API_BASE_URL}/trainings`);
-            const response = await fetch(`${API_BASE_URL}/trainings`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(trainingEntry),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to save training");
-            }
-
-            const savedTraining = await response.json();
-            console.log("Training saved successfully:", savedTraining);
             
-            // Call onTrainingAdded to trigger navigation back to dashboard
-            if (onTrainingAdded) {
-                onTrainingAdded(savedTraining);
-            } else {
-                console.warn("No onTrainingAdded callback provided");
+            try {
+                // Show saving state
+                setIsSubmitting(true);
+                
+                const response = await fetch(`${API_BASE_URL}/trainings`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(trainingEntry),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to save training");
+                }
+
+                const savedTraining = await response.json();
+                console.log("Training saved successfully:", savedTraining);
+                
+                // Call onTrainingAdded to trigger navigation back to dashboard
+                if (onTrainingAdded) {
+                    // Display success feedback momentarily before navigating
+                    setTimeout(() => {
+                        onTrainingAdded(savedTraining);
+                    }, 300);
+                } else {
+                    console.warn("No onTrainingAdded callback provided");
+                    setIsSubmitting(false);
+                }
+            } catch (error) {
+                throw error;
             }
         } catch (error) {
             console.error("Error saving training:", error);
             alert(error instanceof Error ? error.message : "Failed to save training. Please try again.");
-        } finally {
             setIsSubmitting(false);
         }
     };

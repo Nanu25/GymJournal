@@ -154,10 +154,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
     const handleTrainingAdded = async () => {
         try {
+            console.log("Training added successfully, redirecting to dashboard...");
+            
+            // Immediately hide the training selector to show dashboard
+            setShowTrainingSelector(false);
+            
+            // Scroll to top for better user experience
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Not authenticated');
             }
+            
             // Fetch the updated list of trainings after adding a new one
             const response = await fetch("/api/trainings", {
                 headers: {
@@ -175,11 +184,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 // Fallback for backward compatibility
                 setTrainings(Array.isArray(data) ? data : []);
             }
-            setShowTrainingSelector(false);
         } catch (error) {
             console.error("Error fetching updated trainings:", error);
-            // Still hide the selector but show an error
-            setShowTrainingSelector(false);
             alert("Training added but failed to refresh the list. Please reload the page.");
         }
     };
