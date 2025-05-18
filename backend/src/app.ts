@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import multer from 'multer';
+import 'dotenv/config';
 import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
 import activityLogRoutes from './routes/activityLog.routes';
@@ -30,7 +31,9 @@ const corsOptions = {
         'http://localhost:5173', // Vite dev server
         'http://localhost:3000',
         'https://gym-journal-frontend.vercel.app', // Your Vercel frontend URL
-        /\.vercel\.app$/ // Allow any vercel.app subdomain
+        'https://gymjournal-75451ef51cbf.herokuapp.com', // Your Heroku domain
+        /\.vercel\.app$/, // Allow any vercel.app subdomain
+        /\.herokuapp\.com$/ // Allow any herokuapp.com subdomain
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
+require("dotenv/config");
 const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
 const activityLog_routes_1 = __importDefault(require("./routes/activityLog.routes"));
@@ -28,7 +29,9 @@ const corsOptions = {
         'http://localhost:5173',
         'http://localhost:3000',
         'https://gym-journal-frontend.vercel.app',
-        /\.vercel\.app$/
+        'https://gymjournal-75451ef51cbf.herokuapp.com',
+        /\.vercel\.app$/,
+        /\.herokuapp\.com$/
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
