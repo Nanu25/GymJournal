@@ -27,8 +27,8 @@ __decorate([
     __metadata("design:type", String)
 ], ActivityLog.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'integer' }),
+    __metadata("design:type", Number)
 ], ActivityLog.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => User_1.User),

@@ -225,14 +225,14 @@ const deleteUser = async (req, res) => {
             return;
         }
         const userRepository = database_1.AppDataSource.getRepository(User_1.User);
-        const userToDelete = await userRepository.findOne({ where: { id: userId } });
+        const userToDelete = await userRepository.findOne({ where: { id: Number(userId) } });
         if (!userToDelete) {
             res.status(404).json({ message: 'User not found' });
             return;
         }
         const activityLogRepository = database_1.AppDataSource.getRepository(ActivityLog_1.ActivityLog);
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: Number(req.user.id),
             action: ActivityLog_1.ActionType.DELETE,
             entityType: 'User',
             entityId: userId,

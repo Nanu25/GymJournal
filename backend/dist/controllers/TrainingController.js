@@ -31,7 +31,7 @@ const getAllTrainings = async (req, res) => {
             .createQueryBuilder('training')
             .leftJoinAndSelect('training.trainingExercises', 'trainingExercise')
             .leftJoinAndSelect('trainingExercise.exercise', 'exercise')
-            .where('training.userId = :userId', { userId: req.user.id });
+            .where('training.userId = :userId', { userId: Number(req.user.id) });
         if (searchTerm) {
             const term = `%${searchTerm}%`;
             queryBuilder.andWhere('(CAST(training.date AS TEXT) LIKE :term OR exercise.name LIKE :term)', { term });
@@ -114,7 +114,9 @@ const createTraining = async (req, res) => {
             return;
         }
         try {
-            const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
+            console.log(`Checking for existing training on ${date} for user ID: ${req.user.id} (type: ${typeof req.user.id})`);
+            const userId = Number(req.user.id);
+            const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId } });
             if (existingTraining) {
                 res.status(400).json({ message: 'Training for this date already exists' });
                 return;
@@ -127,7 +129,8 @@ const createTraining = async (req, res) => {
         }
         const training = new Training_1.Training();
         training.date = new Date(date);
-        training.userId = req.user.id;
+        training.userId = Number(req.user.id);
+        console.log(`Creating training with userId: ${training.userId} (type: ${typeof training.userId})`);
         const savedTraining = await trainingRepository.save(training);
         const trainingExercises = [];
         for (const [exerciseName, weight] of Object.entries(exercises)) {
@@ -158,7 +161,7 @@ const createTraining = async (req, res) => {
         }
         await trainingExerciseRepository.save(trainingExercises);
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: Number(req.user.id),
             action: ActivityLog_1.ActionType.CREATE,
             entityType: 'Training',
             entityId: savedTraining.id,
@@ -207,7 +210,7 @@ const deleteTraining = async (req, res) => {
         }
         await trainingRepository.remove(training);
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: Number(req.user.id),
             action: ActivityLog_1.ActionType.DELETE,
             entityType: 'Training',
             entityId: training.id,
@@ -241,7 +244,7 @@ const updateTrainingByDate = async (req, res) => {
         const training = await trainingRepository.findOne({
             where: {
                 date: (0, typeorm_1.Between)(startDate, endDate),
-                userId: req.user.id
+                userId: Number(req.user.id)
             },
             relations: ['trainingExercises', 'trainingExercises.exercise']
         });
@@ -285,7 +288,7 @@ const updateTrainingByDate = async (req, res) => {
         console.log('Saving new training exercises:', trainingExercises);
         await trainingExerciseRepository.save(trainingExercises);
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: Number(req.user.id),
             action: ActivityLog_1.ActionType.UPDATE,
             entityType: 'Training',
             entityId: training.id,
@@ -336,7 +339,7 @@ const getMuscleGroupDistribution = async (req, res) => {
             .from(Training_1.Training, 't')
             .innerJoin('t.trainingExercises', 'te')
             .innerJoin('te.exercise', 'e')
-            .where('t.userId = :userId', { userId: req.user.id })
+            .where('t.userId = :userId', { userId: Number(req.user.id) })
             .groupBy('e.muscleGroup')
             .getRawMany();
         console.timeEnd('[CONTROLLER] muscleGroupQuery');
@@ -363,7 +366,7 @@ const getExerciseProgressData = async (req, res) => {
         }
         const { exercise } = req.params;
         const trainings = await trainingRepository.find({
-            where: { userId: req.user.id },
+            where: { userId: Number(req.user.id) },
             relations: ['trainingExercises', 'trainingExercises.exercise']
         });
         const progressData = trainings
@@ -404,7 +407,7 @@ const getTotalWeightPerSession = async (req, res) => {
             .addSelect('SUM(te.weight)', 'totalWeight')
             .from(Training_1.Training, 't')
             .innerJoin('t.trainingExercises', 'te')
-            .where('t.userId = :userId', { userId: req.user.id })
+            .where('t.userId = :userId', { userId: Number(req.user.id) })
             .groupBy('t.date')
             .orderBy('t.date', 'ASC')
             .getRawMany();
@@ -443,7 +446,7 @@ const getUniqueExercises = async (req, res) => {
             .from(Exercise_1.Exercise, 'e')
             .innerJoin('e.trainingExercises', 'te')
             .innerJoin('te.training', 't')
-            .where('t.userId = :userId', { userId: req.user.id })
+            .where('t.userId = :userId', { userId: Number(req.user.id) })
             .orderBy('e.name', 'ASC')
             .getRawMany();
         console.timeEnd('[CONTROLLER] uniqueExercisesQuery');

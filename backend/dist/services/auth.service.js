@@ -21,7 +21,7 @@ class AuthService {
             password: hashedPassword,
         });
         await userRepository.save(user);
-        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: Number(user.id) }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
         return { user, token };
     }
     static async login(email, password) {
@@ -34,7 +34,7 @@ class AuthService {
         if (!isPasswordValid) {
             throw new Error('Invalid password');
         }
-        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: Number(user.id) }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
         return { user, token };
     }
 }

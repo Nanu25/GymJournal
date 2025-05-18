@@ -5,7 +5,7 @@ export class LoggingService {
     private static activityLogRepository = AppDataSource.getRepository(ActivityLog);
 
     static async logActivity(
-        userId: string,
+        userId: number,
         action: ActionType,
         entityType: string,
         entityId?: string,
@@ -22,7 +22,7 @@ export class LoggingService {
     }
 
     static async getActivityLogs(
-        userId?: string,
+        userId?: number,
         entityType?: string,
         startDate?: Date,
         endDate?: Date

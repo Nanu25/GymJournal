@@ -30,8 +30,8 @@ __decorate([
     __metadata("design:type", User_1.User)
 ], Training.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", Object)
+    (0, typeorm_1.Column)({ type: 'integer' }),
+    __metadata("design:type", Number)
 ], Training.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => TrainingExercise_1.TrainingExercise, trainingExercise => trainingExercise.training, {

@@ -15,8 +15,8 @@ export class Training extends BaseEntity {
     @JoinColumn({ name: 'userId' })
     user!: User;
 
-    @Column()
-    userId!: string | undefined;
+    @Column({ type: 'integer' })
+    userId!: number;
 
     @OneToMany(() => TrainingExercise, trainingExercise => trainingExercise.training, {
         cascade: true
