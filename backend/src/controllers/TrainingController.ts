@@ -397,22 +397,26 @@ export const getMuscleGroupDistribution = async (req: Request, res: Response): P
             return;
         }
 
-        const trainings = await trainingRepository.find({
-            where: { userId: req.user.id },
-            relations: ['trainingExercises', 'trainingExercises.exercise']
-        });
+        // Using more efficient query with joins and group by
+        const result = await AppDataSource
+            .createQueryBuilder()
+            .select('e.muscleGroup', 'muscleGroup')
+            .addSelect('COUNT(te.id)', 'count')
+            .from(Training, 't')
+            .innerJoin('t.trainingExercises', 'te')
+            .innerJoin('te.exercise', 'e')
+            .where('t.userId = :userId', { userId: req.user.id })
+            .groupBy('e.muscleGroup')
+            .getRawMany();
 
         const muscleGroupCounts: { [key: string]: number } = {};
-
-        trainings.forEach((training: Training) => {
-            training.trainingExercises.forEach((te: TrainingExercise) => {
-                const muscleGroup = te.exercise.muscleGroup || 'Other';
-                muscleGroupCounts[muscleGroup] = (muscleGroupCounts[muscleGroup] || 0) + 1;
-            });
+        result.forEach(item => {
+            muscleGroupCounts[item.muscleGroup || 'Other'] = parseInt(item.count, 10);
         });
 
         res.status(200).json(muscleGroupCounts);
     } catch (error) {
+        console.error('Error getting muscle group distribution:', error);
         res.status(500).json({ message: 'Error getting muscle group distribution', error });
     }
 };
@@ -465,22 +469,25 @@ export const getTotalWeightPerSession = async (req: Request, res: Response): Pro
             return;
         }
 
-        const trainings = await trainingRepository.find({
-            where: { userId: req.user.id },
-            relations: ['trainingExercises']
-        });
+        // More efficient query with direct aggregation in the database
+        const result = await AppDataSource
+            .createQueryBuilder()
+            .select('t.date', 'date')
+            .addSelect('SUM(te.weight)', 'totalWeight')
+            .from(Training, 't')
+            .innerJoin('t.trainingExercises', 'te')
+            .where('t.userId = :userId', { userId: req.user.id })
+            .groupBy('t.date')
+            .orderBy('t.date', 'ASC')
+            .getRawMany();
 
-        const totalWeightData = trainings.map((training: Training) => {
-            const totalWeight = training.trainingExercises.reduce((sum, te) => sum + te.weight, 0);
-            const date = training.date instanceof Date 
-                ? training.date.toISOString().split('T')[0]
-                : new Date(training.date).toISOString().split('T')[0];
-            
+        const totalWeightData = result.map(item => {
+            const date = new Date(item.date).toISOString().split('T')[0];
             return {
                 date,
-                totalWeight: Number(totalWeight)
+                totalWeight: Number(item.totalWeight)
             };
-        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        });
 
         res.status(200).json(totalWeightData);
     } catch (error) {
@@ -496,20 +503,21 @@ export const getUniqueExercises = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        const trainings = await trainingRepository.find({
-            where: { userId: req.user.id },
-            relations: ['trainingExercises', 'trainingExercises.exercise']
-        });
+        // More efficient query to get unique exercises directly from the database
+        const result = await AppDataSource
+            .createQueryBuilder()
+            .select('DISTINCT e.name', 'name')
+            .from(Exercise, 'e')
+            .innerJoin('e.trainingExercises', 'te')
+            .innerJoin('te.training', 't')
+            .where('t.userId = :userId', { userId: req.user.id })
+            .orderBy('e.name', 'ASC')
+            .getRawMany();
 
-        const uniqueExercises = new Set<string>();
-        trainings.forEach((training: Training) => {
-            training.trainingExercises.forEach((te: TrainingExercise) => {
-                uniqueExercises.add(te.exercise.name);
-            });
-        });
-
-        res.status(200).json(Array.from(uniqueExercises));
+        const uniqueExercises = result.map(item => item.name);
+        res.status(200).json(uniqueExercises);
     } catch (error) {
+        console.error('Error getting unique exercises:', error);
         res.status(500).json({ message: 'Error getting unique exercises', error });
     }
 };
