@@ -118,6 +118,7 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
 
 export const createTraining = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('Creating training with request body:', JSON.stringify(req.body));
         const { date, exercises } = req.body;
         // Validate required fields
         if (!date) {
@@ -137,11 +138,26 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
+        
+        console.log(`Creating training for user ${req.user.id} on date ${date} with ${Object.keys(exercises).length} exercises`);
 
+        // Check if database is initialized
+        if (!AppDataSource.isInitialized) {
+            console.error('Database is not initialized when creating training');
+            res.status(503).json({ message: 'Database service unavailable, please try again later' });
+            return;
+        }
+        
         //check if the date is unique
-        const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
-        if (existingTraining) {
-            res.status(400).json({ message: 'Training for this date already exists' });
+        try {
+            const existingTraining = await trainingRepository.findOne({ where: { date: new Date(date), userId: req.user.id } });
+            if (existingTraining) {
+                res.status(400).json({ message: 'Training for this date already exists' });
+                return;
+            }
+        } catch (dbError) {
+            console.error('Error checking for existing training:', dbError);
+            res.status(500).json({ message: 'Error checking for existing training' });
             return;
         }
 

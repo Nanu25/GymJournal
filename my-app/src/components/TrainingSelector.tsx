@@ -45,16 +45,7 @@ const DEFAULT_EXERCISE_CATEGORIES = [
     }
 ];
 
-// Add interface for the API response
-interface ExerciseApiResponse {
-    source: 'database' | 'mock';
-    count: number;
-    categories: number;
-    data: {
-        category: string;
-        exercises: string[];
-    }[];
-}
+
 
 const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, onCancel }) => {
     const [trainingData, setTrainingData] = useState<TrainingData>({});
@@ -94,7 +85,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 let exerciseCount = 0;
                 let categoriesCount = 0;
                 
-                if (rawData.source && rawData.data) {
+                if ('source' in rawData && 'data' in rawData) {
                     // New format with metadata
                     dataSource = rawData.source;
                     exerciseCount = rawData.count;
@@ -123,7 +114,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                     setError(null);
                     
                     console.log(`Successfully loaded ${exerciseCount} exercises from ${dataSource}`);
-                    console.log('Categories:', exerciseData.map(cat => cat.category).join(', '));
+                    console.log('Categories:', exerciseData.map((cat: {category: string}) => cat.category).join(', '));
                 } else {
                     throw new Error('No exercise categories received');
                 }
@@ -187,7 +178,8 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 throw new Error('Not authenticated. Please log in again.');
             }
 
-            const response = await fetch("/api/trainings", {
+            console.log(`Sending training data to: ${API_BASE_URL}/trainings`);
+            const response = await fetch(`${API_BASE_URL}/trainings`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
