@@ -26,7 +26,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
-    const [username, setUsername] = useState<string>("");
+    const [username, setUsername] = useState<string>("Fitness Enthusiast"); // Default username
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
     useEffect(() => {
@@ -34,39 +34,72 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     }, [isAdmin]);
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchUserData = async (): Promise<void> => {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    throw new Error('Not authenticated');
+                    console.error('No token found');
+                    return; // Keep using default username
                 }
-                console.log('Fetching user data with token:', token);
-                const response = await fetch("/api/user", {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error("Failed to fetch user data");
-                }
-                const data = await response.json();
-                console.log('Received user data:', data);
                 
-                // Set username
-                if (data.name) {
-                    setUsername(data.name);
-                } else {
-                    console.error('No name in user data:', data);
-                }
+                console.log('Fetching user data with token:', token);
+                
+                // Create controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                
+                try {
+                    const response = await fetch("/api/user", {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        signal: controller.signal
+                    });
+                    
+                    // Clear the timeout
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        console.warn(`User data fetch returned status ${response.status}`);
+                        return; // Keep using default username
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Received user data:', data);
+                    
+                    // Set username if available
+                    if (data.name) {
+                        setUsername(data.name);
+                    } else {
+                        console.warn('No name in user data:', data);
+                        // Keep using default username
+                    }
 
-                // Handle isAdmin
-                console.log('Raw isAdmin value from API:', data.isAdmin);
-                const adminStatus = data.isAdmin === true;
-                console.log('Processed admin status:', adminStatus);
-                setIsAdmin(adminStatus);
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-                setUsername("");
+                    // Handle isAdmin
+                    console.log('Raw isAdmin value from API:', data.isAdmin);
+                    const adminStatus = data.isAdmin === true;
+                    console.log('Processed admin status:', adminStatus);
+                    setIsAdmin(adminStatus);
+                } catch (fetchError: unknown) {
+                    // Handle fetch errors
+                    if (fetchError instanceof Error) {
+                        if (fetchError.name === 'AbortError') {
+                            console.error('User data request timed out');
+                        } else {
+                            console.error('Error fetching user data:', fetchError.message);
+                        }
+                    } else {
+                        console.error('Unknown error fetching user data');
+                    }
+                    // Keep using default username
+                }
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    console.error("Error in fetchUserData:", error.message);
+                } else {
+                    console.error("Unknown error in fetchUserData");
+                }
+                // Keep using default username, reset admin status
                 setIsAdmin(false);
             }
         };
