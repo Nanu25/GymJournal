@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
+import { API_BASE_URL } from '../config';
 
 interface TrainingEntry {
     date: string;
@@ -17,6 +17,34 @@ interface TrainingData {
     [key: string]: number;
 }
 
+// Default exercise categories to use as fallback
+const DEFAULT_EXERCISE_CATEGORIES = [
+    {
+        category: 'Chest',
+        exercises: ['Bench Press', 'Incline Press', 'Decline Press', 'Chest Fly', 'Push-ups']
+    },
+    {
+        category: 'Back',
+        exercises: ['Pull-ups', 'Lat Pulldown', 'Deadlift', 'Bent Over Row', 'T-Bar Row']
+    },
+    {
+        category: 'Legs',
+        exercises: ['Squat', 'Leg Press', 'Lunges', 'Leg Extension', 'Leg Curl', 'Calf Raise']
+    },
+    {
+        category: 'Shoulders',
+        exercises: ['Overhead Press', 'Lateral Raise', 'Front Raise', 'Reverse Fly', 'Shrugs']
+    },
+    {
+        category: 'Arms',
+        exercises: ['Bicep Curl', 'Tricep Extension', 'Hammer Curl', 'Skull Crusher', 'Chin-ups']
+    },
+    {
+        category: 'Core',
+        exercises: ['Crunches', 'Leg Raises', 'Plank', 'Russian Twist', 'Ab Wheel Rollout']
+    }
+];
+
 const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, onCancel }) => {
     const [trainingData, setTrainingData] = useState<TrainingData>({});
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -27,21 +55,38 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("/api/exercises")
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch exercises");
-                return res.json();
-            })
-            .then(data => {
+        const fetchExercises = async () => {
+            try {
+                console.log('Fetching exercises from:', `${API_BASE_URL}/exercises`);
+                const response = await fetch(`${API_BASE_URL}/exercises`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch exercises: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Successfully fetched exercises:', data);
+                
                 setExerciseCategories(data);
-                if (data.length > 0) setActiveCategory(data[0].category);
+                if (data.length > 0) {
+                    setActiveCategory(data[0].category);
+                }
+            } catch (err) {
+                console.error('Error fetching exercises:', err);
+                setError("Failed to fetch exercises from server. Using default exercise list.");
+                
+                // Use default exercise categories as fallback
+                console.log('Using default exercise categories as fallback');
+                setExerciseCategories(DEFAULT_EXERCISE_CATEGORIES);
+                if (DEFAULT_EXERCISE_CATEGORIES.length > 0) {
+                    setActiveCategory(DEFAULT_EXERCISE_CATEGORIES[0].category);
+                }
+            } finally {
                 setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error fetching exercises:", err);
-                setError("Failed to fetch exercises");
-                setLoading(false);
-            });
+            }
+        };
+
+        fetchExercises();
     }, []);
 
     const handleExerciseChange = (exercise: string, value: number) => {

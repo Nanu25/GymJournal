@@ -10,6 +10,7 @@ const multer_1 = __importDefault(require("multer"));
 require("dotenv/config");
 const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
+const exerciseroutes_1 = __importDefault(require("./routes/exerciseroutes"));
 const activityLog_routes_1 = __importDefault(require("./routes/activityLog.routes"));
 const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
@@ -130,6 +131,7 @@ app.get('/api/videos', (_req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+app.use('/api/exercises', exerciseroutes_1.default);
 app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);

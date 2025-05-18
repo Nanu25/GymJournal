@@ -5,6 +5,7 @@ import multer from 'multer';
 import 'dotenv/config';
 import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
+import exerciseRoutes from './routes/exerciseroutes';
 import activityLogRoutes from './routes/activityLog.routes';
 import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
@@ -162,6 +163,9 @@ app.get('/api/videos', (_req: Request, res: Response): void => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
+// Add exercise routes (no authentication required for read-only data)
+app.use('/api/exercises', exerciseRoutes);
 
 // Add user routes with authentication
 app.use('/api/user', authenticateToken, userRoutes);

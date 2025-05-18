@@ -107,6 +107,27 @@ async function testUserEndpoint(token) {
   }
 }
 
+async function testExercisesEndpoint() {
+  console.log(`${colors.blue}Testing /api/exercises endpoint (public)...${colors.reset}`);
+  
+  try {
+    const data = await fetchWithRetry(`${API_URL}/api/exercises`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log(`${colors.green}Exercises data successfully retrieved!${colors.reset}`);
+    console.log(`${colors.cyan}Categories found: ${data.map(cat => cat.category).join(', ')}${colors.reset}`);
+    console.log(`${colors.cyan}Total exercises: ${data.reduce((sum, cat) => sum + cat.exercises.length, 0)}${colors.reset}`);
+    return data;
+  } catch (error) {
+    console.log(`${colors.red}Error testing exercises endpoint: ${error.message}${colors.reset}`);
+    return null;
+  }
+}
+
 async function main() {
   console.log(`${colors.magenta}=== Full API Flow Test ===\n${colors.reset}`);
   console.log(`${colors.yellow}Testing against: ${API_URL}${colors.reset}`);
@@ -125,6 +146,13 @@ async function main() {
     const userData = await testUserEndpoint(token);
     if (!userData) {
       console.log(`${colors.red}Failed to get user data.${colors.reset}`);
+    }
+    
+    // Step 3: Get Exercises Data
+    console.log(`\n${colors.cyan}=== Step 3: Get Exercises Data ===\n${colors.reset}`);
+    const exercisesData = await testExercisesEndpoint();
+    if (!exercisesData) {
+      console.log(`${colors.red}Failed to get exercises data.${colors.reset}`);
     }
     
     console.log(`\n${colors.magenta}=== Test Complete ===\n${colors.reset}`);
