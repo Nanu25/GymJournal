@@ -83,6 +83,13 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
     // Fetch weight from the backend when the component mounts
     useEffect(() => {
+        // Use prop weight if available, otherwise set a default (0)
+        if (propWeight !== undefined) {
+            setWeight(propWeight);
+        } else {
+            setWeight(0); // Set a default immediately so we don't show "Loading..."
+        }
+        
         const fetchWeight = async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -99,18 +106,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
                 const data = await response.json();
                 console.log('Received user data in PersonalRecordsCard:', data);
-                if (weight === undefined) {
-                    setWeight(data.weight || 0);
-                }
+                setWeight(data.weight || 0);
             } catch (error) {
                 console.error("Error fetching weight:", error);
-                if (weight === undefined) {
-                    setWeight(0);
-                }
+                // Keep the default weight if fetch fails
             }
         };
         fetchWeight();
-    }, []);
+    }, [propWeight]);
 
     // Fetch exercise options from backend on mount
     useEffect(() => {
@@ -475,6 +478,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
     return (
         <section
+            id="personal-records-card"
             className="relative p-10 bg-[#0f172a] min-h-[800px] rounded-[32px] w-full flex flex-col shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl"
         >
             <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 to-transparent rounded-[32px] pointer-events-none" />

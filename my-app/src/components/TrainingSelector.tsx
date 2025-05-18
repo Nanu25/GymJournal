@@ -205,7 +205,16 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 if (onTrainingAdded) {
                     // Display success feedback momentarily before navigating
                     setTimeout(() => {
+                        // Call the callback to navigate back to dashboard
                         onTrainingAdded(savedTraining);
+                        
+                        // After a small delay, find and scroll to the PersonalRecordsCard
+                        setTimeout(() => {
+                            const personalRecordsCard = document.getElementById('personal-records-card');
+                            if (personalRecordsCard) {
+                                personalRecordsCard.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }, 300); // 300ms delay to ensure the dashboard is rendered
                     }, 300);
                 } else {
                     console.warn("No onTrainingAdded callback provided");

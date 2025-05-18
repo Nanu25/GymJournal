@@ -10,7 +10,7 @@ class LoggingService {
         log.action = action;
         log.entityType = entityType;
         if (entityId)
-            log.entityId = entityId;
+            log.entityId = typeof entityId === 'string' ? Number(entityId) : entityId;
         if (details)
             log.details = details;
         await this.activityLogRepository.save(log);

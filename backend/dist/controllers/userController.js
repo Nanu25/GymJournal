@@ -235,7 +235,7 @@ const deleteUser = async (req, res) => {
             userId: Number(req.user.id),
             action: ActivityLog_1.ActionType.DELETE,
             entityType: 'User',
-            entityId: userId,
+            entityId: Number(userId),
             details: { deletedUser: userToDelete.email },
             timestamp: new Date()
         });
