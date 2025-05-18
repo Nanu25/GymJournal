@@ -11,6 +11,8 @@ import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
+// Import for debugging
+import { createTraining, debugTrainingController } from './controllers/TrainingController';
 
 console.log('[APP] Starting Gym Journal API server...');
 console.log('[APP] Node environment:', process.env.NODE_ENV);
@@ -179,6 +181,24 @@ app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 // Auth routes
 app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
+
+// Add debug routes in non-production environments
+if (process.env.NODE_ENV !== 'production') {
+    console.log('[APP] Adding debug routes (non-production environment)');
+    
+    app.get('/api/debug/trainings', debugTrainingController);
+    
+    // Debug route to test direct training creation
+    app.post('/api/debug/trainings', (req: Request, res: Response) => {
+        console.log('[DEBUG] Direct training creation test');
+        console.log('[DEBUG] Request body:', req.body);
+        
+        // Set mock user for testing
+        req.user = { id: 1 };
+        
+        createTraining(req, res);
+    });
+}
 
 // Fallback: serve index.html for any non-API route (for React Router)
 app.get('*', (req: Request, res: Response) => {

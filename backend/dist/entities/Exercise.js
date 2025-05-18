@@ -16,8 +16,8 @@ let Exercise = class Exercise {
 };
 exports.Exercise = Exercise;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
+    (0, typeorm_1.PrimaryGeneratedColumn)('increment'),
+    __metadata("design:type", Number)
 ], Exercise.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),

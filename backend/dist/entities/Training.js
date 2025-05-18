@@ -17,8 +17,8 @@ let Training = class Training extends typeorm_1.BaseEntity {
 };
 exports.Training = Training;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
+    (0, typeorm_1.PrimaryGeneratedColumn)('increment'),
+    __metadata("design:type", Number)
 ], Training.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'date' }),
@@ -33,6 +33,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'integer' }),
     __metadata("design:type", Number)
 ], Training.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    __metadata("design:type", Object)
+], Training.prototype, "exercises", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => TrainingExercise_1.TrainingExercise, trainingExercise => trainingExercise.training, {
         cascade: true

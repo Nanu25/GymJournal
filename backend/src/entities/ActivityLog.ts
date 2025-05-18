@@ -10,8 +10,8 @@ export enum ActionType {
 
 @Entity('activity_logs')
 export class ActivityLog {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column({ type: 'integer' })
     userId!: number;
@@ -29,8 +29,8 @@ export class ActivityLog {
     @Column()
     entityType!: string;
 
-    @Column({ type: 'uuid', nullable: true })
-    entityId!: string | null;
+    @Column({ type: 'integer', nullable: true })
+    entityId!: number | null;
 
     @Column({ type: 'jsonb', nullable: true })
     details!: Record<string, any>;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = exports.updateTrainingByDate = exports.deleteTraining = exports.createTraining = exports.getAllTrainings = void 0;
+exports.debugTrainingController = exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = exports.updateTrainingByDate = exports.deleteTraining = exports.createTraining = exports.getAllTrainings = void 0;
 const Training_1 = require("../entities/Training");
 const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
@@ -130,7 +130,15 @@ const createTraining = async (req, res) => {
         const training = new Training_1.Training();
         training.date = new Date(date);
         training.userId = Number(req.user.id);
+        const exercisesRecord = {};
+        for (const [key, value] of Object.entries(exercises)) {
+            if (!isNaN(Number(value)) && Number(value) > 0) {
+                exercisesRecord[key] = Number(value);
+            }
+        }
+        training.exercises = exercisesRecord;
         console.log(`Creating training with userId: ${training.userId} (type: ${typeof training.userId})`);
+        console.log(`Exercises data: ${JSON.stringify(training.exercises)}`);
         const savedTraining = await trainingRepository.save(training);
         const trainingExercises = [];
         for (const [exerciseName, weight] of Object.entries(exercises)) {
@@ -461,4 +469,51 @@ const getUniqueExercises = async (req, res) => {
     }
 };
 exports.getUniqueExercises = getUniqueExercises;
+const debugTrainingController = async (_req, res) => {
+    try {
+        console.log('[DEBUG] TrainingController debug function called');
+        if (!database_1.AppDataSource.isInitialized) {
+            console.error('[DEBUG] Database not initialized');
+            res.status(500).json({ message: 'Database not initialized' });
+            return;
+        }
+        console.log('[DEBUG] Database is initialized');
+        try {
+            const users = await database_1.AppDataSource.query('SELECT id, email FROM users LIMIT 5');
+            console.log('[DEBUG] Users in database:', users);
+        }
+        catch (error) {
+            console.error('[DEBUG] Error querying users:', error);
+        }
+        try {
+            const trainingTableInfo = await database_1.AppDataSource.query(`
+                SELECT column_name, data_type, is_nullable
+                FROM information_schema.columns
+                WHERE table_name = 'trainings'
+                ORDER BY ordinal_position
+            `);
+            console.log('[DEBUG] Training table structure:', trainingTableInfo);
+        }
+        catch (error) {
+            console.error('[DEBUG] Error querying training table structure:', error);
+        }
+        try {
+            const trainings = await database_1.AppDataSource.query('SELECT id, "userId", date FROM trainings LIMIT 5');
+            console.log('[DEBUG] Trainings in database:', trainings);
+        }
+        catch (error) {
+            console.error('[DEBUG] Error querying trainings:', error);
+        }
+        res.status(200).json({
+            message: 'Debug info logged to console',
+            dbInitialized: database_1.AppDataSource.isInitialized,
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        console.error('[DEBUG] Error in debug function:', error);
+        res.status(500).json({ message: 'Error in debug function' });
+    }
+};
+exports.debugTrainingController = debugTrainingController;
 //# sourceMappingURL=TrainingController.js.map

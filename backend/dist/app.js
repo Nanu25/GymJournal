@@ -16,6 +16,7 @@ const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
+const TrainingController_1 = require("./controllers/TrainingController");
 console.log('[APP] Starting Gym Journal API server...');
 console.log('[APP] Node environment:', process.env.NODE_ENV);
 console.log('[APP] Current directory:', __dirname);
@@ -137,6 +138,16 @@ app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
 app.post('/api/auth/register', auth_controller_1.AuthController.register);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
+if (process.env.NODE_ENV !== 'production') {
+    console.log('[APP] Adding debug routes (non-production environment)');
+    app.get('/api/debug/trainings', TrainingController_1.debugTrainingController);
+    app.post('/api/debug/trainings', (req, res) => {
+        console.log('[DEBUG] Direct training creation test');
+        console.log('[DEBUG] Request body:', req.body);
+        req.user = { id: 1 };
+        (0, TrainingController_1.createTraining)(req, res);
+    });
+}
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/'))
         return;

@@ -23,8 +23,8 @@ let ActivityLog = class ActivityLog {
 };
 exports.ActivityLog = ActivityLog;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
+    (0, typeorm_1.PrimaryGeneratedColumn)('increment'),
+    __metadata("design:type", Number)
 ], ActivityLog.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'integer' }),
@@ -47,7 +47,7 @@ __decorate([
     __metadata("design:type", String)
 ], ActivityLog.prototype, "entityType", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'integer', nullable: true }),
     __metadata("design:type", Object)
 ], ActivityLog.prototype, "entityId", void 0);
 __decorate([

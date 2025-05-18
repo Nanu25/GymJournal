@@ -4,8 +4,8 @@ import { TrainingExercise } from './TrainingExercise';
 
 @Entity('exercises')
 export class Exercise {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column()
     name!: string;

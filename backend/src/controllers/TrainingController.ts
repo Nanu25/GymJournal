@@ -167,12 +167,23 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         const training = new Training();
         training.date = new Date(date);
         training.userId = Number(req.user.id);
+        
+        // Store exercises directly in the exercises column as well
+        const exercisesRecord: Record<string, number> = {};
+        for (const [key, value] of Object.entries(exercises)) {
+            if (!isNaN(Number(value)) && Number(value) > 0) {
+                exercisesRecord[key] = Number(value);
+            }
+        }
+        training.exercises = exercisesRecord;
+        
         console.log(`Creating training with userId: ${training.userId} (type: ${typeof training.userId})`);
+        console.log(`Exercises data: ${JSON.stringify(training.exercises)}`);
 
         // Save training first to get ID
         const savedTraining = await trainingRepository.save(training);
 
-        // Process exercises
+        // Process exercises for TrainingExercise relationships
         const trainingExercises: TrainingExercise[] = [];
 
         for (const [exerciseName, weight] of Object.entries(exercises)) {
@@ -569,5 +580,60 @@ export const getUniqueExercises = async (req: Request, res: Response): Promise<v
     } catch (error) {
         console.error('[CONTROLLER] Error in getUniqueExercises:', error);
         res.status(500).json({ message: 'Error getting unique exercises', error });
+    }
+};
+
+// Debug function for testing
+export const debugTrainingController = async (_req: Request, res: Response): Promise<void> => {
+    try {
+        console.log('[DEBUG] TrainingController debug function called');
+        
+        // Check database connection
+        if (!AppDataSource.isInitialized) {
+            console.error('[DEBUG] Database not initialized');
+            res.status(500).json({ message: 'Database not initialized' });
+            return;
+        }
+        
+        console.log('[DEBUG] Database is initialized');
+        
+        // Check user table
+        try {
+            const users = await AppDataSource.query('SELECT id, email FROM users LIMIT 5');
+            console.log('[DEBUG] Users in database:', users);
+        } catch (error) {
+            console.error('[DEBUG] Error querying users:', error);
+        }
+        
+        // Check training table structure
+        try {
+            const trainingTableInfo = await AppDataSource.query(`
+                SELECT column_name, data_type, is_nullable
+                FROM information_schema.columns
+                WHERE table_name = 'trainings'
+                ORDER BY ordinal_position
+            `);
+            console.log('[DEBUG] Training table structure:', trainingTableInfo);
+        } catch (error) {
+            console.error('[DEBUG] Error querying training table structure:', error);
+        }
+        
+        // Check existing trainings
+        try {
+            const trainings = await AppDataSource.query('SELECT id, "userId", date FROM trainings LIMIT 5');
+            console.log('[DEBUG] Trainings in database:', trainings);
+        } catch (error) {
+            console.error('[DEBUG] Error querying trainings:', error);
+        }
+        
+        // Return debugging info
+        res.status(200).json({
+            message: 'Debug info logged to console',
+            dbInitialized: AppDataSource.isInitialized,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[DEBUG] Error in debug function:', error);
+        res.status(500).json({ message: 'Error in debug function' });
     }
 };

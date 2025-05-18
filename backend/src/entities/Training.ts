@@ -5,8 +5,8 @@ import { TrainingExercise } from './TrainingExercise';
 
 @Entity('trainings')
 export class Training extends BaseEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column({ type: 'date' })
     date!: Date;
@@ -17,6 +17,9 @@ export class Training extends BaseEntity {
 
     @Column({ type: 'integer' })
     userId!: number;
+    
+    @Column({ type: 'jsonb', nullable: true })
+    exercises!: Record<string, number> | null;
 
     @OneToMany(() => TrainingExercise, trainingExercise => trainingExercise.training, {
         cascade: true
