@@ -23,10 +23,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { userId: string };
-        req.user = { id: decoded.userId };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { userId: string | number };
+        // Ensure userId is always treated as a string
+        req.user = { id: String(decoded.userId) };
         next();
     } catch (error) {
+        console.error('JWT verification error:', error);
         res.status(403).json({ message: 'Invalid token' });
     }
 };
