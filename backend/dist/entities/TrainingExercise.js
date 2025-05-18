@@ -43,6 +43,6 @@ __decorate([
     __metadata("design:type", Exercise_1.Exercise)
 ], TrainingExercise.prototype, "exercise", void 0);
 exports.TrainingExercise = TrainingExercise = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('training_exercises')
 ], TrainingExercise);
 //# sourceMappingURL=TrainingExercise.js.map

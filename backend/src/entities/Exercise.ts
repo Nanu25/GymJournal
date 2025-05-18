@@ -2,7 +2,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { TrainingExercise } from './TrainingExercise';
 
-@Entity()
+@Entity('exercises')
 export class Exercise {
     @PrimaryGeneratedColumn('uuid')
     id!: string;

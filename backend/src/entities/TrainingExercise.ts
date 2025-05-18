@@ -3,7 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 't
 import { Training } from './Training';
 import { Exercise } from './Exercise';
 
-@Entity()
+@Entity('training_exercises')
 export class TrainingExercise {
     @PrimaryGeneratedColumn('uuid')
     id!: string;

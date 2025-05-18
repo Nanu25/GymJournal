@@ -105,6 +105,7 @@ app.get('/api/videos', (_req, res) => {
 app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
+app.post('/api/auth/register', auth_controller_1.AuthController.register);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/'))
