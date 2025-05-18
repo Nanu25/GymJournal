@@ -123,7 +123,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                     throw new Error("Failed to fetch trainings");
                 }
                 const data = await response.json();
-                setTrainings(data);
+                // Extract trainings from the paginated response
+                if (data.data && Array.isArray(data.data)) {
+                    setTrainings(data.data);
+                    console.log("Fetched trainings:", data.data);
+                } else {
+                    // Fallback for backward compatibility
+                    setTrainings(Array.isArray(data) ? data : []);
+                    console.log("Fetched trainings (old format):", data);
+                }
             } catch (error) {
                 console.error("Error fetching trainings:", error);
             }
@@ -160,7 +168,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 throw new Error("Failed to fetch updated trainings");
             }
             const data = await response.json();
-            setTrainings(data);
+            // Extract trainings from the paginated response
+            if (data.data && Array.isArray(data.data)) {
+                setTrainings(data.data);
+            } else {
+                // Fallback for backward compatibility
+                setTrainings(Array.isArray(data) ? data : []);
+            }
             setShowTrainingSelector(false);
         } catch (error) {
             console.error("Error fetching updated trainings:", error);
