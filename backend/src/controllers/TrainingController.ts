@@ -392,10 +392,16 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
 
 export const getMuscleGroupDistribution = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('[CONTROLLER] getMuscleGroupDistribution called');
+        
         if (!req.user?.id) {
+            console.log('[CONTROLLER] getMuscleGroupDistribution: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
+        
+        console.log('[CONTROLLER] getMuscleGroupDistribution: Starting query for user', req.user.id);
+        console.time('[CONTROLLER] muscleGroupQuery');
 
         // Using more efficient query with joins and group by
         const result = await AppDataSource
@@ -409,14 +415,18 @@ export const getMuscleGroupDistribution = async (req: Request, res: Response): P
             .groupBy('e.muscleGroup')
             .getRawMany();
 
+        console.timeEnd('[CONTROLLER] muscleGroupQuery');
+        console.log('[CONTROLLER] getMuscleGroupDistribution: Query returned', result.length, 'groups');
+
         const muscleGroupCounts: { [key: string]: number } = {};
         result.forEach(item => {
             muscleGroupCounts[item.muscleGroup || 'Other'] = parseInt(item.count, 10);
         });
 
+        console.log('[CONTROLLER] getMuscleGroupDistribution: Sending response');
         res.status(200).json(muscleGroupCounts);
     } catch (error) {
-        console.error('Error getting muscle group distribution:', error);
+        console.error('[CONTROLLER] Error in getMuscleGroupDistribution:', error);
         res.status(500).json({ message: 'Error getting muscle group distribution', error });
     }
 };
@@ -464,10 +474,16 @@ export const getExerciseProgressData = async (req: Request, res: Response): Prom
 
 export const getTotalWeightPerSession = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('[CONTROLLER] getTotalWeightPerSession called');
+        
         if (!req.user?.id) {
+            console.log('[CONTROLLER] getTotalWeightPerSession: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
+        
+        console.log('[CONTROLLER] getTotalWeightPerSession: Starting query for user', req.user.id);
+        console.time('[CONTROLLER] totalWeightQuery');
 
         // More efficient query with direct aggregation in the database
         const result = await AppDataSource
@@ -481,6 +497,9 @@ export const getTotalWeightPerSession = async (req: Request, res: Response): Pro
             .orderBy('t.date', 'ASC')
             .getRawMany();
 
+        console.timeEnd('[CONTROLLER] totalWeightQuery');
+        console.log('[CONTROLLER] getTotalWeightPerSession: Query returned', result.length, 'sessions');
+
         const totalWeightData = result.map(item => {
             const date = new Date(item.date).toISOString().split('T')[0];
             return {
@@ -489,19 +508,26 @@ export const getTotalWeightPerSession = async (req: Request, res: Response): Pro
             };
         });
 
+        console.log('[CONTROLLER] getTotalWeightPerSession: Sending response');
         res.status(200).json(totalWeightData);
     } catch (error) {
-        console.error('Error getting total weight per session:', error);
+        console.error('[CONTROLLER] Error in getTotalWeightPerSession:', error);
         res.status(500).json({ message: 'Error getting total weight per session', error });
     }
 };
 
 export const getUniqueExercises = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('[CONTROLLER] getUniqueExercises called');
+        
         if (!req.user?.id) {
+            console.log('[CONTROLLER] getUniqueExercises: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
+        
+        console.log('[CONTROLLER] getUniqueExercises: Starting query for user', req.user.id);
+        console.time('[CONTROLLER] uniqueExercisesQuery');
 
         // More efficient query to get unique exercises directly from the database
         const result = await AppDataSource
@@ -514,10 +540,15 @@ export const getUniqueExercises = async (req: Request, res: Response): Promise<v
             .orderBy('e.name', 'ASC')
             .getRawMany();
 
+        console.timeEnd('[CONTROLLER] uniqueExercisesQuery');
+        console.log('[CONTROLLER] getUniqueExercises: Query returned', result.length, 'exercises');
+
         const uniqueExercises = result.map(item => item.name);
+        
+        console.log('[CONTROLLER] getUniqueExercises: Sending response');
         res.status(200).json(uniqueExercises);
     } catch (error) {
-        console.error('Error getting unique exercises:', error);
+        console.error('[CONTROLLER] Error in getUniqueExercises:', error);
         res.status(500).json({ message: 'Error getting unique exercises', error });
     }
 };

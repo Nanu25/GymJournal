@@ -7,9 +7,13 @@ import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
 import activityLogRoutes from './routes/activityLog.routes';
 import fs from 'fs';
-import { AppDataSource } from './config/database';
+import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
+
+console.log('[APP] Starting Gym Journal API server...');
+console.log('[APP] Node environment:', process.env.NODE_ENV);
+console.log('[APP] Current directory:', __dirname);
 
 // Ensure 'uploads/' directory exists in both development and production
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -40,6 +44,20 @@ const corsOptions = {
     credentials: true
 };
 
+// Request logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const start = Date.now();
+    console.log(`[REQUEST] ${req.method} ${req.url} - Started`);
+    
+    // Add response finished handler
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[REQUEST] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
+    });
+    
+    next();
+});
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -48,19 +66,20 @@ app.use(express.json());
 app.use(express.static(publicDir));
 
 // Root path handler - serve the React app
-// app.get('/', (_req: Request, res: Response) => {
-//     res.sendFile(path.join(publicDir, 'index.html'));
-// });
-
-app.get('*', (req: Request, res: Response) => {
-    if (req.path.startsWith('/api/')) return;
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) return next();
     res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-
 // API status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
-    res.json({ message: 'Gym Journal API is running' });
+    console.log('[API] Status endpoint called');
+    res.json({ 
+        message: 'Gym Journal API is running', 
+        time: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        dbConnected: AppDataSource.isInitialized 
+    });
 });
 
 // Define a request type that includes the `file` property for multer
@@ -98,39 +117,48 @@ app.use('/uploads', express.static(uploadsDir));
 
 // Upload video endpoint
 app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, _next: NextFunction): void => {
+    console.log('[API] Upload endpoint called');
     if (!req.file) {
+        console.log('[API] Upload failed - no file');
         res.status(400).json({ message: 'No file uploaded.' });
         return;
     }
 
+    console.log('[API] Upload successful:', req.file.filename);
     res.json({ fileName: req.file.filename, filePath: `/uploads/${req.file.filename}` });
 });
 
 // Download video endpoint
 app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunction): void => {
     const filePath: string = path.join(uploadsDir, req.params.filename);
+    console.log('[API] Download endpoint called for file:', req.params.filename);
 
     res.download(filePath, (err: Error | null) => {
         if (err) {
+            console.log('[API] Download failed:', err.message);
             res.status(404).json({ message: 'File not found.' });
+        } else {
+            console.log('[API] Download successful');
         }
     });
 });
 
 // Get all videos endpoint
 app.get('/api/videos', (_req: Request, res: Response): void => {
+    console.log('[API] Videos endpoint called');
     try {
         fs.readdir(uploadsDir, (err, files) => {
             if (err) {
-                console.error('Error reading directory:', err);
+                console.error('[API] Error reading directory:', err);
                 res.status(500).json({ message: 'Error reading videos directory' });
                 return;
             }
             const videoFiles = files.filter(file => file.match(/\.(mp4|mov|avi)$/i));
+            console.log('[API] Videos endpoint returning', videoFiles.length, 'files');
             res.status(200).json(videoFiles);
         });
     } catch (error) {
-        console.error('Error:', error);
+        console.error('[API] Error:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
@@ -155,25 +183,35 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error(err.stack);
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[ERROR]', req.method, req.url, err.stack);
     res.status(500).json({
         success: false,
         error: 'Internal server error',
+        message: err.message,
+        path: req.url
     });
 });
 
-// Initialize database connection
-AppDataSource.initialize()
-    .then(() => {
-        console.log('Database connection established');
+// Use our new database initialization function
+console.log('[APP] Starting database initialization...');
+
+initializeDatabase()
+    .then((success) => {
+        if (!success) {
+            console.error('[APP] Database initialization failed. Exiting.');
+            process.exit(1);
+        }
+        
+        console.log('[APP] Database initialization successful!');
         // Only start the server after database connection is established
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
+            console.log(`[APP] Server is running on port ${PORT}`);
+            console.log(`[APP] API available at http://localhost:${PORT}/api`);
         });
     })
     .catch((error) => {
-        console.error('Error during database initialization:', error);
+        console.error('[APP] Error during database initialization:', error);
         process.exit(1); // Exit if database connection fails
     });

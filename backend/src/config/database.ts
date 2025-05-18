@@ -14,21 +14,26 @@ const getDatabaseConfig = (): DataSourceOptions => {
     console.log('[DB_CONFIG] Entering getDatabaseConfig()');
     if (process.env.DATABASE_URL) {
         console.log('[DB_CONFIG] DATABASE_URL found. Parsing...');
-        // Heroku provides a DATABASE_URL in the format:
-        // postgres://username:password@host:port/database
-        const url = new URL(process.env.DATABASE_URL);
-        console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
-        return {
-            type: 'postgres',
-            host: url.hostname,
-            port: parseInt(url.port),
-            username: url.username,
-            password: url.password,
-            database: url.pathname.substring(1),
-            ssl: {
-                rejectUnauthorized: false // Required for Heroku
-            }
-        };
+        try {
+            // Heroku provides a DATABASE_URL in the format:
+            // postgres://username:password@host:port/database
+            const url = new URL(process.env.DATABASE_URL);
+            console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
+            return {
+                type: 'postgres',
+                host: url.hostname,
+                port: parseInt(url.port),
+                username: url.username,
+                password: url.password,
+                database: url.pathname.substring(1),
+                ssl: {
+                    rejectUnauthorized: false // Required for Heroku
+                }
+            };
+        } catch (error) {
+            console.error('[DB_CONFIG] ERROR parsing DATABASE_URL:', error);
+            throw error;
+        }
     }
     
     console.log('[DB_CONFIG] DATABASE_URL not found, using local development database configuration');
@@ -58,7 +63,8 @@ try {
     appDataSourceInstance = new DataSource({
         ...dbConfig,
         synchronize: process.env.NODE_ENV !== 'production', // Only true in development
-        logging: process.env.NODE_ENV !== 'production', // Consider setting to true for Heroku debugging temporarily
+        logging: true, // Enable logging for all database operations
+        logger: "advanced-console", // Use detailed logging
         entities: entities,
         subscribers: [],
         migrations: [],
@@ -73,3 +79,25 @@ try {
 
 // Create and export the data source
 export const AppDataSource = appDataSourceInstance; 
+
+// Add a wrapper function to help with debugging
+export const initializeDatabase = async () => {
+    console.log('[DB_INIT] Starting database initialization...');
+    try {
+        console.time('[DB_INIT] Database connection time');
+        await AppDataSource.initialize();
+        console.timeEnd('[DB_INIT] Database connection time');
+        console.log('[DB_INIT] Database connection successful!');
+        
+        // Test a simple query to verify it's really working
+        console.time('[DB_INIT] Test query time');
+        const userCount = await AppDataSource.getRepository(User).count();
+        console.timeEnd('[DB_INIT] Test query time');
+        console.log(`[DB_INIT] Database test query complete. Found ${userCount} users.`);
+        
+        return true;
+    } catch (error) {
+        console.error('[DB_INIT] CRITICAL ERROR during database initialization:', error);
+        return false;
+    }
+}; 
