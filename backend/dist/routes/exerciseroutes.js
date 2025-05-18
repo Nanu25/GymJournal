@@ -19,15 +19,24 @@ router.get('/', async (_req, res) => {
         }
         console.log(`[EXERCISE_ROUTES] Found ${exercises.length} exercises in the database`);
         const grouped = exercises.reduce((acc, ex) => {
-            acc[ex.muscleGroup] = acc[ex.muscleGroup] || [];
-            acc[ex.muscleGroup].push(ex.name);
+            const muscleGroup = ex.muscleGroup;
+            if (!acc[muscleGroup]) {
+                acc[muscleGroup] = [];
+            }
+            acc[muscleGroup].push(ex.name);
             return acc;
         }, {});
         const result = Object.entries(grouped).map(([category, exercises]) => ({
             category,
             exercises,
         }));
-        res.json(result);
+        const responseWithMetadata = {
+            source: 'database',
+            count: exercises.length,
+            categories: result.length,
+            data: result
+        };
+        res.json(responseWithMetadata);
     }
     catch (err) {
         console.error('[EXERCISE_ROUTES] Error fetching exercises:', err);
@@ -62,7 +71,13 @@ function sendMockExercises(res) {
             exercises: ['Crunches', 'Leg Raises', 'Plank', 'Russian Twist', 'Ab Wheel Rollout']
         }
     ];
-    res.json(mockExercises);
+    const responseWithMetadata = {
+        source: 'mock',
+        count: mockExercises.reduce((sum, cat) => sum + cat.exercises.length, 0),
+        categories: mockExercises.length,
+        data: mockExercises
+    };
+    res.json(responseWithMetadata);
 }
 exports.default = router;
 //# sourceMappingURL=exerciseroutes.js.map

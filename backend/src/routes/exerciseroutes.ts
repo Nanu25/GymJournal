@@ -27,8 +27,11 @@ router.get('/', async (_req, res) => {
     
     // Group by muscleGroup
     const grouped = exercises.reduce((acc: Record<string, string[]>, ex) => {
-      acc[ex.muscleGroup] = acc[ex.muscleGroup] || [];
-      acc[ex.muscleGroup].push(ex.name);
+      const muscleGroup = ex.muscleGroup;
+      if (!acc[muscleGroup]) {
+        acc[muscleGroup] = [];
+      }
+      acc[muscleGroup].push(ex.name);
       return acc;
     }, {});
     
@@ -38,7 +41,15 @@ router.get('/', async (_req, res) => {
       exercises,
     }));
     
-    res.json(result);
+    // Add a data source indicator
+    const responseWithMetadata = {
+      source: 'database',
+      count: exercises.length,
+      categories: result.length,
+      data: result
+    };
+    
+    res.json(responseWithMetadata);
   } catch (err) {
     console.error('[EXERCISE_ROUTES] Error fetching exercises:', err);
     sendMockExercises(res);
@@ -75,7 +86,15 @@ function sendMockExercises(res: any) {
     }
   ];
   
-  res.json(mockExercises);
+  // Add metadata to the response
+  const responseWithMetadata = {
+    source: 'mock',
+    count: mockExercises.reduce((sum, cat) => sum + cat.exercises.length, 0),
+    categories: mockExercises.length,
+    data: mockExercises
+  };
+  
+  res.json(responseWithMetadata);
 }
 
 export default router; 

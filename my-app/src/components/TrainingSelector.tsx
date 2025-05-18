@@ -45,6 +45,17 @@ const DEFAULT_EXERCISE_CATEGORIES = [
     }
 ];
 
+// Add interface for the API response
+interface ExerciseApiResponse {
+    source: 'database' | 'mock';
+    count: number;
+    categories: number;
+    data: {
+        category: string;
+        exercises: string[];
+    }[];
+}
+
 const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, onCancel }) => {
     const [trainingData, setTrainingData] = useState<TrainingData>({});
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -54,6 +65,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [usingDatabaseData, setUsingDatabaseData] = useState<boolean>(false);
+    const [exerciseStats, setExerciseStats] = useState<{count: number, categories: number} | null>(null);
 
     useEffect(() => {
         const fetchExercises = async () => {
@@ -72,32 +84,52 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                     throw new Error(`Failed to fetch exercises: ${response.status} ${response.statusText}`);
                 }
                 
-                const data = await response.json();
-                const totalExerciseCount = data.reduce((total: number, category: any) => 
-                    total + category.exercises.length, 0);
+                // Parse the response as the new format
+                const rawData = await response.json();
+                console.log('API Response:', rawData);
                 
-                console.log(`Successfully fetched ${totalExerciseCount} exercises from database in ${data.length} categories`);
-                console.log('Categories:', data.map((cat: any) => cat.category).join(', '));
+                // Handle both old and new response formats
+                let exerciseData;
+                let dataSource = 'unknown';
+                let exerciseCount = 0;
+                let categoriesCount = 0;
                 
-                // Validate data has expected structure
-                if (data.length > 0 && 
-                    data[0].category && 
-                    Array.isArray(data[0].exercises) && 
-                    data[0].exercises.length > 0) {
-                    
-                    setExerciseCategories(data);
-                    setActiveCategory(data[0].category);
-                    setError(null);
-                    setUsingDatabaseData(true);
-                    
-                    // Add a success message
-                    console.log('Exercise data successfully loaded from database');
+                if (rawData.source && rawData.data) {
+                    // New format with metadata
+                    dataSource = rawData.source;
+                    exerciseCount = rawData.count;
+                    categoriesCount = rawData.categories;
+                    exerciseData = rawData.data;
+                } else if (Array.isArray(rawData)) {
+                    // Old format (direct array)
+                    dataSource = 'unknown';
+                    exerciseData = rawData;
+                    exerciseCount = rawData.reduce((total, cat) => total + cat.exercises.length, 0);
+                    categoriesCount = rawData.length;
                 } else {
-                    throw new Error('Invalid exercise data structure received from server');
+                    throw new Error('Invalid response format from server');
+                }
+                
+                // Update state based on the data
+                setUsingDatabaseData(dataSource === 'database');
+                setExerciseStats({
+                    count: exerciseCount,
+                    categories: categoriesCount
+                });
+                
+                if (exerciseData.length > 0) {
+                    setExerciseCategories(exerciseData);
+                    setActiveCategory(exerciseData[0].category);
+                    setError(null);
+                    
+                    console.log(`Successfully loaded ${exerciseCount} exercises from ${dataSource}`);
+                    console.log('Categories:', exerciseData.map(cat => cat.category).join(', '));
+                } else {
+                    throw new Error('No exercise categories received');
                 }
             } catch (err) {
-                console.error('Error fetching exercises from database:', err);
-                setError("Failed to fetch exercises from database. Using default exercise list.");
+                console.error('Error fetching exercises from API:', err);
+                setError("Failed to fetch exercises from server. Using default exercise list.");
                 setUsingDatabaseData(false);
                 
                 // Use default exercise categories as fallback
@@ -106,6 +138,11 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 if (DEFAULT_EXERCISE_CATEGORIES.length > 0) {
                     setActiveCategory(DEFAULT_EXERCISE_CATEGORIES[0].category);
                 }
+                
+                setExerciseStats({
+                    count: DEFAULT_EXERCISE_CATEGORIES.reduce((total, cat) => total + cat.exercises.length, 0),
+                    categories: DEFAULT_EXERCISE_CATEGORIES.length
+                });
             } finally {
                 setLoading(false);
             }
@@ -194,8 +231,9 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                     : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
                         }`}>
                             {loading ? 'Connecting to database...' : 
-                                usingDatabaseData ? 'Using exercises from database' : 
-                                'Using fallback exercise data'}
+                                usingDatabaseData 
+                                    ? `Using ${exerciseStats?.count || 0} exercises from database (${exerciseStats?.categories || 0} categories)` 
+                                    : `Using fallback exercise data (${exerciseStats?.count || 0} exercises)`}
                         </div>
                         
                         {loading && (
