@@ -1,2 +1,1 @@
-release: node dist/scripts/run-migrations.js
-web: node dist/index.js 
+web: cd backend && npm install && NODE_ENV=production node dist/scripts/ensureUploadsDir.js && node dist/app.js 

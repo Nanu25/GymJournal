@@ -62,19 +62,6 @@ try {
         entities: entities,
         subscribers: [],
         migrations: [],
-        cache: {
-            duration: 60000, // 1 minute in milliseconds
-            type: "database",
-            tableName: "query_cache",
-            options: {
-                max: 100, // Maximum number of queries to store
-            }
-        },
-        extra: {
-            max: 5, // Maximum pool size
-            connectionTimeoutMillis: 10000, // 10 seconds
-            statement_timeout: 25000 // 25 seconds
-        }
     });
     console.log('[DB_CONFIG] DataSource instance created successfully.');
 } catch (error) {

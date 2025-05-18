@@ -33,14 +33,12 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
         const { searchTerm, sortField, sortDirection } = req.query;
         const page = parseInt((req.query.page as string) || '1', 10);
         const limit = parseInt((req.query.limit as string) || '5', 10);
-        const skip = (page - 1) * limit;
 
         if (!req.user?.id) {
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
 
-        // Create a base query builder
         const queryBuilder = AppDataSource
             .getRepository(Training)
             .createQueryBuilder('training')
@@ -48,18 +46,15 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             .leftJoinAndSelect('trainingExercise.exercise', 'exercise')
             .where('training.userId = :userId', { userId: req.user.id });
 
-        // Apply search filter if provided
         if (searchTerm) {
             const term = `%${searchTerm}%`;
+
             queryBuilder.andWhere(
                 '(CAST(training.date AS TEXT) LIKE :term OR exercise.name LIKE :term)',
                 { term }
             );
         }
 
-        // Get the total count for pagination before applying limit
-        const totalCount = await queryBuilder.getCount();
-        
         // Apply sorting
         if (sortField === 'date') {
             queryBuilder.orderBy('training.date', sortDirection === 'asc' ? 'ASC' : 'DESC');
@@ -67,13 +62,6 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             queryBuilder.orderBy('training.date', 'DESC');
         }
 
-        // Apply pagination
-        queryBuilder
-            .skip(skip)
-            .take(limit)
-            .cache(true, 30000); // Cache for 30 seconds
-
-        // Get the paginated data
         const trainings = await queryBuilder.getMany();
 
         // Transform data to match frontend expectations
@@ -95,7 +83,7 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             };
         });
 
-        // These sorts still need to happen in memory
+        // Apply additional sorting that requires the transformed data
         if (sortField === 'pr') {
             formattedTrainings.sort((a: FormattedTraining, b: FormattedTraining) => {
                 const prA = Object.values(a.exercises).length > 0 ? Math.max(...Object.values(a.exercises).map(Number)) : 0;
@@ -109,12 +97,16 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             });
         }
 
-        // Calculate page count
-        const pageCount = Math.ceil(totalCount / limit);
+        // Pagination
+        const total = formattedTrainings.length;
+        const pageCount = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const end = start + limit;
+        const paginatedData = formattedTrainings.slice(start, end);
 
         res.status(200).json({
-            data: formattedTrainings,
-            total: totalCount,
+            data: paginatedData,
+            total,
             page,
             pageCount
         });
@@ -405,29 +397,22 @@ export const getMuscleGroupDistribution = async (req: Request, res: Response): P
             return;
         }
 
-        // Use a more efficient query that aggregates data at the database level
-        const distributionData = await AppDataSource
-            .createQueryBuilder()
-            .select('e.muscleGroup', 'muscleGroup')
-            .addSelect('COUNT(*)', 'count')
-            .from(TrainingExercise, 'te')
-            .innerJoin('te.exercise', 'e')
-            .innerJoin('te.training', 't')
-            .where('t.userId = :userId', { userId: req.user.id })
-            .groupBy('e.muscleGroup')
-            .cache(true, 60000) // Cache for 1 minute
-            .getRawMany();
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
 
-        // Format the result
         const muscleGroupCounts: { [key: string]: number } = {};
-        distributionData.forEach(item => {
-            const muscleGroup = item.muscleGroup || 'Other';
-            muscleGroupCounts[muscleGroup] = parseInt(item.count);
+
+        trainings.forEach((training: Training) => {
+            training.trainingExercises.forEach((te: TrainingExercise) => {
+                const muscleGroup = te.exercise.muscleGroup || 'Other';
+                muscleGroupCounts[muscleGroup] = (muscleGroupCounts[muscleGroup] || 0) + 1;
+            });
         });
 
         res.status(200).json(muscleGroupCounts);
     } catch (error) {
-        console.error('Error getting muscle group distribution:', error);
         res.status(500).json({ message: 'Error getting muscle group distribution', error });
     }
 };
@@ -440,28 +425,33 @@ export const getExerciseProgressData = async (req: Request, res: Response): Prom
         }
 
         const { exercise } = req.params;
-        
-        // Use a more efficient query that filters at the database level
-        const progressData = await AppDataSource
-            .createQueryBuilder()
-            .select('t.date', 'date')
-            .addSelect('te.weight', 'weight')
-            .from(TrainingExercise, 'te')
-            .innerJoin('te.exercise', 'e')
-            .innerJoin('te.training', 't')
-            .where('t.userId = :userId', { userId: req.user.id })
-            .andWhere('e.name = :exerciseName', { exerciseName: exercise })
-            .orderBy('t.date', 'ASC')
-            .cache(true, 60000) // Cache for 1 minute
-            .getRawMany();
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
 
-        // Format the results
-        const formattedData = progressData.map(item => ({
-            date: new Date(item.date).toISOString().split('T')[0],
-            weight: Number(item.weight) || 0
-        }));
+        const progressData = trainings
+            .filter((training: Training) => 
+                training.trainingExercises.some((te: TrainingExercise) => 
+                    te.exercise.name === exercise
+                )
+            )
+            .map((training: Training) => {
+                const exerciseData = training.trainingExercises.find((te: TrainingExercise) => 
+                    te.exercise.name === exercise
+                );
+                const date = training.date instanceof Date 
+                    ? training.date.toISOString().split('T')[0]
+                    : new Date(training.date).toISOString().split('T')[0];
+                
+                return {
+                    date,
+                    weight: Number(exerciseData?.weight || 0)
+                };
+            })
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        res.status(200).json(formattedData);
+        res.status(200).json(progressData);
     } catch (error) {
         console.error('Error getting exercise progress data:', error);
         res.status(500).json({ message: 'Error getting exercise progress data', error });
@@ -475,27 +465,22 @@ export const getTotalWeightPerSession = async (req: Request, res: Response): Pro
             return;
         }
 
-        // Aggregate weight data at the database level with a more efficient query
-        const weightData = await AppDataSource
-            .createQueryBuilder()
-            .select('t.date', 'date')
-            .addSelect('SUM(te.weight)', 'totalWeight')
-            .from(Training, 't')
-            .innerJoin('t.trainingExercises', 'te')
-            .where('t.userId = :userId', { userId: req.user.id })
-            .groupBy('t.date')
-            .orderBy('t.date', 'ASC')
-            .cache(true, 60000) // Cache for 1 minute
-            .getRawMany();
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises']
+        });
 
-        // Format the results for consistency
-        const totalWeightData = weightData.map(item => {
-            const date = new Date(item.date).toISOString().split('T')[0];
+        const totalWeightData = trainings.map((training: Training) => {
+            const totalWeight = training.trainingExercises.reduce((sum, te) => sum + te.weight, 0);
+            const date = training.date instanceof Date 
+                ? training.date.toISOString().split('T')[0]
+                : new Date(training.date).toISOString().split('T')[0];
+            
             return {
                 date,
-                totalWeight: parseInt(item.totalWeight) || 0
+                totalWeight: Number(totalWeight)
             };
-        });
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         res.status(200).json(totalWeightData);
     } catch (error) {
@@ -511,23 +496,20 @@ export const getUniqueExercises = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        // Use a more efficient query to get distinct exercises directly from the database
-        const results = await AppDataSource
-            .createQueryBuilder()
-            .select('DISTINCT e.name', 'name')
-            .from(TrainingExercise, 'te')
-            .innerJoin('te.exercise', 'e')
-            .innerJoin('te.training', 't')
-            .where('t.userId = :userId', { userId: req.user.id })
-            .cache(true, 60000) // Cache for 1 minute
-            .getRawMany();
+        const trainings = await trainingRepository.find({
+            where: { userId: req.user.id },
+            relations: ['trainingExercises', 'trainingExercises.exercise']
+        });
 
-        // Extract the names
-        const uniqueExercises = results.map(item => item.name);
+        const uniqueExercises = new Set<string>();
+        trainings.forEach((training: Training) => {
+            training.trainingExercises.forEach((te: TrainingExercise) => {
+                uniqueExercises.add(te.exercise.name);
+            });
+        });
 
-        res.status(200).json(uniqueExercises);
+        res.status(200).json(Array.from(uniqueExercises));
     } catch (error) {
-        console.error('Error getting unique exercises:', error);
         res.status(500).json({ message: 'Error getting unique exercises', error });
     }
 };
