@@ -53,27 +53,52 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [usingDatabaseData, setUsingDatabaseData] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                console.log('Fetching exercises from:', `${API_BASE_URL}/exercises`);
-                const response = await fetch(`${API_BASE_URL}/exercises`);
+                console.log('Fetching exercises from database via API:', `${API_BASE_URL}/exercises`);
+                setLoading(true);
+                
+                const response = await fetch(`${API_BASE_URL}/exercises`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 
                 if (!response.ok) {
                     throw new Error(`Failed to fetch exercises: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
-                console.log('Successfully fetched exercises:', data);
+                const totalExerciseCount = data.reduce((total: number, category: any) => 
+                    total + category.exercises.length, 0);
                 
-                setExerciseCategories(data);
-                if (data.length > 0) {
+                console.log(`Successfully fetched ${totalExerciseCount} exercises from database in ${data.length} categories`);
+                console.log('Categories:', data.map((cat: any) => cat.category).join(', '));
+                
+                // Validate data has expected structure
+                if (data.length > 0 && 
+                    data[0].category && 
+                    Array.isArray(data[0].exercises) && 
+                    data[0].exercises.length > 0) {
+                    
+                    setExerciseCategories(data);
                     setActiveCategory(data[0].category);
+                    setError(null);
+                    setUsingDatabaseData(true);
+                    
+                    // Add a success message
+                    console.log('Exercise data successfully loaded from database');
+                } else {
+                    throw new Error('Invalid exercise data structure received from server');
                 }
             } catch (err) {
-                console.error('Error fetching exercises:', err);
-                setError("Failed to fetch exercises from server. Using default exercise list.");
+                console.error('Error fetching exercises from database:', err);
+                setError("Failed to fetch exercises from database. Using default exercise list.");
+                setUsingDatabaseData(false);
                 
                 // Use default exercise categories as fallback
                 console.log('Using default exercise categories as fallback');
@@ -159,6 +184,20 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                         <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
                             Add Training Session
                         </h2>
+                        
+                        {/* Data source indicator */}
+                        <div className={`text-center text-sm mb-4 py-1 px-3 rounded-full inline-block mx-auto ${
+                            usingDatabaseData 
+                                ? 'bg-green-100 text-green-800 border border-green-300' 
+                                : loading 
+                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                        }`}>
+                            {loading ? 'Connecting to database...' : 
+                                usingDatabaseData ? 'Using exercises from database' : 
+                                'Using fallback exercise data'}
+                        </div>
+                        
                         {loading && (
                             <div className="text-blue-200 text-center py-8">Loading exercises...</div>
                         )}
