@@ -60,6 +60,10 @@ const App = () => {
             )}
             {currentPage === "trainingSelector" && (
                 <TrainingSelector
+                    onTrainingAdded={() => {
+                        navigateToDashboard();
+                        // Optionally refresh the dashboard data here if needed
+                    }}
                     onCancel={navigateToDashboard}
                 />
             )}

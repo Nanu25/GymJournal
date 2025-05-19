@@ -9,7 +9,7 @@ interface TrainingEntry {
 }
 
 interface TrainingSelectorProps {
-    onTrainingAdded?: (training: TrainingEntry) => void;
+    onTrainingAdded: (training: TrainingEntry) => void;
     onCancel?: () => void;
 }
 
