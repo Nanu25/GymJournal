@@ -55,7 +55,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [usingDatabaseData, setUsingDatabaseData] = useState<boolean>(false);
     const [exerciseStats, setExerciseStats] = useState<{count: number, categories: number} | null>(null);
 
     useEffect(() => {
@@ -81,19 +80,16 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 
                 // Handle both old and new response formats
                 let exerciseData;
-                let dataSource = 'unknown';
                 let exerciseCount = 0;
                 let categoriesCount = 0;
                 
                 if ('source' in rawData && 'data' in rawData) {
                     // New format with metadata
-                    dataSource = rawData.source;
                     exerciseCount = rawData.count;
                     categoriesCount = rawData.categories;
                     exerciseData = rawData.data;
                 } else if (Array.isArray(rawData)) {
                     // Old format (direct array)
-                    dataSource = 'unknown';
                     exerciseData = rawData;
                     exerciseCount = rawData.reduce((total, cat) => total + cat.exercises.length, 0);
                     categoriesCount = rawData.length;
@@ -102,7 +98,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 }
                 
                 // Update state based on the data
-                setUsingDatabaseData(dataSource === 'database');
                 setExerciseStats({
                     count: exerciseCount,
                     categories: categoriesCount
@@ -113,7 +108,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                     setActiveCategory(exerciseData[0].category);
                     setError(null);
                     
-                    console.log(`Successfully loaded ${exerciseCount} exercises from ${dataSource}`);
+                    console.log(`Successfully loaded ${exerciseCount} exercises`);
                     console.log('Categories:', exerciseData.map((cat: {category: string}) => cat.category).join(', '));
                 } else {
                     throw new Error('No exercise categories received');
@@ -121,7 +116,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
             } catch (err) {
                 console.error('Error fetching exercises from API:', err);
                 setError("Failed to fetch exercises from server. Using default exercise list.");
-                setUsingDatabaseData(false);
                 
                 // Use default exercise categories as fallback
                 console.log('Using default exercise categories as fallback');
