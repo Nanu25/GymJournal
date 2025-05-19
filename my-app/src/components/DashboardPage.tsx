@@ -184,6 +184,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 // Fallback for backward compatibility
                 setTrainings(Array.isArray(data) ? data : []);
             }
+
+            // Add a small delay to ensure smooth transition
+            setTimeout(() => {
+                // Find and scroll to the PersonalRecordsCard
+                const personalRecordsCard = document.getElementById('personal-records-card');
+                if (personalRecordsCard) {
+                    personalRecordsCard.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
         } catch (error) {
             console.error("Error fetching updated trainings:", error);
             alert("Training added but failed to refresh the list. Please reload the page.");
