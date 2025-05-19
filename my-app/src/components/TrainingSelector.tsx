@@ -172,56 +172,34 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 exercises: filteredData,
             };
 
-            // Get the token from localStorage
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Not authenticated. Please log in again.');
             }
 
-            console.log(`Sending training data to: ${API_BASE_URL}/trainings`);
+            const response = await fetch(`${API_BASE_URL}/trainings`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(trainingEntry),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to save training");
+            }
+
+            const savedTraining = await response.json();
+            console.log("Training saved successfully:", savedTraining);
             
-            try {
-                // Show saving state
-                setIsSubmitting(true);
-                
-                const response = await fetch(`${API_BASE_URL}/trainings`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify(trainingEntry),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to save training");
-                }
-
-                const savedTraining = await response.json();
-                console.log("Training saved successfully:", savedTraining);
-                
-                // Call onTrainingAdded to trigger navigation back to dashboard
-                if (onTrainingAdded) {
-                    // Display success feedback momentarily before navigating
-                    setTimeout(() => {
-                        // Call the callback to navigate back to dashboard
-                        onTrainingAdded(savedTraining);
-                        
-                        // After a small delay, find and scroll to the PersonalRecordsCard
-                        setTimeout(() => {
-                            const personalRecordsCard = document.getElementById('personal-records-card');
-                            if (personalRecordsCard) {
-                                personalRecordsCard.scrollIntoView({ behavior: 'smooth' });
-                            }
-                        }, 300); // 300ms delay to ensure the dashboard is rendered
-                    }, 300);
-                } else {
-                    console.warn("No onTrainingAdded callback provided");
-                    setIsSubmitting(false);
-                }
-            } catch (error) {
-                throw error;
+            // Call onTrainingAdded to trigger navigation back to dashboard
+            if (onTrainingAdded) {
+                onTrainingAdded(savedTraining);
+            } else {
+                console.warn("No onTrainingAdded callback provided");
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error("Error saving training:", error);
@@ -241,18 +219,10 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                             Add Training Session
                         </h2>
                         
-                        {/* Data source indicator */}
-                        <div className={`text-center text-sm mb-4 py-1 px-3 rounded-full inline-block mx-auto ${
-                            usingDatabaseData 
-                                ? 'bg-green-100 text-green-800 border border-green-300' 
-                                : loading 
-                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                        }`}>
-                            {loading ? 'Connecting to database...' : 
-                                usingDatabaseData 
-                                    ? `Using ${exerciseStats?.count || 0} exercises from database (${exerciseStats?.categories || 0} categories)` 
-                                    : `Using fallback exercise data (${exerciseStats?.count || 0} exercises)`}
+                        {/* Exercise stats indicator */}
+                        <div className="text-center text-sm mb-4 py-1 px-3 rounded-full inline-block mx-auto bg-blue-100 text-blue-800 border border-blue-300">
+                            {loading ? 'Loading exercises...' : 
+                                `${exerciseStats?.count || 0} exercises in ${exerciseStats?.categories || 0} categories`}
                         </div>
                         
                         {loading && (
