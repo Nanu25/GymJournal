@@ -62,44 +62,30 @@ const getDatabaseConfig = (): DataSourceOptions => {
 };
 
 console.log('[DB_CONFIG] Database configuration function defined. Preparing to create DataSource.');
-let appDataSourceInstance: DataSource;
 
-try {
-    console.log('[DB_CONFIG] Defining entities for DataSource...');
-    const entities = [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser];
-    console.log('[DB_CONFIG] Entities defined. Number of entities:', entities.length);
-    entities.forEach(entity => console.log('[DB_CONFIG] Entity:', entity.name));
+const entities = [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser];
+console.log('[DB_CONFIG] Entities defined. Number of entities:', entities.length);
+entities.forEach(entity => console.log('[DB_CONFIG] Entity:', entity.name));
 
-    const dbConfig = getDatabaseConfig();
-    console.log('[DB_CONFIG] Resolved database configuration:', JSON.stringify(dbConfig, (key, value) => key === 'password' ? '[REDACTED]' : value));
+const dbConfig = getDatabaseConfig();
+console.log('[DB_CONFIG] Resolved database configuration:', JSON.stringify(dbConfig, (key, value) => key === 'password' ? '[REDACTED]' : value));
 
-    appDataSourceInstance = new DataSource({
-        ...dbConfig,
-        logging: process.env.NODE_ENV !== 'production', // Only log in development
-        logger: "advanced-console",
-        entities: entities,
-        subscribers: [],
-        cache: {
-            duration: 60000 // Cache query results for 1 minute
-        },
-        // Add safer synchronization options
-        synchronize: false, // Disable automatic synchronization
-        migrationsRun: true, // Run migrations automatically
-        migrationsTableName: "migrations", // Name of the migrations table
-        migrations: ["src/migrations/*.ts"], // Path to migrations
-        // Note: extra is already included in dbConfig, don't duplicate it here
-    });
-    console.log('[DB_CONFIG] DataSource instance created successfully.');
-} catch (error) {
-    console.error('[DB_CONFIG] CRITICAL ERROR during DataSource instantiation:', error);
-    process.exit(1); // Exit to make it clear this is a fatal startup error
-}
+export const AppDataSource = new DataSource({
+    ...dbConfig,
+    logging: process.env.NODE_ENV !== 'production',
+    logger: "advanced-console",
+    entities: entities,
+    subscribers: [],
+    cache: {
+        duration: 60000
+    },
+    synchronize: false,
+    migrationsRun: true,
+    migrationsTableName: "migrations",
+    migrations: ["src/migrations/*.ts"]
+});
 
-// Create and export the data source
-export const AppDataSource = appDataSourceInstance; 
-
-// Add a wrapper function to help with debugging and connection retries
-export const initializeDatabase = async () => {
+export async function initializeDatabase() {
     console.log('[DB_INIT] Starting database initialization...');
     const MAX_RETRIES = 5;
     let retries = 0;
@@ -142,4 +128,4 @@ export const initializeDatabase = async () => {
     }
     
     return false;
-}; 
+} 
