@@ -8,6 +8,7 @@
     "dev": "nodemon src/app.ts",
     "build": "tsc && node ../copy-frontend.js",
     "local-build": "tsc && node dist/scripts/ensureUploadsDir.js",
+    "heroku-postbuild": "npm ci && npm run build && node dist/scripts/ensureUploadsDir.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -17,6 +18,11 @@
     "db:init": "ts-node src/scripts/initializeDatabase.ts",
     "db:init:js": "node dist/scripts/initializeDatabase.js",
     "db:init:simple": "node initDb.js",
+    "test:supabase": "ts-node src/scripts/testSupabaseConnection.ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm migration:generate -- -d src/config/database.ts",
+    "migration:run": "npm run typeorm migration:run -- -d src/config/database.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d src/config/database.ts",
     "postinstall": "npm install bcryptjs --no-save"
   },
   "engines": {

@@ -9,16 +9,15 @@ import { MonitoredUser } from '../entities/MonitoredUser';
 
 console.log('[DB_CONFIG] Starting database configuration...');
 
-// Parse the DATABASE_URL from Heroku
 const getDatabaseConfig = (): DataSourceOptions => {
     console.log('[DB_CONFIG] Entering getDatabaseConfig()');
     if (process.env.DATABASE_URL) {
         console.log('[DB_CONFIG] DATABASE_URL found. Parsing...');
         try {
-            // Heroku provides a DATABASE_URL in the format:
-            // postgres://username:password@host:port/database
             const url = new URL(process.env.DATABASE_URL);
-            console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
+            console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)}`);
+            
+            // Supabase optimized configuration
             return {
                 type: 'postgres',
                 host: url.hostname,
@@ -27,18 +26,22 @@ const getDatabaseConfig = (): DataSourceOptions => {
                 password: url.password,
                 database: url.pathname.substring(1),
                 ssl: {
-                    rejectUnauthorized: false // Required for Heroku
+                    rejectUnauthorized: false // Required for Supabase
                 },
-                // Connection pool settings
-                poolSize: 20,
-                connectTimeoutMS: 10000,
+                // Supabase free tier optimized settings
+                poolSize: 5,
+                connectTimeoutMS: 5000,
                 extra: {
-                    // PostgreSQL specific settings
-                    max: 20,
-                    idleTimeoutMillis: 30000, 
-                    connectionTimeoutMillis: 10000,
-                    // Configure statement timeout to avoid Heroku H12 errors
-                    statement_timeout: 25000 // 25 seconds, below Heroku's 30s timeout
+                    max: 5,
+                    idleTimeoutMillis: 15000,
+                    connectionTimeoutMillis: 5000,
+                    statement_timeout: 15000,
+                    // Supabase specific optimizations
+                    application_name: 'gym-journal-app',
+                    // Enable prepared statements
+                    prepare: true,
+                    // Enable statement caching
+                    statement_cache_size: 100
                 }
             };
         } catch (error) {
@@ -48,7 +51,6 @@ const getDatabaseConfig = (): DataSourceOptions => {
     }
     
     console.log('[DB_CONFIG] DATABASE_URL not found, using local development database configuration');
-    // Fallback to local development configuration
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -73,15 +75,18 @@ try {
 
     appDataSourceInstance = new DataSource({
         ...dbConfig,
-        synchronize: process.env.NODE_ENV !== 'production', // Only true in development
         logging: process.env.NODE_ENV !== 'production', // Only log in development
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: [],
         cache: {
             duration: 60000 // Cache query results for 1 minute
-        }
+        },
+        // Add safer synchronization options
+        synchronize: false, // Disable automatic synchronization
+        migrationsRun: true, // Run migrations automatically
+        migrationsTableName: "migrations", // Name of the migrations table
+        migrations: ["src/migrations/*.ts"], // Path to migrations
         // Note: extra is already included in dbConfig, don't duplicate it here
     });
     console.log('[DB_CONFIG] DataSource instance created successfully.');
