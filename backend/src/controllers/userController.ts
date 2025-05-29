@@ -276,7 +276,7 @@ export const deleteUser = async (req: Request, res: Response) => {
             userId: Number(req.user.id),
             action: ActionType.DELETE,
             entityType: 'User',
-            entityId: userId,
+            entityId: Number(userId),
             details: { deletedUser: userToDelete.email },
             timestamp: new Date()
         });

@@ -15,7 +15,7 @@ export class LoggingService {
         log.userId = userId;
         log.action = action;
         log.entityType = entityType;
-        if (entityId) log.entityId = entityId;
+        if (entityId) log.entityId = Number(entityId);
         if (details) log.details = details;
 
         await this.activityLogRepository.save(log);
