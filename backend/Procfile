@@ -1,1 +1,1 @@
-web: cd backend && npm install && NODE_ENV=production node dist/scripts/ensureUploadsDir.js && node dist/app.js 
+web: npm install && NODE_ENV=production node dist/app.js 
