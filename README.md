@@ -22,10 +22,10 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard Screenshot](my-app/public/dashboard.png)
+![Dashboard Screenshot](dashboard.png)
 
 ### Login Page
-![Login Screenshot](my-app/public/login.png)
+![Login Screenshot](login.png)
 
 ## 🛠️ Tech Stack
 
