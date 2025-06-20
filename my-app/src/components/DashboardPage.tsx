@@ -5,6 +5,7 @@ import WelcomeHeader from "./WelcomeHeader";
 import PersonalRecordsCard from "./PersonalRecordsCard";
 import PRSection from "./PRSection";
 import TrainingSelector from "./TrainingSelector";
+import { useAuth } from "../context/AuthContext";
 
 interface TrainingEntry {
     date: string;
@@ -28,6 +29,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     const [showTrainingSelector, setShowTrainingSelector] = useState(false);
     const [username, setUsername] = useState<string>("Fitness Enthusiast"); // Default username
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const { logout } = useAuth();
 
     useEffect(() => {
         console.log('isAdmin value changed:', isAdmin);
@@ -223,7 +225,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                                         </button>
                                     )}
                                     <button
-                                        onClick={onLogout}
+                                        onClick={() => { logout(); onLogout(); }}
                                         className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-lg font-bold text-black bg-white rounded-xl shadow hover:bg-blue-100 border border-blue-100 transition-all duration-200 min-w-[44px] min-h-[44px] mr-2"
                                     >
                                         Logout
