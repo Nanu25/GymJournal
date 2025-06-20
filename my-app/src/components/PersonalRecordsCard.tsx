@@ -513,30 +513,30 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     <div className="flex space-x-4">
                         <button
                             onClick={() => handleSort("date")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
                                 sortField === "date" 
-                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
+                                    : ""
                             }`}
                         >
                             Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("pr")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
                                 sortField === "pr" 
-                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
+                                    : ""
                             }`}
                         >
                             PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
                         </button>
                         <button
                             onClick={() => handleSort("exercises")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 ${
+                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
                                 sortField === "exercises" 
-                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                                    : "bg-[#1a2234] text-black-200 border border-blue-500/10 hover:border-blue-500/30"
+                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
+                                    : ""
                             }`}
                         >
                             #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
