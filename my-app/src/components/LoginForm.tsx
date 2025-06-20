@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -14,6 +15,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     setError(null);
@@ -22,9 +24,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     try {
       const response = await api.auth.login({ email, password });
       if (response.success) {
-        // Store the token in localStorage
-        localStorage.setItem('token', response.data?.token || '');
-        localStorage.setItem('user', JSON.stringify(response.data?.user || {}));
+        // Use AuthContext login function
+        login(response.data?.token || '', response.data?.user || {});
         onLoginSuccess();
       } else {
         setError(response.error || "Login failed");
