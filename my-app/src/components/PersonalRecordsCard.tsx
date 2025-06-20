@@ -687,7 +687,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         Add Training Session
                     </button>
                     <button
-                        className="w-full py-4 text-xl font-bold text-center text-black-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                        className="w-full py-4 text-xl font-bold text-center text-black bg-white/80 md:text-black md:bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
                         onClick={onNavigateToMetricsSection}
                     >
                         Edit Metrics

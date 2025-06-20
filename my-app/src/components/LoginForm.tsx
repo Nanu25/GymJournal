@@ -95,7 +95,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             type="button"
             onClick={handleLogin}
             disabled={isSubmitting}
-            className="relative w-full h-[54px] text-lg font-medium text-black bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative w-full h-[54px] text-lg font-medium text-black bg-white/80 md:bg-gradient-to-r md:from-blue-500/10 md:via-purple-500/10 md:to-blue-500/10 rounded-xl border border-white/10 backdrop-blur-xl hover:border-white/20 hover:bg-white/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <span>{isSubmitting ? 'Logging in...' : 'Login'}</span>

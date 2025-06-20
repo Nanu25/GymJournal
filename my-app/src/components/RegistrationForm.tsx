@@ -206,7 +206,7 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
                 value={formData.gender}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white pl-10"
-                placeholder="e.g. Male/Female/Other"
+                placeholder="e.g. Male/Female"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Users className="h-5 w-5 text-blue-300/50" />
