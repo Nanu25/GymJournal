@@ -7,6 +7,13 @@ import { TrainingExercise } from '../entities/TrainingExercise';
 import { ActivityLog } from '../entities/ActivityLog';
 import { MonitoredUser } from '../entities/MonitoredUser';
 
+// Load environment variables from .env in local development
+if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('dotenv').config();
+  // Make sure to set DATABASE_URL in your .env file for local development
+}
+
 console.log('[DB_CONFIG] Starting database configuration...');
 
 // Parse the DATABASE_URL from Heroku
