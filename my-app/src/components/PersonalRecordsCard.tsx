@@ -645,7 +645,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                 {expandedTraining === originalIndex && (
                                     <div className="p-6 bg-[#1a2234]/50 border-t border-blue-500/10">
                                         <h4 className="text-white font-semibold text-xl mb-6">Exercises:</h4>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
                                                 <div
                                                     key={idx}
