@@ -18,12 +18,17 @@ const Pagination: React.FC<PaginationProps> = ({ pageCount, onPageChange }) => (
         pageRangeDisplayed={3}
         onPageChange={(data) => onPageChange(data.selected)}
         containerClassName={"pagination flex items-center justify-center space-x-2 mt-4"}
-        pageClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
-        previousClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
-        nextClassName={"px-4 py-2 bg-[#1a2234] text-blue-200 rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
-        breakClassName={"px-4 py-2 text-blue-200"}
+        pageClassName={"px-4 py-2 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        previousClassName={"px-4 py-2 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        nextClassName={"px-4 py-2 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"}
+        breakClassName={"px-4 py-2"}
         activeClassName={"!bg-gradient-to-r from-blue-500 to-blue-600 !text-white border-blue-400 shadow-lg shadow-blue-500/20"}
         disabledClassName={"opacity-50 cursor-not-allowed"}
+        pageLinkClassName={"text-white"}
+        previousLinkClassName={"text-white"}
+        nextLinkClassName={"text-white"}
+        breakLinkClassName={"text-white"}
+        activeLinkClassName={"!text-white"}
     />
 );
 

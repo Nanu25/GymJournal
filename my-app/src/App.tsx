@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import GymJournalRegistration from "./components/GymJournalRegistration";
 import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
+import { useAuth } from "./context/AuthContext";
 
 const App = () => {
+    const { token } = useAuth();
     const [currentPage, setCurrentPage] = useState("login");
+
+    useEffect(() => {
+        if (token) {
+            setCurrentPage("dashboard");
+        } else {
+            setCurrentPage("login");
+        }
+    }, [token]);
 
     const navigateToDashboard = () => {
         setCurrentPage("dashboard");
