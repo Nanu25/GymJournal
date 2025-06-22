@@ -12,20 +12,25 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 - **Activity Logs** - Detailed tracking of user activities and progress
 - **Metrics Management** - Personalize and update your fitness metrics
 - **Video Upload/Download** - Upload and manage exercise demonstration videos
+- **AI Fitness Assistant** - Chat with an AI-powered fitness advisor for personalized training advice, nutrition tips, and workout guidance
 
 ### 📊 Dashboard Features
 - **Progress Visualization** - Charts and graphs showing your fitness journey
 - **Personal Records Cards** - Easy-to-view PR tracking for each exercise
 - **Training Selector** - Choose and customize your workout routines
 - **Real-time Updates** - Live data synchronization across the application
+- **AI Chat Integration** - Direct access to AI fitness assistance from the dashboard
 
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard Screenshot](dashboard.png)
+![Dashboard Screenshot]
 
 ### Login Page
-![Login Screenshot](login.png)
+![Login Screenshot]
+
+### AI Chat Assistant
+![AI Chat Example](https://github.com/Nanu25/GymJournal/raw/Heroku/chatExample.png)
 
 ## 🛠️ Tech Stack
 
@@ -38,6 +43,7 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 - **Recharts** - Data visualization library
 - **Axios** - HTTP client for API communication
 - **React Router** - Client-side routing
+- **React Markdown** - Markdown rendering for AI responses
 - **Jest & Testing Library** - Unit and integration testing
 
 ### Backend (`backend/`)
@@ -50,6 +56,7 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 - **JWT** - Authentication and authorization
 - **Multer** - File upload handling
 - **bcrypt** - Password hashing
+- **Google Generative AI (Gemini)** - AI-powered fitness assistance
 - **Jest** - Testing framework
 
 ## 🚀 Getting Started
@@ -201,6 +208,10 @@ npm run test
 - `GET /api/download/:filename` - Download files
 - `GET /api/videos` - List uploaded videos
 
+### Chat
+- `GET /api/chat/status` - Check chat service status
+- `POST /api/chat` - Send message to AI fitness assistant
+
 ## 🔒 Security Features
 
 - JWT-based authentication
@@ -208,12 +219,17 @@ npm run test
 - CORS configuration
 - File upload validation
 - Environment variables for sensitive data
+- Protected AI chat endpoints requiring authentication
 
 ## 🚀 Deployment
 
+### Environment Variables Required
+Make sure to set the following environment variables for the AI chat feature:
+- `GEMINI_API_KEY` - Your Google Generative AI API key
+
 ### Backend Deployment
 1. Build the application: `npm run build`
-2. Set production environment variables
+2. Set production environment variables (including GEMINI_API_KEY)
 3. Start the server: `npm start`
 
 ### Frontend Deployment
