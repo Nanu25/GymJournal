@@ -7,16 +7,16 @@ import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
 import exerciseRoutes from './routes/exerciseroutes';
 import activityLogRoutes from './routes/activityLog.routes';
+import chatRoutes from './routes/chatRoutes';
 import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
 // Import for debugging
 import { createTraining, debugTrainingController } from './controllers/TrainingController';
-
-console.log('[APP] Starting Gym Journal API server...');
-console.log('[APP] Node environment:', process.env.NODE_ENV);
-console.log('[APP] Current directory:', __dirname);
+// Import chat controller to ensure it's initialized
+import { ChatController } from './controllers/chatController';
+ChatController.initialize();
 
 // Ensure 'uploads/' directory exists in both development and production
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -177,6 +177,9 @@ app.use('/api/trainings', authenticateToken, trainingRoutes);
 
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
+
+// Add chat routes
+app.use('/api', chatRoutes);
 
 // Auth routes
 app.post('/api/auth/register', AuthController.register);
