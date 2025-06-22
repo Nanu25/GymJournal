@@ -35,7 +35,6 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
     const sendMessage = async () => {
         if (!inputMessage.trim() || isLoading) return;
 
