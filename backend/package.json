@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "npx tsc && node ../copy-frontend.js",
+    "build": "tsc && node ../copy-frontend.js",
     "local-build": "tsc && node dist/scripts/ensureUploadsDir.js",
     "test": "jest",
     "test:watch": "jest --watch",
