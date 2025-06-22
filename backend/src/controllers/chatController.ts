@@ -57,7 +57,6 @@ export class ChatController {
             }
 
 
-            // Create a fitness-focused system prompt
             const systemPrompt = `You are FitCoach AI, an expert fitness and nutrition assistant with deep knowledge of exercise science, sports nutrition, and behavioral psychology.
 
             CORE EXPERTISE:
