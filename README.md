@@ -24,10 +24,10 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard Screenshot](dashboard.png)
+![Dashboard Screenshot](https://github.com/Nanu25/GymJournal/raw/main/dashboard.png)
 
 ### Login Page
-![Login Screenshot](login.png)
+![Login Screenshot](https://github.com/Nanu25/GymJournal/raw/main/login.png)
 
 ### AI Chat Assistant
 ![AI Chat Example](chatExample.png)
