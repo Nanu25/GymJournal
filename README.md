@@ -24,10 +24,10 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard Screenshot]
+![Dashboard Screenshot](dashbooard.png)
 
 ### Login Page
-![Login Screenshot]
+![Login Screenshot](login.png)
 
 ### AI Chat Assistant
 ![AI Chat Example](https://github.com/Nanu25/GymJournal/raw/Heroku/chatExample.png)
