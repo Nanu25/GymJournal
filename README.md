@@ -24,7 +24,7 @@ A full-stack web application for tracking workouts, personal records, and fitnes
 ## 📸 Screenshots
 
 ### Dashboard
-![Dashboard Screenshot](dashbooard.png)
+![Dashboard Screenshot](dashboard.png)
 
 ### Login Page
 ![Login Screenshot](login.png)
