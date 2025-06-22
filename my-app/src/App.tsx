@@ -5,6 +5,7 @@ import GymJournalRegistration from "./components/GymJournalRegistration";
 import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
+import ChatPage from "./components/ChatPage";
 import { useAuth } from "./context/AuthContext";
 
 const App = () => {
@@ -44,6 +45,10 @@ const App = () => {
         setCurrentPage("activityLogs");
     };
 
+    const navigateToChat = () => {
+        setCurrentPage("chat");
+    };
+
     return (
         <div className="w-screen h-screen flex flex-col">
             {currentPage === "login" && (
@@ -57,6 +62,7 @@ const App = () => {
                     onLogout={navigateToLogin}
                     onNavigateToMetricsSection={navigateToMetricsSection}
                     onNavigateToActivityLogs={navigateToActivityLogs}
+                    onNavigateToChat={navigateToChat}
                     navigateToTrainingSelector={navigateToTrainingSelector}
                 />
             )}
@@ -94,6 +100,9 @@ const App = () => {
                         <ActivityLogs />
                     </div>
                 </div>
+            )}
+            {currentPage === "chat" && (
+                <ChatPage onBackToDashboard={navigateToDashboard} />
             )}
         </div>
     );

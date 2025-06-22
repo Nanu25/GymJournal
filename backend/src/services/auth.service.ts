@@ -27,7 +27,7 @@ export class AuthService {
 
         return { user, token };
     }
-
+    
     static async login(email: string, password: string): Promise<{ user: User; token: string }> {
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });

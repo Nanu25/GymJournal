@@ -16,6 +16,7 @@ interface DashboardPageProps {
     onLogout: () => void;
     onNavigateToMetricsSection: () => void;
     onNavigateToActivityLogs: () => void;
+    onNavigateToChat: () => void;
     navigateToTrainingSelector?: () => void;
 }
 
@@ -23,6 +24,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     onLogout, 
     onNavigateToMetricsSection,
     onNavigateToActivityLogs,
+    onNavigateToChat,
     navigateToTrainingSelector,
 }) => {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
@@ -216,6 +218,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                 <WelcomeHeader username={username} />
                                 <div className="flex items-center space-x-2 sm:space-x-4 ml-0 sm:ml-8">
+                                    <button
+                                        onClick={onNavigateToChat}
+                                        className="px-4 py-2 text-sm sm:text-base bg-green-500 text-black rounded hover:bg-green-600 min-w-[44px] min-h-[44px]"
+                                    >
+                                        Chat with AI
+                                    </button>
                                     {isAdmin && (
                                         <button
                                             onClick={onNavigateToActivityLogs}
