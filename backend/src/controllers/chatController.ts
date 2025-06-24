@@ -6,8 +6,6 @@ export class ChatController {
 
     static initialize() {
         const apiKey = process.env.GEMINI_API_KEY;
-        console.log('ChatController: Checking for GEMINI_API_KEY...');
-        console.log('ChatController: Environment variables available:', Object.keys(process.env).filter(key => key.includes('GEMINI') || key.includes('API')));
         
         if (!apiKey) {
             console.error('ChatController: GEMINI_API_KEY is not set in environment variables');
@@ -20,10 +18,8 @@ export class ChatController {
             return;
         }
         
-        console.log('ChatController: Initializing with Gemini API key (length:', apiKey.length, ')');
         try {
             this.genAI = new GoogleGenerativeAI(apiKey);
-            console.log('ChatController: Gemini AI initialized successfully');
         } catch (error) {
             console.error('ChatController: Failed to initialize Gemini AI:', error);
             this.genAI = null;
@@ -32,14 +28,9 @@ export class ChatController {
 
     static async chat(req: Request, res: Response): Promise<void> {
         try {
-            console.log('ChatController: Received chat request');
-            console.log('ChatController: Request body:', req.body);
-            console.log('ChatController: Request headers:', req.headers);
-            console.log('ChatController: genAI is initialized:', !!this.genAI);
-            
+
             // Fallback initialization if not already initialized
             if (!this.genAI) {
-                console.log('ChatController: genAI not initialized, attempting to initialize now...');
                 this.initialize();
                 if (!this.genAI) {
                     console.error('ChatController: Failed to initialize Gemini AI');

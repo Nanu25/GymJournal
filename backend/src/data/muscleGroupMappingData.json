@@ -86,5 +86,13 @@
   "V-Ups": "Abs",
   "Hanging Knee Raises": "Abs",
   "Flutter Kicks": "Abs",
-  "Toe Touches": "Abs"
+  "Toe Touches": "Abs",
+  "Treadmill Running": "Cardio",
+  "Stationary Bike": "Cardio",
+  "Elliptical Trainer": "Cardio",
+  "Rowing Machine": "Cardio",
+  "Jump Rope": "Cardio",
+  "Stair Climber": "Cardio",
+  "Machine Chest Fly": "Chest",
+  "Running": "Cardio"
 }

@@ -281,7 +281,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                                     pattern="\d*"
                                                     value={trainingData[exercise] || ""}
                                                     onChange={(e) => handleExerciseChange(exercise, Math.round(Number(e.target.value)))}
-                                                    placeholder="Weight (kg)"
+                                                    placeholder="kg/min"
                                                     className="w-full px-4 py-2 text-lg border border-blue-500/10 rounded-lg bg-[#1a2234] text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
                                                 />
                                             </div>
