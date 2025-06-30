@@ -28,6 +28,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Quick message prompts
+    const quickMessages = [
+        "What do you think about my training schedule?",
+        "Can you suggest a workout plan for me?",
+        "How can I improve my nutrition?",
+        "What are some good recovery tips?",
+        "How do I break through a plateau?"
+    ];
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -114,6 +123,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const handleQuickMessage = async (msg: string) => {
+        setInputMessage(msg);
+        setTimeout(() => {
+            sendMessage();
+        }, 0);
+    };
+
     return (
         <div className="h-screen bg-[#080b14] flex flex-col">
             {/* Header */}
@@ -184,6 +200,22 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
 
                 {/* Input Area */}
                 <div className="bg-[#0f172a]/50 backdrop-blur-xl border border-teal-500/10 rounded-lg p-3 sm:p-4 flex-shrink-0">
+                    {/* Quick Messages Title */}
+                    <div className="mb-2 text-base font-semibold text-teal-400 border-l-4 border-teal-500 pl-3">Quick Messages</div>
+                    {/* Quick Messages */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {quickMessages.map((msg, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                className="px-3 py-1 bg-teal-500 text-black rounded-lg text-xs hover:bg-teal-600 transition-colors"
+                                onClick={() => handleQuickMessage(msg)}
+                                disabled={isLoading}
+                            >
+                                {msg}
+                            </button>
+                        ))}
+                    </div>
                     <div className="flex space-x-2 sm:space-x-4">
                         <textarea
                             value={inputMessage}
@@ -197,7 +229,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
                         <button
                             onClick={sendMessage}
                             disabled={!inputMessage.trim() || isLoading}
-                            className="px-3 py-2 sm:px-6 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 shadow-lg hover:shadow-xl"
+                            className="px-3 py-2 sm:px-6 sm:py-3 bg-green-500 text-black rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 shadow-lg hover:shadow-xl"
                         >
                             {isLoading ? (
                                 <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
