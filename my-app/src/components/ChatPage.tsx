@@ -37,6 +37,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
         "How do I break through a plateau?"
     ];
 
+    // State for showing/hiding quick messages
+    const [showQuickMessages, setShowQuickMessages] = useState(true);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -200,21 +203,40 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
 
                 {/* Input Area */}
                 <div className="bg-[#0f172a]/50 backdrop-blur-xl border border-teal-500/10 rounded-lg p-3 sm:p-4 flex-shrink-0">
-                    {/* Quick Messages Title */}
-                    <div className="mb-2 text-base font-semibold text-teal-400 border-l-4 border-teal-500 pl-3">Quick Messages</div>
-                    {/* Quick Messages */}
-                    <div className="flex flex-wrap gap-2 mb-2">
-                        {quickMessages.map((msg, idx) => (
-                            <button
-                                key={idx}
-                                type="button"
-                                className="px-3 py-1 bg-teal-500 text-black rounded-lg text-xs hover:bg-teal-600 transition-colors"
-                                onClick={() => handleQuickMessage(msg)}
-                                disabled={isLoading}
+                    {/* Quick Messages Title and Toggle */}
+                    <div className="mb-2 flex items-center">
+                        <span className="text-base font-semibold text-teal-400 border-l-4 border-teal-500 pl-3 flex-1">Quick Messages</span>
+                        <button
+                            type="button"
+                            aria-label={showQuickMessages ? 'Hide quick messages' : 'Show quick messages'}
+                            onClick={() => setShowQuickMessages(v => !v)}
+                            className="ml-2 p-1 rounded hover:bg-teal-900 transition-colors"
+                        >
+                            <svg
+                                className={`w-5 h-5 text-teal-400 transition-transform duration-300 ${showQuickMessages ? '' : 'rotate-180'}`}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
                             >
-                                {msg}
-                            </button>
-                        ))}
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                    {/* Quick Messages */}
+                    <div
+                        className={`overflow-hidden transition-all duration-300 mb-2 ${showQuickMessages ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
+                    >
+                        <div className="flex flex-wrap gap-2">
+                            {quickMessages.map((msg, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    className="px-3 py-1 bg-teal-500 text-black rounded-lg text-xs hover:bg-teal-600 transition-colors"
+                                    onClick={() => handleQuickMessage(msg)}
+                                    disabled={isLoading}
+                                >
+                                    {msg}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <div className="flex space-x-2 sm:space-x-4">
                         <textarea
