@@ -7,6 +7,7 @@
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
     "build": "node ./node_modules/typescript/bin/tsc && node ../copy-frontend.js",
+    "heroku-postbuild": "npm run build",
     "local-build": "node ./node_modules/typescript/bin/tsc && node dist/scripts/ensureUploadsDir.js",
     "test": "jest",
     "test:watch": "jest --watch",

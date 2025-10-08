@@ -223,22 +223,41 @@ app.use((err: Error, req: express.Request, res: express.Response, _next: express
 // Use our new database initialization function
 console.log('[APP] Starting database initialization...');
 
+// Start the server first, then initialize database
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+    console.log(`[APP] Server is running on port ${PORT}`);
+    console.log(`[APP] API available at http://localhost:${PORT}/api`);
+});
+
+// Initialize database in background
 initializeDatabase()
     .then((success) => {
         if (!success) {
-            console.error('[APP] Database initialization failed. Exiting.');
-            process.exit(1);
+            console.error('[APP] Database initialization failed, but server is running.');
+            console.error('[APP] Some features may not work properly.');
+        } else {
+            console.log('[APP] Database initialization successful!');
         }
-        
-        console.log('[APP] Database initialization successful!');
-        // Only start the server after database connection is established
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`[APP] Server is running on port ${PORT}`);
-            console.log(`[APP] API available at http://localhost:${PORT}/api`);
-        });
     })
     .catch((error) => {
         console.error('[APP] Error during database initialization:', error);
-        process.exit(1); // Exit if database connection fails
+        console.error('[APP] Server is running but database features may not work.');
     });
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('[APP] SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('[APP] Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('[APP] SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('[APP] Server closed');
+        process.exit(0);
+    });
+});
