@@ -23,6 +23,14 @@
     "GEMINI_API_KEY": {
       "description": "Google Gemini API key for AI chat",
       "required": false
+    },
+    "GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth Client ID for authentication",
+      "required": false
+    },
+    "GOOGLE_CLIENT_SECRET": {
+      "description": "Google OAuth Client Secret for authentication",
+      "required": false
     }
   },
   "scripts": {

@@ -12,14 +12,14 @@ const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
 const exerciseroutes_1 = __importDefault(require("./routes/exerciseroutes"));
 const activityLog_routes_1 = __importDefault(require("./routes/activityLog.routes"));
+const chatRoutes_1 = __importDefault(require("./routes/chatRoutes"));
 const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
 const TrainingController_1 = require("./controllers/TrainingController");
-console.log('[APP] Starting Gym Journal API server...');
-console.log('[APP] Node environment:', process.env.NODE_ENV);
-console.log('[APP] Current directory:', __dirname);
+const chatController_1 = require("./controllers/chatController");
+chatController_1.ChatController.initialize();
 const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
@@ -39,7 +39,7 @@ const corsOptions = {
         /\.herokuapp\.com$/
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
     credentials: true
 };
 app.use((req, res, next) => {
@@ -136,8 +136,10 @@ app.use('/api/exercises', exerciseroutes_1.default);
 app.use('/api/user', auth_1.authenticateToken, userroutes_1.default);
 app.use('/api/trainings', auth_1.authenticateToken, trainingroutes_1.default);
 app.use('/api/activity-logs', auth_1.authenticateToken, activityLog_routes_1.default);
+app.use('/api', chatRoutes_1.default);
 app.post('/api/auth/register', auth_controller_1.AuthController.register);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
+app.post('/api/auth/google', auth_controller_1.AuthController.loginWithGoogle);
 if (process.env.NODE_ENV !== 'production') {
     console.log('[APP] Adding debug routes (non-production environment)');
     app.get('/api/debug/trainings', TrainingController_1.debugTrainingController);
@@ -163,21 +165,37 @@ app.use((err, req, res, _next) => {
     });
 });
 console.log('[APP] Starting database initialization...');
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+    console.log(`[APP] Server is running on port ${PORT}`);
+    console.log(`[APP] API available at http://localhost:${PORT}/api`);
+});
 (0, database_1.initializeDatabase)()
     .then((success) => {
     if (!success) {
-        console.error('[APP] Database initialization failed. Exiting.');
-        process.exit(1);
+        console.error('[APP] Database initialization failed, but server is running.');
+        console.error('[APP] Some features may not work properly.');
     }
-    console.log('[APP] Database initialization successful!');
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`[APP] Server is running on port ${PORT}`);
-        console.log(`[APP] API available at http://localhost:${PORT}/api`);
-    });
+    else {
+        console.log('[APP] Database initialization successful!');
+    }
 })
     .catch((error) => {
     console.error('[APP] Error during database initialization:', error);
-    process.exit(1);
+    console.error('[APP] Server is running but database features may not work.');
+});
+process.on('SIGTERM', () => {
+    console.log('[APP] SIGTERM received, shutting down gracefully');
+    server.close(() => {
+        console.log('[APP] Server closed');
+        process.exit(0);
+    });
+});
+process.on('SIGINT', () => {
+    console.log('[APP] SIGINT received, shutting down gracefully');
+    server.close(() => {
+        console.log('[APP] Server closed');
+        process.exit(0);
+    });
 });
 //# sourceMappingURL=app.js.map

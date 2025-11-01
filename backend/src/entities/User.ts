@@ -12,8 +12,11 @@ export class User extends BaseEntity {
     @Column({ unique: true, length: 100 })
     email!: string;
 
-    @Column()
-    password!: string;
+    @Column({ nullable: true })
+    password?: string;
+
+    @Column({ nullable: true, unique: true })
+    googleId?: string;
 
     @Column({ type: 'float', nullable: true })
     weight?: number;

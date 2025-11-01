@@ -8,6 +8,7 @@ const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const bcryptWrapper_1 = __importDefault(require("../utils/bcryptWrapper"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const google_auth_library_1 = require("google-auth-library");
 class AuthService {
     static async register(userData) {
         const userRepository = database_1.AppDataSource.getRepository(User_1.User);
@@ -30,12 +31,53 @@ class AuthService {
         if (!user) {
             throw new Error('User not found');
         }
+        if (!user.password) {
+            throw new Error('This account uses Google login. Please sign in with Google.');
+        }
         const isPasswordValid = await bcryptWrapper_1.default.compare(password, user.password);
         if (!isPasswordValid) {
             throw new Error('Invalid password');
         }
-        const token = jsonwebtoken_1.default.sign({ userId: Number(user.id) }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: Number(user.id) }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
         return { user, token };
+    }
+    static async loginWithGoogle(googleToken) {
+        const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: googleToken,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            if (!payload) {
+                throw new Error('Invalid Google token');
+            }
+            const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+            let user = await userRepository.findOne({ where: { googleId: payload.sub } });
+            let createdNewUser = false;
+            if (!user) {
+                user = await userRepository.findOne({ where: { email: payload.email } });
+                if (user && !user.googleId) {
+                    user.googleId = payload.sub;
+                    await userRepository.save(user);
+                }
+            }
+            if (!user) {
+                user = userRepository.create({
+                    email: payload.email,
+                    name: payload.name || payload.email.split('@')[0],
+                    googleId: payload.sub,
+                });
+                await userRepository.save(user);
+                createdNewUser = true;
+            }
+            const token = jsonwebtoken_1.default.sign({ userId: Number(user.id) }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
+            return { user, token, createdNewUser };
+        }
+        catch (error) {
+            console.error('Google authentication error:', error);
+            throw new Error('Google authentication failed');
+        }
     }
 }
 exports.AuthService = AuthService;

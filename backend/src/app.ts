@@ -184,6 +184,7 @@ app.use('/api', chatRoutes);
 // Auth routes
 app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
+app.post('/api/auth/google', AuthController.loginWithGoogle);
 
 // Add debug routes in non-production environments
 if (process.env.NODE_ENV !== 'production') {

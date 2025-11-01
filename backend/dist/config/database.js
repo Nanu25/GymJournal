@@ -8,6 +8,9 @@ const Exercise_1 = require("../entities/Exercise");
 const TrainingExercise_1 = require("../entities/TrainingExercise");
 const ActivityLog_1 = require("../entities/ActivityLog");
 const MonitoredUser_1 = require("../entities/MonitoredUser");
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 console.log('[DB_CONFIG] Starting database configuration...');
 const getDatabaseConfig = () => {
     console.log('[DB_CONFIG] Entering getDatabaseConfig()');

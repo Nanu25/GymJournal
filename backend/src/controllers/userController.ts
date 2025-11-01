@@ -243,6 +243,65 @@ export const getUser = async (req: Request, res: Response) => {
     }
 };
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+    try {
+        if (!req.user?.id) {
+            res.status(401).json({ 
+                success: false,
+                error: 'User not authenticated' 
+            });
+            return;
+        }
+
+        const userRepository = AppDataSource.getRepository(User);
+        const user = await userRepository.findOne({ where: { id: req.user.id } });
+
+        if (!user) {
+            res.status(404).json({ 
+                success: false,
+                error: 'User not found' 
+            });
+            return;
+        }
+
+        // Update user fields (only update provided fields)
+        const updateData = req.body;
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] !== undefined && updateData[key] !== null && updateData[key] !== '') {
+                (user as any)[key] = updateData[key];
+            }
+        });
+
+        await userRepository.save(user);
+
+        // Return updated user data in the format expected by frontend
+        const responseData = {
+            success: true,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                weight: user.weight,
+                height: user.height,
+                gender: user.gender,
+                age: user.age,
+                timesPerWeek: user.timesPerWeek,
+                timePerSession: user.timePerSession,
+                repRange: user.repRange,
+                isAdmin: user.isAdmin
+            }
+        };
+
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Error updating user profile' 
+        });
+    }
+};
+
 export const deleteUser = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;

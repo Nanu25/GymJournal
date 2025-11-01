@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.getUser = exports.updateUserMetrics = exports.getUserMetrics = void 0;
+exports.deleteUser = exports.updateUserProfile = exports.getUser = exports.updateUserMetrics = exports.getUserMetrics = void 0;
 const database_1 = require("../config/database");
 const User_1 = require("../entities/User");
 const ActivityLog_1 = require("../entities/ActivityLog");
@@ -210,6 +210,59 @@ const getUser = async (req, res) => {
     }
 };
 exports.getUser = getUser;
+const updateUserProfile = async (req, res) => {
+    var _a;
+    try {
+        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+            res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+            return;
+        }
+        const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+        const user = await userRepository.findOne({ where: { id: req.user.id } });
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+            return;
+        }
+        const updateData = req.body;
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] !== undefined && updateData[key] !== null && updateData[key] !== '') {
+                user[key] = updateData[key];
+            }
+        });
+        await userRepository.save(user);
+        const responseData = {
+            success: true,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                weight: user.weight,
+                height: user.height,
+                gender: user.gender,
+                age: user.age,
+                timesPerWeek: user.timesPerWeek,
+                timePerSession: user.timePerSession,
+                repRange: user.repRange,
+                isAdmin: user.isAdmin
+            }
+        };
+        res.status(200).json(responseData);
+    }
+    catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating user profile'
+        });
+    }
+};
+exports.updateUserProfile = updateUserProfile;
 const deleteUser = async (req, res) => {
     var _a;
     try {
