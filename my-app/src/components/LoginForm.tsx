@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { GoogleLogin } from '@react-oauth/google';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
   onNavigateToRegistration: () => void;
+  onGoogleLoginSuccess: (user: any) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
   onLoginSuccess,
   onNavigateToRegistration,
+  onGoogleLoginSuccess,
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +43,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const handleSignup = () => {
     onNavigateToRegistration();
   };
+
+  // GoogleLogin component returns an ID token via `credential` which matches backend verification
 
   return (
     <section className="w-full px-4 md:px-8 lg:px-12 mb-16">
@@ -104,6 +109,62 @@ const LoginForm: React.FC<LoginFormProps> = ({
               </svg>
             </span>
           </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/20"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-900 text-white/50">or</span>
+          </div>
+        </div>
+
+        {/* Google Login Button */}
+        <div className="w-full flex justify-center">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (!credentialResponse.credential) {
+                setError("Google login failed");
+                return;
+              }
+              setError(null);
+              setIsSubmitting(true);
+              try {
+                const response = await api.auth.loginWithGoogle({ token: credentialResponse.credential });
+                if (response.success) {
+                  const appToken = response.data?.token || '';
+                  const user = response.data?.user || {};
+                  const createdNewUser = Boolean(response.data?.createdNewUser);
+                  localStorage.setItem('token', appToken);
+
+                  if (createdNewUser) {
+                    // Newly created Google user → collect details
+                    onGoogleLoginSuccess(user);
+                  } else {
+                    // Existing user → go straight to dashboard
+                    login(appToken, user);
+                    onLoginSuccess();
+                  }
+                } else {
+                  setError(response.error || "Google login failed");
+                }
+              } catch (err) {
+                setError("An error occurred during Google login");
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+            onError={() => setError("Google login failed")}
+            useOneTap={false}
+            theme="filled_blue"
+            size="large"
+            text="continue_with"
+            shape="pill"
+            logo_alignment="left"
+            locale="en"
+          />
         </div>
 
         {/* Sign Up Link */}

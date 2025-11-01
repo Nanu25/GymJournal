@@ -6,11 +6,13 @@ import EditMetrics from "./components/EditMetrics"; // Import EditMetrics compon
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
 import ChatPage from "./components/ChatPage";
+import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
 import { useAuth } from "./context/AuthContext";
 
 const App = () => {
     const { token } = useAuth();
     const [currentPage, setCurrentPage] = useState("login");
+    const [googleUser, setGoogleUser] = useState<any>(null);
 
     useEffect(() => {
         if (token) {
@@ -49,12 +51,23 @@ const App = () => {
         setCurrentPage("chat");
     };
 
+    const handleGoogleLoginSuccess = (user: any) => {
+        setGoogleUser(user);
+        setCurrentPage("googleSetup");
+    };
+
+    const handleGoogleSetupComplete = () => {
+        setGoogleUser(null);
+        setCurrentPage("dashboard");
+    };
+
     return (
         <div className="w-screen h-screen flex flex-col">
             {currentPage === "login" && (
                 <LoginPage
                     onLoginSuccess={navigateToDashboard}
                     onNavigateToRegistration={navigateToRegistration}
+                    onGoogleLoginSuccess={handleGoogleLoginSuccess}
                 />
             )}
             {currentPage === "dashboard" && (
@@ -103,6 +116,12 @@ const App = () => {
             )}
             {currentPage === "chat" && (
                 <ChatPage onBackToDashboard={navigateToDashboard} />
+            )}
+            {currentPage === "googleSetup" && googleUser && (
+                <GoogleUserSetupPage
+                    user={googleUser}
+                    onComplete={handleGoogleSetupComplete}
+                />
             )}
         </div>
     );

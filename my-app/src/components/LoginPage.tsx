@@ -6,11 +6,13 @@ import RightSection from "./RightSection";
 interface LoginPageProps {
   onLoginSuccess: () => void;
   onNavigateToRegistration?: () => void;
+  onGoogleLoginSuccess: (user: any) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
   onNavigateToRegistration,
+  onGoogleLoginSuccess,
 }) => {
   const handleNavigateToRegistration = () => {
     if (onNavigateToRegistration) {
@@ -48,6 +50,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
                   <LoginForm
                     onLoginSuccess={onLoginSuccess}
                     onNavigateToRegistration={handleNavigateToRegistration}
+                    onGoogleLoginSuccess={onGoogleLoginSuccess}
                   />
                 </div>
               </div>

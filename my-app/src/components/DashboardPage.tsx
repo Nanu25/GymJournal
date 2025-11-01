@@ -34,7 +34,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     const { logout } = useAuth();
 
     useEffect(() => {
-        console.log('isAdmin value changed:', isAdmin);
+        // Admin status tracked internally
     }, [isAdmin]);
 
     useEffect(() => {
@@ -42,11 +42,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    console.error('No token found');
                     return; // Keep using default username
                 }
-                
-                console.log('Fetching user data with token:', token);
                 
                 // Create controller for timeout
                 const controller = new AbortController();
@@ -64,25 +61,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                     clearTimeout(timeoutId);
                     
                     if (!response.ok) {
-                        console.warn(`User data fetch returned status ${response.status}`);
                         return; // Keep using default username
                     }
                     
                     const data = await response.json();
-                    console.log('Received user data:', data);
                     
                     // Set username if available
                     if (data.name) {
                         setUsername(data.name);
-                    } else {
-                        console.warn('No name in user data:', data);
-                        // Keep using default username
                     }
 
                     // Handle isAdmin
-                    console.log('Raw isAdmin value from API:', data.isAdmin);
                     const adminStatus = data.isAdmin === true;
-                    console.log('Processed admin status:', adminStatus);
                     setIsAdmin(adminStatus);
                 } catch (fetchError: unknown) {
                     // Handle fetch errors
@@ -130,11 +120,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 // Extract trainings from the paginated response
                 if (data.data && Array.isArray(data.data)) {
                     setTrainings(data.data);
-                    console.log("Fetched trainings:", data.data);
                 } else {
                     // Fallback for backward compatibility
                     setTrainings(Array.isArray(data) ? data : []);
-                    console.log("Fetched trainings (old format):", data);
                 }
             } catch (error) {
                 console.error("Error fetching trainings:", error);
@@ -158,8 +146,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
 
     const handleTrainingAdded = async () => {
         try {
-            console.log("Training added successfully, redirecting to dashboard...");
-            
             // Immediately hide the training selector to show dashboard
             setShowTrainingSelector(false);
             

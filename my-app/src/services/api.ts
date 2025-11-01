@@ -30,6 +30,10 @@ export interface LoginData {
     password: string;
 }
 
+export interface GoogleLoginData {
+    token: string;
+}
+
 export interface AuthResponse {
     success: boolean;
     data?: {
@@ -46,6 +50,7 @@ export interface AuthResponse {
             repRange?: string;
         };
         token: string;
+        createdNewUser?: boolean;
     };
     error?: string;
 }
@@ -73,6 +78,32 @@ export const api = {
                     return error.response?.data || { success: false, error: 'Login failed' };
                 }
                 return { success: false, error: 'Login failed' };
+            }
+        },
+
+        loginWithGoogle: async (googleData: GoogleLoginData): Promise<AuthResponse> => {
+            try {
+                const response = await axios.post(`${API_URL}/auth/google`, googleData);
+                return response.data;
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    return error.response?.data || { success: false, error: 'Google login failed' };
+                }
+                return { success: false, error: 'Google login failed' };
+            }
+        },
+    },
+
+    user: {
+        updateProfile: async (userData: Partial<UserData>): Promise<AuthResponse> => {
+            try {
+                const response = await axios.put(`${API_URL}/user/profile`, userData);
+                return response.data;
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    return error.response?.data || { success: false, error: 'Profile update failed' };
+                }
+                return { success: false, error: 'Profile update failed' };
             }
         },
     },

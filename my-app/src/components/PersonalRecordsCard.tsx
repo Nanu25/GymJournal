@@ -110,7 +110,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error("Failed to fetch weight");
                 }
                 const data = await response.json();
-                console.log('Received user data in PersonalRecordsCard:', data);
                 setWeight(data.weight || 0);
             } catch (error) {
                 console.error("Error fetching weight:", error);
@@ -140,7 +139,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
     const confirmDelete = async () => {
         if (!trainingToDelete) {
-            console.error('Invalid trainingToDelete:', trainingToDelete);
             return;
         }
 
@@ -171,8 +169,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             });
 
             if (!updatedResponse.ok) {
-                const errorData = await updatedResponse.json();
-                console.error('Failed to fetch updated trainings:', errorData);
                 throw new Error('Failed to fetch updated trainings');
             }
 
@@ -183,7 +179,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 if (onTrainingChange) {
                     onTrainingChange(updatedData.data);
                 }
-                console.log("Updated trainings after delete:", updatedData.data);
             } else {
                 // Fallback for backward compatibility
                 const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
@@ -191,7 +186,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 if (onTrainingChange) {
                     onTrainingChange(trainingsArray);
                 }
-                console.log("Updated trainings after delete (old format):", trainingsArray);
             }
 
             setTrainingToDelete(null);
@@ -230,7 +224,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             : [];
                     
                     setExerciseOptions(allExercises);
-                    console.log("Fetched exercise options for update:", allExercises);
                     
                     // Now set up the update form with the training data
                     const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
@@ -321,10 +314,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
                 // Ensure the date is in YYYY-MM-DD format
                 const formattedDate = new Date(updateFormData.date).toISOString().split('T')[0];
-                console.log('Making update request with data:', {
-                    date: formattedDate,
-                    exercises: exercisesObject
-                });
 
                 const response = await fetch(`/api/trainings/${formattedDate}`, {
                     method: 'PUT',
@@ -341,7 +330,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 const responseData = await response.json();
 
                 if (!response.ok) {
-                    console.error('Update request failed:', responseData);
                     throw new Error(responseData.message || 'Failed to update training');
                 }
 
@@ -353,8 +341,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 });
 
                 if (!updatedResponse.ok) {
-                    const errorData = await updatedResponse.json();
-                    console.error('Failed to fetch updated trainings:', errorData);
                     throw new Error('Failed to fetch updated trainings');
                 }
 
@@ -365,7 +351,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     if (onTrainingChange) {
                         onTrainingChange(updatedData.data);
                     }
-                    console.log("Updated trainings:", updatedData.data);
                 } else {
                     // Fallback for backward compatibility
                     const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
@@ -373,7 +358,6 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     if (onTrainingChange) {
                         onTrainingChange(trainingsArray);
                     }
-                    console.log("Updated trainings (old format):", trainingsArray);
                 }
 
                 setUpdateFormOpen(null);
@@ -414,12 +398,10 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             const query = new URLSearchParams(params).toString();
             const token = localStorage.getItem('token');
             if (!token) {
-                console.error('Not authenticated');
                 return;
             }
 
             try {
-                console.log(`Fetching trainings with query: ${query}`);
                 const response = await fetch(`/api/trainings?${query}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -431,18 +413,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
 
                 const data = await response.json();
-                console.log("Received trainings data:", data);
                 
                 if (data.data && Array.isArray(data.data)) {
                     setTrainings(data.data);
                     setPageCount(data.pageCount || 1);
-                    console.log("Trainings set from paginated data:", data.data);
                 } else if (Array.isArray(data)) {
                     setTrainings(data);
                     setPageCount(Math.ceil(data.length / itemsPerPage) || 1);
-                    console.log("Trainings set from array data:", data);
                 } else {
-                    console.error("Unexpected data format:", data);
                     setTrainings([]);
                     setPageCount(1);
                 }
