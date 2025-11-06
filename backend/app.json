@@ -28,8 +28,8 @@
       "description": "Google OAuth Client ID for authentication",
       "required": false
     },
-    "GOOGLE_CLIENT_SECRET": {
-      "description": "Google OAuth Client Secret for authentication",
+    "VITE_GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth Client ID for frontend (Vite build-time variable)",
       "required": false
     }
   },

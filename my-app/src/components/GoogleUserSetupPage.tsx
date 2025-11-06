@@ -1,4 +1,3 @@
-"use client";
 import GoogleUserDetailsForm from "./GoogleUserDetailsForm";
 
 interface GoogleUserSetupPageProps {
@@ -54,4 +53,6 @@ function GoogleUserSetupPage({
 }
 
 export default GoogleUserSetupPage;
+
+
 

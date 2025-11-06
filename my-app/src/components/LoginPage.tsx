@@ -17,10 +17,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
   const handleNavigateToRegistration = () => {
     if (onNavigateToRegistration) {
       onNavigateToRegistration();
-    } else {
-      console.log(
-        "Navigation to registration page requested, but handler not provided"
-      );
     }
   };
 

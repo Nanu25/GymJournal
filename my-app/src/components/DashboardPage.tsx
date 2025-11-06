@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import WelcomeHeader from "./WelcomeHeader";
 import PersonalRecordsCard from "./PersonalRecordsCard";
@@ -32,10 +30,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     const [username, setUsername] = useState<string>("Fitness Enthusiast"); // Default username
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
     const { logout } = useAuth();
-
-    useEffect(() => {
-        // Admin status tracked internally
-    }, [isAdmin]);
 
     useEffect(() => {
         const fetchUserData = async (): Promise<void> => {

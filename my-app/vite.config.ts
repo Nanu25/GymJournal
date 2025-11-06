@@ -1,10 +1,7 @@
-// @ts-nocheck
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-// Using a dynamic import for path
-// @ts-ignore
-const path = await import('path');
+import path from 'path';
 
 export default defineConfig({
   plugins: [
@@ -13,7 +10,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': '/src',
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {

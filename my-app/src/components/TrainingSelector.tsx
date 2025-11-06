@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from '../config';
 
@@ -60,7 +58,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                console.log('Fetching exercises from database via API:', `${API_BASE_URL}/exercises`);
                 setLoading(true);
                 
                 const response = await fetch(`${API_BASE_URL}/exercises`, {
@@ -76,7 +73,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 
                 // Parse the response as the new format
                 const rawData = await response.json();
-                console.log('API Response:', rawData);
                 
                 // Handle both old and new response formats
                 let exerciseData;
@@ -107,9 +103,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                     setExerciseCategories(exerciseData);
                     setActiveCategory(exerciseData[0].category);
                     setError(null);
-                    
-                    console.log(`Successfully loaded ${exerciseCount} exercises`);
-                    console.log('Categories:', exerciseData.map((cat: {category: string}) => cat.category).join(', '));
                 } else {
                     throw new Error('No exercise categories received');
                 }
@@ -118,7 +111,6 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 setError("Failed to fetch exercises from server. Using default exercise list.");
                 
                 // Use default exercise categories as fallback
-                console.log('Using default exercise categories as fallback');
                 setExerciseCategories(DEFAULT_EXERCISE_CATEGORIES);
                 if (DEFAULT_EXERCISE_CATEGORIES.length > 0) {
                     setActiveCategory(DEFAULT_EXERCISE_CATEGORIES[0].category);
@@ -186,13 +178,11 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
             }
 
             const savedTraining = await response.json();
-            console.log("Training saved successfully:", savedTraining);
             
             // Call onTrainingAdded to trigger navigation back to dashboard
             if (onTrainingAdded) {
                 onTrainingAdded(savedTraining);
             } else {
-                console.warn("No onTrainingAdded callback provided");
                 setIsSubmitting(false);
             }
         } catch (error) {

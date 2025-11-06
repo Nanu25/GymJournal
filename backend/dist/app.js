@@ -17,7 +17,6 @@ const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
-const TrainingController_1 = require("./controllers/TrainingController");
 const chatController_1 = require("./controllers/chatController");
 chatController_1.ChatController.initialize();
 const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
@@ -140,16 +139,6 @@ app.use('/api', chatRoutes_1.default);
 app.post('/api/auth/register', auth_controller_1.AuthController.register);
 app.post('/api/auth/login', auth_controller_1.AuthController.login);
 app.post('/api/auth/google', auth_controller_1.AuthController.loginWithGoogle);
-if (process.env.NODE_ENV !== 'production') {
-    console.log('[APP] Adding debug routes (non-production environment)');
-    app.get('/api/debug/trainings', TrainingController_1.debugTrainingController);
-    app.post('/api/debug/trainings', (req, res) => {
-        console.log('[DEBUG] Direct training creation test');
-        console.log('[DEBUG] Request body:', req.body);
-        req.user = { id: 1 };
-        (0, TrainingController_1.createTraining)(req, res);
-    });
-}
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/'))
         return;

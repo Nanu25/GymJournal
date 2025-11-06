@@ -17,14 +17,11 @@ router.get('/chat/status', authenticateToken, (_req, res) => {
     });
 });
 
-// Simple inline chat handler to bypass the static class issue
 router.post('/chat', authenticateToken, async (req, res) => {
     try {
-        console.log('Inline chat handler: Received chat request');
         const { message } = req.body;
 
         if (!message || typeof message !== 'string') {
-            console.log('Inline chat handler: Invalid message format', { message });
             res.status(400).json({ error: 'Message is required and must be a string' });
             return;
         }
@@ -54,8 +51,6 @@ router.post('/chat', authenticateToken, async (req, res) => {
                 console.error('Error fetching user data for chat prompt:', err);
             }
         }
-        console.log('Fetched userMetrics:', userMetrics);
-        console.log('Fetched lastTrainings:', lastTrainings);
 
         // Format user metrics for prompt
         let userMetricsText = '';

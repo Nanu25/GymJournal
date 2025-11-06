@@ -34,7 +34,6 @@ const App = () => {
         setCurrentPage("registration");
     };
 
-    // Update this function to set currentPage to "editMetrics"
     const navigateToMetricsSection = () => {
         setCurrentPage("editMetrics");
     };

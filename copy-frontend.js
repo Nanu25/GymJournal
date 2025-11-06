@@ -19,7 +19,13 @@ if (!fs.existsSync(backendPublicDir)) {
 try {
     console.log('Building frontend...');
     process.chdir(frontendDir);
-    execSync('npm run build', { stdio: 'inherit' });
+    
+    // Pass through environment variables to the build process
+    const env = { ...process.env };
+    execSync('npm run build', { 
+        stdio: 'inherit',
+        env: env
+    });
     console.log('Frontend build completed successfully.');
 } catch (error) {
     console.error('Error building frontend:', error);

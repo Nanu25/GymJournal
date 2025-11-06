@@ -21,10 +21,8 @@ router.get('/chat/status', auth_1.authenticateToken, (_req, res) => {
 router.post('/chat', auth_1.authenticateToken, async (req, res) => {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     try {
-        console.log('Inline chat handler: Received chat request');
         const { message } = req.body;
         if (!message || typeof message !== 'string') {
-            console.log('Inline chat handler: Invalid message format', { message });
             res.status(400).json({ error: 'Message is required and must be a string' });
             return;
         }
@@ -52,8 +50,6 @@ router.post('/chat', auth_1.authenticateToken, async (req, res) => {
                 console.error('Error fetching user data for chat prompt:', err);
             }
         }
-        console.log('Fetched userMetrics:', userMetrics);
-        console.log('Fetched lastTrainings:', lastTrainings);
         let userMetricsText = '';
         if (userMetrics) {
             userMetricsText = `User Metrics:\n` +

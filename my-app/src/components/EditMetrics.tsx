@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 
 interface EditMetricsProps {
@@ -74,8 +72,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
         }),
       });
       if (!response.ok) throw new Error('Failed to update metrics');
-      const updatedData = await response.json();
-      console.log('Updated metrics:', updatedData);
+      await response.json();
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);

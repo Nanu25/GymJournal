@@ -1,4 +1,3 @@
-"use client";
 import RegistrationForm from "./RegistrationForm";
 
 interface GymJournalRegistrationProps {
@@ -11,8 +10,6 @@ function GymJournalRegistration({
   const handleNavigateToLogin = () => {
     if (onNavigateToLogin) {
       onNavigateToLogin();
-    } else {
-      console.log("Navigation to login page requested, but handler not provided");
     }
   };
 
