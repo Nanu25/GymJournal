@@ -322,7 +322,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 
         // Find the user to delete
         const userRepository = AppDataSource.getRepository(User);
-        const userToDelete = await userRepository.findOne({ where: { id: Number(userId) } });
+        const userToDelete = await userRepository.findOne({ where: { id: userId } });
 
         if (!userToDelete) {
             res.status(404).json({ message: 'User not found' });
@@ -332,10 +332,10 @@ export const deleteUser = async (req: Request, res: Response) => {
         // Log the action
         const activityLogRepository = AppDataSource.getRepository(ActivityLog);
         await activityLogRepository.save({
-            userId: Number(req.user.id),
+            userId: req.user.id,
             action: ActionType.DELETE,
             entityType: 'User',
-            entityId: Number(userId),
+            entityId: userId,
             details: { deletedUser: userToDelete.email },
             timestamp: new Date()
         });

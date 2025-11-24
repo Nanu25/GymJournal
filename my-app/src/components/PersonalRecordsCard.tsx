@@ -54,7 +54,13 @@ interface PersonalRecordsCardProps {
     onNavigateToTrainingSelector: () => void;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
-    weight?: number;
+    profile?: {
+        name?: string;
+        weight?: number;
+        height?: number;
+    };
+    hasCachedInitialTrainings?: boolean;
+    onRequestFullRefresh?: () => Promise<void> | void;
 }
 
 const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
@@ -64,7 +70,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     onNavigateToTrainingSelector,
     onUpdateTraining,
     onTrainingChange,
-    weight: propWeight,
+    profile,
+    onRequestFullRefresh,
 }) => {
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [updateFormOpen, setUpdateFormOpen] = useState<number | null>(null);
@@ -76,46 +83,53 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 5;
-    const [weight, setWeight] = useState<number | null>(propWeight || null);
+    const itemsPerPage = 10;
     const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
     const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
-    const [pageCount, setPageCount] = useState(0);
 
-    // Fetch weight from the backend when the component mounts
-    useEffect(() => {
-        // Use prop weight if available, otherwise set a default (0)
-        if (propWeight !== undefined) {
-            setWeight(propWeight);
-        } else {
-            setWeight(0); // Set a default immediately so we don't show "Loading..."
+    // Client-side filtering and sorting
+    const filteredAndSortedTrainings = React.useMemo(() => {
+        let result = [...trainings];
+
+        // Apply search filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(training =>
+                training.date.includes(term) ||
+                Object.keys(training.exercises).some(exercise => exercise.toLowerCase().includes(term))
+            );
         }
-        
-        const fetchWeight = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('Not authenticated');
-                }
-                const response = await fetch("/api/user", {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error("Failed to fetch weight");
-                }
-                const data = await response.json();
-                setWeight(data.weight || 0);
-            } catch (error) {
-                console.error("Error fetching weight:", error);
-                // Keep the default weight if fetch fails
-            }
-        };
-        fetchWeight();
-    }, [propWeight]);
+
+        // Apply sorting
+        if (sortField === "date") {
+            result.sort((a, b) => {
+                const comparison = a.date.localeCompare(b.date);
+                return sortDirection === "asc" ? comparison : -comparison;
+            });
+        } else if (sortField === "pr") {
+            result.sort((a, b) => {
+                const prA = Object.values(a.exercises).length > 0 ? Math.max(...Object.values(a.exercises).map(Number)) : 0;
+                const prB = Object.values(b.exercises).length > 0 ? Math.max(...Object.values(b.exercises).map(Number)) : 0;
+                return sortDirection === "asc" ? prA - prB : prB - prA;
+            });
+        } else if (sortField === "exercises") {
+            result.sort((a, b) => {
+                const countA = Object.keys(a.exercises).length;
+                const countB = Object.keys(b.exercises).length;
+                return sortDirection === "asc" ? countA - countB : countB - countA;
+            });
+        }
+
+        return result;
+    }, [trainings, searchTerm, sortField, sortDirection]);
+
+    const pageCount = Math.max(1, Math.ceil(filteredAndSortedTrainings.length / itemsPerPage));
+    const currentTrainings = filteredAndSortedTrainings.slice(
+        currentPage * itemsPerPage,
+        (currentPage + 1) * itemsPerPage
+    );
 
     // Fetch exercise options from backend on mount
     useEffect(() => {
@@ -123,7 +137,11 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             .then(res => res.json())
             .then(data => {
                 // Flatten all exercises into a single array
-                const allExercises = data.flatMap((cat: { exercises: string[] }) => cat.exercises);
+                const allExercises = Array.isArray(data)
+                    ? data.flatMap((cat: { exercises: string[] }) => cat.exercises)
+                    : data.data && Array.isArray(data.data)
+                        ? data.data.flatMap((cat: { exercises: string[] }) => cat.exercises)
+                        : [];
                 setExerciseOptions(allExercises);
             })
             .catch(err => console.error("Failed to fetch exercises for update form:", err));
@@ -159,31 +177,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 throw new Error(errorData.message || 'Failed to delete training');
             }
 
-            // Fetch updated trainings after delete
-            const updatedResponse = await fetch('/api/trainings', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            // Update local state
+            setTrainings(prev => {
+                const updated = prev.filter(t => t.date !== trainingToDelete.date);
+                if (onTrainingChange) {
+                    onTrainingChange(updated);
                 }
+                return updated;
             });
 
-            if (!updatedResponse.ok) {
-                throw new Error('Failed to fetch updated trainings');
-            }
-
-            const updatedData = await updatedResponse.json();
-            // Extract trainings from the paginated response
-            if (updatedData.data && Array.isArray(updatedData.data)) {
-                setTrainings(updatedData.data);
-                if (onTrainingChange) {
-                    onTrainingChange(updatedData.data);
-                }
-            } else {
-                // Fallback for backward compatibility
-                const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
-                setTrainings(trainingsArray);
-                if (onTrainingChange) {
-                    onTrainingChange(trainingsArray);
-                }
+            // Optionally refresh from server
+            if (onRequestFullRefresh) {
+                await onRequestFullRefresh();
             }
 
             setTrainingToDelete(null);
@@ -209,31 +214,31 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             onUpdateTraining(trainings[index], index);
         } else {
             const training = trainings[index];
-            
+
             // Fetch the latest exercises from the API before opening the update form
             fetch("/api/exercises")
                 .then(res => res.json())
                 .then(data => {
                     // Flatten all exercises into a single array
-                    const allExercises = Array.isArray(data) 
-                        ? data.flatMap((cat: { exercises: string[] }) => cat.exercises) 
-                        : data.data 
+                    const allExercises = Array.isArray(data)
+                        ? data.flatMap((cat: { exercises: string[] }) => cat.exercises)
+                        : data.data
                             ? data.data.flatMap((cat: { exercises: string[] }) => cat.exercises)
                             : [];
-                    
+
                     setExerciseOptions(allExercises);
-                    
+
                     // Now set up the update form with the training data
                     const exercises = Object.entries(training.exercises).map(([name, weight]) => ({
                         name,
                         weight,
                     }));
-                    
+
                     setUpdateFormData({
                         date: training.date,
                         exercises,
                     });
-                    
+
                     setUpdateFormOpen(index);
                 })
                 .catch(err => {
@@ -243,12 +248,12 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         name,
                         weight,
                     }));
-                    
+
                     setUpdateFormData({
                         date: training.date,
                         exercises,
                     });
-                    
+
                     setUpdateFormOpen(index);
                 });
         }
@@ -331,31 +336,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error(responseData.message || 'Failed to update training');
                 }
 
-                // Fetch the updated list of trainings
-                const updatedResponse = await fetch('/api/trainings', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!updatedResponse.ok) {
-                    throw new Error('Failed to fetch updated trainings');
-                }
-
-                const updatedData = await updatedResponse.json();
-                // Extract trainings from the paginated response
-                if (updatedData.data && Array.isArray(updatedData.data)) {
-                    setTrainings(updatedData.data);
-                    if (onTrainingChange) {
-                        onTrainingChange(updatedData.data);
-                    }
-                } else {
-                    // Fallback for backward compatibility
-                    const trainingsArray = Array.isArray(updatedData) ? updatedData : [];
-                    setTrainings(trainingsArray);
-                    if (onTrainingChange) {
-                        onTrainingChange(trainingsArray);
-                    }
+                // Optionally refresh from server
+                if (onRequestFullRefresh) {
+                    await onRequestFullRefresh();
                 }
 
                 setUpdateFormOpen(null);
@@ -384,66 +367,13 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     };
 
     useEffect(() => {
-        const fetchTrainings = async () => {
-            // Build query parameters - only include parameters with values
-            const params: Record<string, string> = {};
-            if (searchTerm) params.searchTerm = searchTerm;
-            if (sortField) params.sortField = sortField;
-            if (sortDirection) params.sortDirection = sortDirection;
-            params.page = (currentPage + 1).toString(); // backend is 1-based
-            params.limit = itemsPerPage.toString();
-
-            const query = new URLSearchParams(params).toString();
-            const token = localStorage.getItem('token');
-            if (!token) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/trainings?${query}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                if (data.data && Array.isArray(data.data)) {
-                    setTrainings(data.data);
-                    setPageCount(data.pageCount || 1);
-                } else if (Array.isArray(data)) {
-                    setTrainings(data);
-                    setPageCount(Math.ceil(data.length / itemsPerPage) || 1);
-                } else {
-                    setTrainings([]);
-                    setPageCount(1);
-                }
-            } catch (error) {
-                console.error('Error fetching trainings:', error);
-                setTrainings([]);
-                setPageCount(1);
-            }
-        };
-        fetchTrainings();
-    // eslint-disable-next-line
-    }, [searchTerm, sortField, sortDirection, currentPage]);
-
-    const currentTrainings = Array.isArray(trainings)
-        ? trainings.map((training, originalIndex) => ({ training, originalIndex }))
-        : [];
-
-    useEffect(() => {
         setCurrentPage(0);
     }, [searchTerm, sortField, sortDirection]);
 
     // Calculate exercise statistics
     useEffect(() => {
-        if (trainings.length > 0) {
-            const exerciseCounts = trainings.map(t => Object.keys(t.exercises).length);
+        if (filteredAndSortedTrainings.length > 0) {
+            const exerciseCounts = filteredAndSortedTrainings.map(t => Object.keys(t.exercises).length);
             const stats = {
                 min: Math.min(...exerciseCounts),
                 max: Math.max(...exerciseCounts),
@@ -453,89 +383,94 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
         } else {
             setExerciseStats({ max: 0, min: 0, avg: 0 });
         }
-    }, [trainings]);
+    }, [filteredAndSortedTrainings]);
 
-  
+
 
     return (
-        <section
-            id="personal-records-card"
-            className="relative p-10 bg-[#0f172a] min-h-[800px] rounded-[32px] w-full flex flex-col shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl"
-        >
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 to-transparent rounded-[32px] pointer-events-none" />
-            
-            <h2 className="relative text-5xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-12 tracking-wide">
-                Training History
-            </h2>
-
-            <div className="relative flex items-center bg-[#1a2234] p-8 rounded-2xl border border-blue-500/10">
-                <div className="flex items-center">
-                    <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full mr-4"></div>
-                    <div className="text-3xl bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent font-medium">
-                        Current Weight
-                    </div>
-                </div>
-                <div className="ml-auto text-3xl font-bold text-white bg-gradient-to-r from-blue-500/20 to-blue-600/20 px-8 py-3 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-500/10">
-                    {weight !== null ? `${weight} kg` : "Loading..."}
-                </div>
-            </div>
-
-            <div className="relative mt-8 mb-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex-grow max-w-md">
-                        <input
-                            type="text"
-                            placeholder="Search by date or exercise"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-6 py-4 text-lg border border-blue-500/10 rounded-xl bg-[#1a2234] text-white placeholder-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
-                        />
-                    </div>
-                    <div className="flex space-x-4">
-                        <button
-                            onClick={() => handleSort("date")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
-                                sortField === "date" 
-                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
-                                    : ""
-                            }`}
-                        >
-                            Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
-                        </button>
-                        <button
-                            onClick={() => handleSort("pr")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
-                                sortField === "pr" 
-                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
-                                    : ""
-                            }`}
-                        >
-                            PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
-                        </button>
-                        <button
-                            onClick={() => handleSort("exercises")}
-                            className={`px-6 py-4 rounded-xl text-lg transition-all duration-200 bg-white text-black md:bg-[#1a2234] md:text-black-200 border border-blue-500/10 hover:border-blue-500/30 ${
-                                sortField === "exercises" 
-                                    ? "md:bg-gradient-to-r md:from-blue-500 md:to-blue-600 md:text-white md:shadow-lg md:shadow-blue-500/20" 
-                                    : ""
-                            }`}
-                        >
-                            #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
-                        </button>
+        <section id="personal-records-card" className="w-full space-y-6">
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <p className="text-sm uppercase tracking-[0.35em] text-blue-400/70 mb-2">Training history for</p>
+                    <h2 className="text-3xl sm:text-4xl font-semibold text-white">
+                        {profile?.name ?? "You"}
+                    </h2>
+                    <div className="flex flex-wrap gap-4 mt-4">
+                        {profile?.weight && (
+                            <div className="px-4 py-2 rounded-xl border border-blue-500/10 bg-[#111c33]">
+                                <p className="text-xs uppercase text-blue-300/70 tracking-wider">Weight</p>
+                                <p className="text-xl font-semibold text-white mt-1">{profile.weight} kg</p>
+                            </div>
+                        )}
+                        {profile?.height && (
+                            <div className="px-4 py-2 rounded-xl border border-blue-500/10 bg-[#111c33]">
+                                <p className="text-xs uppercase text-blue-300/70 tracking-wider">Height</p>
+                                <p className="text-xl font-semibold text-white mt-1">{profile.height} cm</p>
+                            </div>
+                        )}
+                        <div className="px-4 py-2 rounded-xl border border-blue-500/10 bg-[#111c33]">
+                            <p className="text-xs uppercase text-blue-300/70 tracking-wider">Sessions</p>
+                            <p className="text-xl font-semibold text-white mt-1">{trainings.length}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="relative space-y-6">
+            {/* Search and Sort Controls */}
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex-grow min-w-[200px]">
+                    <input
+                        type="text"
+                        placeholder="Search by date or exercise"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-5 py-3 border border-blue-500/10 rounded-xl bg-[#111c33] text-white placeholder-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
+                    />
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => handleSort("date")}
+                        className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "date"
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            }`}
+                    >
+                        Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </button>
+                    <button
+                        onClick={() => handleSort("pr")}
+                        className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "pr"
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            }`}
+                    >
+                        PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </button>
+                    <button
+                        onClick={() => handleSort("exercises")}
+                        className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "exercises"
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            }`}
+                    >
+                        #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </button>
+                </div>
+            </div>
+
+            {/* Training List */}
+            <div className="space-y-4">
                 {currentTrainings.length === 0 ? (
-                    <div className="flex items-center justify-center h-48 bg-[#1a2234] rounded-2xl border border-blue-500/10">
+                    <div className="flex items-center justify-center h-48 bg-[#111c33] rounded-2xl border border-blue-500/10">
                         <p className="text-blue-200/50 text-xl">No training sessions found</p>
                     </div>
                 ) : (
-                    currentTrainings.map(({ training, originalIndex }) => {
-                        const prExercise = Object.entries(training.exercises).reduce((max, [name, weight]) => 
+                    currentTrainings.map((training, index) => {
+                        const originalIndex = filteredAndSortedTrainings.findIndex(t => t.date === training.date);
+                        const prExercise = Object.entries(training.exercises).reduce((max, [name, weight]) =>
                             !max || weight > max.weight ? { name, weight } : max
-                        , null as { name: string; weight: number } | null);
+                            , null as { name: string; weight: number } | null);
 
                         const exerciseCount = Object.keys(training.exercises).length;
                         const prText = prExercise ? `${prExercise.name}: ${prExercise.weight} kg` : "None";
@@ -543,39 +478,38 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         const isHighPerformer = exerciseCount === exerciseStats.max;
                         const isLowPerformer = exerciseCount === exerciseStats.min;
                         const isAveragePerformer = exerciseCount === Math.round((exerciseStats.max + exerciseStats.min) / 2);
-                        
-                        const borderColor = isHighPerformer 
-                            ? "border-amber-500/30" 
-                            : isLowPerformer 
-                            ? "border-red-500/30" 
-                            : isAveragePerformer
-                            ? "border-blue-500/30"
-                            : "border-blue-500/10";
 
-                        const statHighlight = isHighPerformer 
-                            ? "bg-gradient-to-r from-amber-500/10 to-amber-600/10" 
-                            : isLowPerformer 
-                            ? "bg-gradient-to-r from-red-500/10 to-red-600/10" 
-                            : isAveragePerformer
-                            ? "bg-gradient-to-r from-blue-500/10 to-blue-600/10"
-                            : "bg-[#1a2234]";
+                        const borderColor = isHighPerformer
+                            ? "border-amber-500/30"
+                            : isLowPerformer
+                                ? "border-red-500/30"
+                                : isAveragePerformer
+                                    ? "border-blue-500/30"
+                                    : "border-blue-500/10";
 
-                        const performanceIndicator = isHighPerformer 
-                            ? "text-amber-400" 
-                            : isLowPerformer 
-                            ? "text-red-400" 
-                            : isAveragePerformer
-                            ? "text-blue-400"
-                            : "text-blue-200/70";
+                        const statHighlight = isHighPerformer
+                            ? "bg-gradient-to-r from-amber-500/10 to-amber-600/10"
+                            : isLowPerformer
+                                ? "bg-gradient-to-r from-red-500/10 to-red-600/10"
+                                : isAveragePerformer
+                                    ? "bg-gradient-to-r from-blue-500/10 to-blue-600/10"
+                                    : "bg-[#1a2234]";
+
+                        const performanceIndicator = isHighPerformer
+                            ? "text-amber-400"
+                            : isLowPerformer
+                                ? "text-red-400"
+                                : isAveragePerformer
+                                    ? "text-blue-400"
+                                    : "text-blue-200/70";
 
                         return (
                             <div
-                                key={originalIndex}
-                                className={`rounded-2xl overflow-hidden border ${borderColor} transition-all duration-200 ${
-                                    expandedTraining === originalIndex ? "ring-2 ring-blue-500/50" : ""
-                                }`}
+                                key={`${training.date}-${index}`}
+                                className={`rounded-2xl overflow-hidden border ${borderColor} transition-all duration-200 ${expandedTraining === originalIndex ? "ring-2 ring-blue-500/50" : ""
+                                    }`}
                             >
-                                <div className={`p-6 ${statHighlight}`}>
+                                <div className={`p-5 ${statHighlight}`}>
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                         <div
                                             className="flex items-center cursor-pointer flex-grow w-full"
@@ -596,39 +530,45 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                                 {expandedTraining === originalIndex ? "▲" : "▼"}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto mt-4 sm:mt-0">
+                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0">
                                             <button
-                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow hover:border-blue-300"
+                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg border border-blue-400/50 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center gap-2"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
                                                 }}
                                             >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
                                                 Update
                                             </button>
                                             <button
-                                                className="w-full sm:w-auto px-4 py-2 text-base font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl border border-red-400 transition-all duration-200 shadow hover:border-red-300"
+                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-lg border border-red-400/50 hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md shadow-red-500/20 hover:shadow-red-500/30 flex items-center justify-center gap-2"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(training);
                                                 }}
                                             >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                                 Delete
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                                 {expandedTraining === originalIndex && (
-                                    <div className="p-6 bg-[#1a2234]/50 border-t border-blue-500/10">
-                                        <h4 className="text-white font-semibold text-xl mb-6">Exercises:</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-5 bg-[#111c33]/50 border-t border-blue-500/10">
+                                        <h4 className="text-white font-semibold text-lg mb-4">Exercises:</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="bg-[#1a2234] p-5 rounded-xl flex justify-between items-center border border-blue-500/10 hover:border-blue-400/30 transition-all duration-200"
+                                                    className="bg-[#111c33] p-4 rounded-xl flex justify-between items-center border border-blue-500/10 hover:border-blue-400/30 transition-all duration-200"
                                                 >
-                                                    <span className="text-white text-lg truncate mr-3">{exercise}</span>
-                                                    <span className="text-white font-bold text-lg whitespace-nowrap px-5 py-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                                    <span className="text-white text-base truncate mr-3">{exercise}</span>
+                                                    <span className="text-white font-bold text-base whitespace-nowrap px-4 py-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
                                                         {weight} kg
                                                     </span>
                                                 </div>
@@ -642,35 +582,42 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 )}
             </div>
 
-            <div className="relative mt-8 pt-6 border-t border-blue-500/10">
-                <div className="flex justify-center space-x-8 text-sm mb-6">
+            {/* Footer Actions */}
+            <div className="pt-6 border-t border-blue-500/10 space-y-6">
+                <div className="flex flex-wrap justify-center gap-6 text-sm">
                     <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full mr-2"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full mr-2"></div>
                         <span className="text-emerald-200">Most exercises ({exerciseStats.max})</span>
                     </div>
                     <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mr-2"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mr-2"></div>
                         <span className="text-blue-200">Average ({exerciseStats.avg})</span>
                     </div>
                     <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-red-400 to-red-600 rounded-full mr-2"></div>
+                        <div className="w-2.5 h-2.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full mr-2"></div>
                         <span className="text-red-200">Least exercises ({exerciseStats.min})</span>
                     </div>
                 </div>
 
                 <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
 
-                <div className="mt-8 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button
-                        className="w-full py-4 text-xl font-bold text-center text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 hover:border-blue-300 transition-all duration-200 shadow-lg shadow-blue-500/20"
+                        className="flex-1 py-4 text-base font-semibold text-center text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
                         onClick={onNavigateToTrainingSelector}
                     >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
                         Add Training Session
                     </button>
                     <button
-                        className="w-full py-4 text-xl font-bold text-center text-black bg-white/80 md:text-black md:bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                        className="flex-1 py-4 text-base font-semibold text-center text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl border border-purple-400/50 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 flex items-center justify-center gap-2"
                         onClick={onNavigateToMetricsSection}
                     >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                         Edit Metrics
                     </button>
                 </div>

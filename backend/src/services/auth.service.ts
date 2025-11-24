@@ -21,7 +21,7 @@ export class AuthService {
         await userRepository.save(user);
 
         const token = jwt.sign(
-            { userId: Number(user.id) },
+            { userId: user.id },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );
@@ -47,7 +47,7 @@ export class AuthService {
         }
 
         const token = jwt.sign(
-            { userId: Number(user.id) },
+            { userId: user.id },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '7d' }
         );
@@ -101,7 +101,7 @@ export class AuthService {
             }
 
             const token = jwt.sign(
-                { userId: Number(user.id) },
+                { userId: user.id },
                 process.env.JWT_SECRET || 'your-secret-key',
                 { expiresIn: '7d' }
             );

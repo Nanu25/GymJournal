@@ -18,6 +18,7 @@
     "db:init": "ts-node src/scripts/initializeDatabase.ts",
     "db:init:js": "node dist/scripts/initializeDatabase.js",
     "db:init:simple": "node initDb.js",
+    "migration:run": "ts-node src/scripts/runMigrations.ts",
     "postinstall": "npm install bcryptjs --no-save",
     "db:populate": "ts-node src/scripts/populateExercisesFromMuscleGroupMapping.ts"
   },

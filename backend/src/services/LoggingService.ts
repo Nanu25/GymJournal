@@ -5,7 +5,7 @@ export class LoggingService {
     private static activityLogRepository = AppDataSource.getRepository(ActivityLog);
 
     static async logActivity(
-        userId: number,
+        userId: string,
         action: ActionType,
         entityType: string,
         entityId?: string,
@@ -15,14 +15,14 @@ export class LoggingService {
         log.userId = userId;
         log.action = action;
         log.entityType = entityType;
-        if (entityId) log.entityId = Number(entityId);
+        if (entityId) log.entityId = entityId;
         if (details) log.details = details;
 
         await this.activityLogRepository.save(log);
     }
 
     static async getActivityLogs(
-        userId?: number,
+        userId?: string,
         entityType?: string,
         startDate?: Date,
         endDate?: Date

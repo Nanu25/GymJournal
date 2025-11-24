@@ -3,8 +3,8 @@ import {Training} from "./Training";
 
 @Entity('users')
 export class User extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id!: number;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
     @Column({ length: 100 })
     name!: string;

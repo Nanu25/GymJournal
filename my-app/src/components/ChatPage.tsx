@@ -90,7 +90,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
             }
 
             const data = await response.json();
-            
+
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 text: data.response,
@@ -155,63 +155,64 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
             </header>
 
             {/* Chat Container */}
-            <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-2 sm:px-4 py-4 sm:py-6 overflow-hidden">
+            <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto mb-4 space-y-3 sm:space-y-4 pr-1 sm:pr-2">
+                <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2 custom-scrollbar">
                     {messages.map((message) => (
                         <div
                             key={message.id}
-                            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+                            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
                         >
                             <div
-                                className={`max-w-[85%] sm:max-w-[70%] rounded-lg px-3 py-2 sm:px-4 sm:py-3 ${
-                                    message.isUser
-                                        ? 'bg-indigo-500 text-white'
-                                        : 'bg-gray-700 text-white'
-                                }`}
+                                className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-4 shadow-lg backdrop-blur-sm ${message.isUser
+                                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none border border-blue-500/20'
+                                        : 'bg-[#1e293b]/80 text-white rounded-bl-none border border-white/10'
+                                    }`}
                             >
-                                <div className="prose prose-sm prose-invert max-w-none">
+                                <div className="prose prose-sm prose-invert max-w-none leading-relaxed">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {message.text}
                                     </ReactMarkdown>
                                 </div>
-                                <p className={`text-xs mt-1 text-right ${
-                                    message.isUser ? 'text-indigo-200' : 'text-gray-400'
-                                }`}>
+                                <p className={`text-[10px] mt-2 text-right font-medium uppercase tracking-wider ${message.isUser ? 'text-blue-200/70' : 'text-gray-400/70'
+                                    }`}>
                                     {formatTime(message.timestamp)}
                                 </p>
                             </div>
                         </div>
                     ))}
-                    
+
                     {isLoading && (
-                        <div className="flex justify-start">
-                            <div className="bg-gray-700 text-white rounded-lg px-3 py-2 sm:px-4 sm:py-3">
-                                <div className="flex space-x-2">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="flex justify-start animate-pulse">
+                            <div className="bg-[#1e293b]/80 text-white rounded-2xl rounded-bl-none px-5 py-4 border border-white/10">
+                                <div className="flex space-x-2 items-center h-6">
+                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                 </div>
                             </div>
                         </div>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Area */}
-                <div className="bg-[#0f172a]/50 backdrop-blur-xl border border-teal-500/10 rounded-lg p-3 sm:p-4 flex-shrink-0">
+                <div className="bg-[#1e293b]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-5 flex-shrink-0 shadow-2xl">
                     {/* Quick Messages Title and Toggle */}
-                    <div className="mb-2 flex items-center">
-                        <span className="text-base font-semibold text-teal-400 border-l-4 border-teal-500 pl-3 flex-1">Quick Messages</span>
+                    <div className="mb-3 flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                            Quick Suggestions
+                        </span>
                         <button
                             type="button"
                             aria-label={showQuickMessages ? 'Hide quick messages' : 'Show quick messages'}
                             onClick={() => setShowQuickMessages(v => !v)}
-                            className="ml-2 p-1 rounded hover:bg-teal-900 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-gray-400 hover:text-white"
                         >
                             <svg
-                                className={`w-5 h-5 text-teal-400 transition-transform duration-300 ${showQuickMessages ? '' : 'rotate-180'}`}
+                                className={`w-4 h-4 transition-transform duration-300 ${showQuickMessages ? '' : 'rotate-180'}`}
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -220,14 +221,14 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
                     </div>
                     {/* Quick Messages */}
                     <div
-                        className={`overflow-hidden transition-all duration-300 mb-2 ${showQuickMessages ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
+                        className={`overflow-hidden transition-all duration-300 mb-4 ${showQuickMessages ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
                     >
                         <div className="flex flex-wrap gap-2">
                             {quickMessages.map((msg, idx) => (
                                 <button
                                     key={idx}
                                     type="button"
-                                    className="px-3 py-1 bg-teal-500 text-black rounded-lg text-xs hover:bg-teal-600 transition-colors"
+                                    className="px-4 py-2 bg-white/5 text-gray-300 border border-white/5 rounded-xl text-xs sm:text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
                                     onClick={() => handleQuickMessage(msg)}
                                     disabled={isLoading}
                                 >
@@ -236,35 +237,64 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
                             ))}
                         </div>
                     </div>
-                    <div className="flex space-x-2 sm:space-x-4">
+                    <div className="flex gap-3 sm:gap-4 items-end">
                         <textarea
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="Ask me about training, nutrition, workouts, or any fitness-related questions..."
-                            className="flex-1 bg-gray-800 text-white border border-gray-600 rounded-lg px-3 py-2 sm:px-4 sm:py-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm sm:text-base"
-                            rows={2}
+                            placeholder="Ask me about training, nutrition, workouts..."
+                            className="flex-1 bg-[#0f172a]/50 text-white border border-white/10 rounded-xl px-4 py-3 sm:px-5 sm:py-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-sm sm:text-base placeholder-gray-500 transition-all duration-200"
+                            rows={1}
+                            style={{ minHeight: '3rem', maxHeight: '8rem' }}
                             disabled={isLoading}
                         />
                         <button
                             onClick={sendMessage}
                             disabled={!inputMessage.trim() || isLoading}
-                            className="px-3 py-2 sm:px-6 sm:py-3 bg-green-500 text-black rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 shadow-lg hover:shadow-xl"
+                            className="p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f172a] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex-shrink-0"
                         >
                             {isLoading ? (
-                                <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             ) : (
-                                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                <svg className="h-5 w-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                 </svg>
                             )}
                         </button>
                     </div>
                 </div>
             </div>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+                @keyframes fade-in-up {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animate-fade-in-up {
+                    animation: fade-in-up 0.3s ease-out forwards;
+                }
+            `}</style>
         </div>
     );
 };

@@ -13,8 +13,8 @@ export class ActivityLog {
     @PrimaryGeneratedColumn('increment')
     id!: number;
 
-    @Column({ type: 'integer' })
-    userId!: number;
+    @Column({ type: 'uuid' })
+    userId!: string;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'userId' })
@@ -29,8 +29,8 @@ export class ActivityLog {
     @Column()
     entityType!: string;
 
-    @Column({ type: 'integer', nullable: true })
-    entityId!: number | null;
+    @Column({ type: 'varchar', nullable: true })
+    entityId!: string | null;
 
     @Column({ type: 'jsonb', nullable: true })
     details!: Record<string, any>;

@@ -80,12 +80,13 @@ try {
 
     appDataSourceInstance = new DataSource({
         ...dbConfig,
-        synchronize: process.env.NODE_ENV !== 'production', // Only true in development
+        synchronize: false, // Disable synchronize when using migrations
         logging: process.env.NODE_ENV !== 'production', // Only log in development
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: [],
+        migrations: ['src/migrations/**/*.ts'],
+        migrationsTableName: 'migrations',
         cache: {
             duration: 60000 // Cache query results for 1 minute
         }

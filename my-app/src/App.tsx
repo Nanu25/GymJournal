@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import GymJournalRegistration from "./components/GymJournalRegistration";
@@ -7,12 +7,16 @@ import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
 import ChatPage from "./components/ChatPage";
 import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
+import PRSectionPage from "./components/PRSectionPage";
 import { useAuth } from "./context/AuthContext";
 
 const App = () => {
     const { token } = useAuth();
     const [currentPage, setCurrentPage] = useState("login");
     const [googleUser, setGoogleUser] = useState<any>(null);
+    const prHistoryEntryAdded = useRef(false);
+    const trainingSelectorHistoryAdded = useRef(false);
+    const editMetricsHistoryAdded = useRef(false);
 
     useEffect(() => {
         if (token) {
@@ -21,6 +25,70 @@ const App = () => {
             setCurrentPage("login");
         }
     }, [token]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        if (currentPage !== "prSection") {
+            prHistoryEntryAdded.current = false;
+        }
+        if (currentPage !== "trainingSelector") {
+            trainingSelectorHistoryAdded.current = false;
+        }
+        if (currentPage !== "editMetrics") {
+            editMetricsHistoryAdded.current = false;
+        }
+
+        // Handle PR Section
+        if (currentPage === "prSection") {
+            const handlePopState = () => {
+                prHistoryEntryAdded.current = false;
+                setCurrentPage("dashboard");
+            };
+
+            window.history.pushState({ page: "prSection" }, "", "#pr-section");
+            prHistoryEntryAdded.current = true;
+            window.addEventListener("popstate", handlePopState);
+
+            return () => {
+                window.removeEventListener("popstate", handlePopState);
+            };
+        }
+
+        // Handle Training Selector
+        if (currentPage === "trainingSelector") {
+            const handlePopState = () => {
+                trainingSelectorHistoryAdded.current = false;
+                setCurrentPage("dashboard");
+            };
+
+            window.history.pushState({ page: "trainingSelector" }, "", "#add-training");
+            trainingSelectorHistoryAdded.current = true;
+            window.addEventListener("popstate", handlePopState);
+
+            return () => {
+                window.removeEventListener("popstate", handlePopState);
+            };
+        }
+
+        // Handle Edit Metrics
+        if (currentPage === "editMetrics") {
+            const handlePopState = () => {
+                editMetricsHistoryAdded.current = false;
+                setCurrentPage("dashboard");
+            };
+
+            window.history.pushState({ page: "editMetrics" }, "", "#edit-metrics");
+            editMetricsHistoryAdded.current = true;
+            window.addEventListener("popstate", handlePopState);
+
+            return () => {
+                window.removeEventListener("popstate", handlePopState);
+            };
+        }
+    }, [currentPage]);
 
     const navigateToDashboard = () => {
         setCurrentPage("dashboard");
@@ -50,6 +118,18 @@ const App = () => {
         setCurrentPage("chat");
     };
 
+    const navigateToPRSection = () => {
+        setCurrentPage("prSection");
+    };
+
+    const navigateBackFromPRSection = () => {
+        if (typeof window !== "undefined" && prHistoryEntryAdded.current) {
+            window.history.back();
+        } else {
+            setCurrentPage("dashboard");
+        }
+    };
+
     const handleGoogleLoginSuccess = (user: any) => {
         setGoogleUser(user);
         setCurrentPage("googleSetup");
@@ -75,6 +155,7 @@ const App = () => {
                     onNavigateToMetricsSection={navigateToMetricsSection}
                     onNavigateToActivityLogs={navigateToActivityLogs}
                     onNavigateToChat={navigateToChat}
+                    onNavigateToPRSection={navigateToPRSection}
                     navigateToTrainingSelector={navigateToTrainingSelector}
                 />
             )}
@@ -115,6 +196,9 @@ const App = () => {
             )}
             {currentPage === "chat" && (
                 <ChatPage onBackToDashboard={navigateToDashboard} />
+            )}
+            {currentPage === "prSection" && (
+                <PRSectionPage onBackToDashboard={navigateBackFromPRSection} />
             )}
             {currentPage === "googleSetup" && googleUser && (
                 <GoogleUserSetupPage

@@ -4,18 +4,41 @@ interface EditMetricsProps {
   onBackToDashboard: () => void;
 }
 
-const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
-  // Personal information states
-  const [newWeight, setNewWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [age, setAge] = useState("");
+const USER_METRICS_CACHE_KEY = 'dashboard_user_metrics_cache';
+const USER_DATA_CACHE_KEY = 'dashboard_user_data_cache';
 
-  // Training metrics states
+const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
+  // Load from cache first for instant display
+  const [newWeight, setNewWeight] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem(USER_METRICS_CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        return data.weight?.toString() || '';
+      }
+    } catch {
+      // Ignore cache errors
+    }
+    return '';
+  });
+  const [height, setHeight] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem(USER_METRICS_CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        return data.height?.toString() || '';
+      }
+    } catch {
+      // Ignore cache errors
+    }
+    return '';
+  });
+  const [age, setAge] = useState("");
   const [timesPerWeek, setTimesPerWeek] = useState("");
   const [timePerSession, setTimePerSession] = useState("");
   const [repetitionRange, setRepetitionRange] = useState("");
 
-  // Fetch initial metrics from backend on mount
+  // Fetch initial metrics from backend on mount (to get all fields including age, timesPerWeek, etc.)
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
@@ -30,16 +53,31 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
         });
         if (!response.ok) throw new Error('Failed to fetch metrics');
         const data = await response.json();
+        
+        // Update all fields
         setNewWeight(data.weight?.toString() || '');
         setHeight(data.height?.toString() || '');
         setAge(data.age?.toString() || '');
         setTimesPerWeek(data.timesPerWeek?.toString() || '');
         setTimePerSession(data.timePerSession?.toString() || '');
         setRepetitionRange(data.repRange || '');
+
+        // Update cache with weight and height
+        try {
+          sessionStorage.setItem(USER_METRICS_CACHE_KEY, JSON.stringify({
+            weight: data.weight,
+            height: data.height
+          }));
+        } catch (error) {
+          console.warn('Unable to cache metrics:', error);
+        }
       } catch (error) {
         console.error('Error fetching metrics:', error);
+        // Keep using cached values if fetch fails
       }
     };
+    
+    // Fetch in background to get all fields, but form is already pre-filled from cache
     fetchMetrics();
   }, []);
 
@@ -73,6 +111,17 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       });
       if (!response.ok) throw new Error('Failed to update metrics');
       await response.json();
+      
+      // Update cache with new values
+      try {
+        sessionStorage.setItem(USER_METRICS_CACHE_KEY, JSON.stringify({
+          weight: weightNum,
+          height: parseFloat(height) || undefined
+        }));
+      } catch (error) {
+        console.warn('Unable to update metrics cache:', error);
+      }
+      
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);
@@ -85,6 +134,17 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       <div className="container mx-auto px-6">
         <div className="max-w-2xl mx-auto">
           <div className="bg-[#0f172a] rounded-[32px] shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={onBackToDashboard}
+                className="flex items-center gap-2 px-4 py-2 text-white bg-[#111c33] rounded-xl border border-blue-500/10 hover:border-blue-500/30 hover:bg-[#1a2234] transition-all duration-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+              </button>
+            </div>
             <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
               Edit Metrics
             </h2>
@@ -183,15 +243,15 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleEdit}
-                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:border-blue-300"
+                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20"
               >
                 Save Changes
               </button>
               <button
                 onClick={onBackToDashboard}
-                className="flex-1 py-4 text-xl font-bold text-blue-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl border border-gray-500/50 hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg shadow-gray-500/20"
               >
-                Go Back
+                Cancel
               </button>
             </div>
           </div>
