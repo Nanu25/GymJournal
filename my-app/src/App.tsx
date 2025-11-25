@@ -11,6 +11,8 @@ import PRSectionPage from "./components/PRSectionPage";
 import { useAuth } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 
+import { Toaster } from "react-hot-toast";
+
 const App = () => {
     const { token } = useAuth();
     const [currentPage, setCurrentPage] = useState("login");
@@ -125,6 +127,13 @@ const App = () => {
 
     return (
         <div className="w-screen h-screen flex flex-col bg-[#080b14] overflow-hidden">
+            <Toaster position="top-center" toastOptions={{
+                style: {
+                    background: '#1e293b',
+                    color: '#fff',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                },
+            }} />
             {showNavbar && (
                 <Navbar
                     currentPage={currentPage}

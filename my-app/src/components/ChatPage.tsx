@@ -1,25 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-interface Message {
-    id: string;
-    text: string;
-    isUser: boolean;
-    timestamp: Date;
-}
+import { useChat } from "../hooks/useChat";
 
 const ChatPage: React.FC = () => {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "1",
-            text: "Hello! I'm your AI fitness assistant. I can help you with training advice, nutrition tips, workout plans, and answer any fitness-related questions. What would you like to know?",
-            isUser: false,
-            timestamp: new Date()
-        }
-    ]);
-    const [inputMessage, setInputMessage] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const { messages, inputMessage, setInputMessage, isLoading, sendMessage } = useChat();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Quick message prompts
@@ -42,73 +27,6 @@ const ChatPage: React.FC = () => {
         scrollToBottom();
     }, [messages]);
 
-    const sendMessage = async () => {
-        if (!inputMessage.trim() || isLoading) return;
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('No token found');
-            const errorMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                text: "Authentication error. Please log in again.",
-                isUser: false,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMessage]);
-            return;
-        }
-
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            text: inputMessage,
-            isUser: true,
-            timestamp: new Date()
-        };
-
-        setMessages(prev => [...prev, userMessage]);
-        setInputMessage("");
-        setIsLoading(true);
-
-        try {
-            const response = await fetch("/api/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    message: inputMessage
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to get response from AI");
-            }
-
-            const data = await response.json();
-
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                text: data.response,
-                isUser: false,
-                timestamp: new Date()
-            };
-
-            setMessages(prev => [...prev, aiMessage]);
-        } catch (error) {
-            console.error("Error sending message:", error);
-            const errorMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                text: "Sorry, I'm having trouble connecting right now. Please try again later.",
-                isUser: false,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -117,14 +35,11 @@ const ChatPage: React.FC = () => {
     };
 
     const formatTime = (date: Date) => {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
-    const handleQuickMessage = async (msg: string) => {
-        setInputMessage(msg);
-        setTimeout(() => {
-            sendMessage();
-        }, 0);
+    const handleQuickMessage = (msg: string) => {
+        sendMessage(msg);
     };
 
     return (
@@ -227,7 +142,7 @@ const ChatPage: React.FC = () => {
                             disabled={isLoading}
                         />
                         <button
-                            onClick={sendMessage}
+                            onClick={() => sendMessage()}
                             disabled={!inputMessage.trim() || isLoading}
                             className="p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f172a] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex-shrink-0"
                         >

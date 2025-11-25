@@ -1,76 +1,53 @@
 import React, { useState, useEffect } from "react";
+import { userService, UserMetrics } from "../services/userService";
+
 
 interface EditMetricsProps {
   onBackToDashboard: () => void;
 }
 
-const USER_METRICS_CACHE_KEY = 'dashboard_user_metrics_cache';
-const USER_DATA_CACHE_KEY = 'dashboard_user_data_cache';
-
 const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
   // Load from cache first for instant display
   const [newWeight, setNewWeight] = useState(() => {
-    try {
-      const cached = sessionStorage.getItem(USER_METRICS_CACHE_KEY);
-      if (cached) {
-        const data = JSON.parse(cached);
-        return data.weight?.toString() || '';
-      }
-    } catch {
-      // Ignore cache errors
-    }
-    return '';
+    const cached = userService.getCachedMetrics();
+    return cached?.weight?.toString() || '';
   });
   const [height, setHeight] = useState(() => {
-    try {
-      const cached = sessionStorage.getItem(USER_METRICS_CACHE_KEY);
-      if (cached) {
-        const data = JSON.parse(cached);
-        return data.height?.toString() || '';
-      }
-    } catch {
-      // Ignore cache errors
-    }
-    return '';
+    const cached = userService.getCachedMetrics();
+    return cached?.height?.toString() || '';
   });
-  const [age, setAge] = useState("");
-  const [timesPerWeek, setTimesPerWeek] = useState("");
-  const [timePerSession, setTimePerSession] = useState("");
-  const [repetitionRange, setRepetitionRange] = useState("");
+  const [age, setAge] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.age?.toString() || '';
+  });
+  const [timesPerWeek, setTimesPerWeek] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.timesPerWeek?.toString() || '';
+  });
+  const [timePerSession, setTimePerSession] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.timePerSession?.toString() || '';
+  });
+  const [repetitionRange, setRepetitionRange] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.repRange || '';
+  });
 
   // Fetch initial metrics from backend on mount (to get all fields including age, timesPerWeek, etc.)
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Not authenticated');
-        }
-        const response = await fetch('/api/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch metrics');
-        const data = await response.json();
+        const data = await userService.getUserData();
 
-        // Update all fields
-        setNewWeight(data.weight?.toString() || '');
-        setHeight(data.height?.toString() || '');
-        setAge(data.age?.toString() || '');
-        setTimesPerWeek(data.timesPerWeek?.toString() || '');
-        setTimePerSession(data.timePerSession?.toString() || '');
-        setRepetitionRange(data.repRange || '');
+        // Update all fields if they are not already set (or to ensure sync)
+        // We use the nullish coalescing operator to default to empty string if undefined
+        setNewWeight(prev => prev || data.weight?.toString() || '');
+        setHeight(prev => prev || data.height?.toString() || '');
+        setAge(prev => prev || data.age?.toString() || '');
+        setTimesPerWeek(prev => prev || data.timesPerWeek?.toString() || '');
+        setTimePerSession(prev => prev || data.timePerSession?.toString() || '');
+        setRepetitionRange(prev => prev || data.repRange || '');
 
-        // Update cache with weight and height
-        try {
-          sessionStorage.setItem(USER_METRICS_CACHE_KEY, JSON.stringify({
-            weight: data.weight,
-            height: data.height
-          }));
-        } catch (error) {
-          console.warn('Unable to cache metrics:', error);
-        }
       } catch (error) {
         console.error('Error fetching metrics:', error);
         // Keep using cached values if fetch fails
@@ -94,43 +71,35 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
     }
 
     setIsSubmitting(true);
+
+    // Optimistic Update: Create the metrics object
+    const updatedMetrics: UserMetrics = {
+      weight: weightNum,
+      height: parseFloat(height) || undefined,
+      age: parseInt(age) || undefined,
+      timesPerWeek: parseInt(timesPerWeek) || undefined,
+      timePerSession: parseInt(timePerSession) || undefined,
+      repRange: repetitionRange || undefined
+    };
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-      const response = await fetch('/api/user', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          weight: weightNum,
-          height: parseFloat(height) || undefined,
-          age: parseInt(age) || undefined,
-          timesPerWeek: parseInt(timesPerWeek) || undefined,
-          timePerSession: parseInt(timePerSession) || undefined,
-          repRange: repetitionRange || undefined
-        }),
+      // 1. Update Cache Immediately (Optimistic)
+      // We construct a temporary UserData object to pass to cacheUserData
+      userService.cacheUserData({
+        metrics: updatedMetrics,
+        ...updatedMetrics // Flattened properties
       });
-      if (!response.ok) throw new Error('Failed to update metrics');
-      await response.json();
 
-      // Update cache with new values
-      try {
-        sessionStorage.setItem(USER_METRICS_CACHE_KEY, JSON.stringify({
-          weight: weightNum,
-          height: parseFloat(height) || undefined
-        }));
-      } catch (error) {
-        console.warn('Unable to update metrics cache:', error);
-      }
+      // 2. Send to Backend
+      await userService.updateMetrics(updatedMetrics);
 
+      // 3. Navigate back immediately
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);
       alert('Failed to update metrics');
+      // In a real optimistic UI, we might want to revert the cache here if it failed,
+      // but for this simple app, keeping the user's input in cache is acceptable.
     } finally {
       setIsSubmitting(false);
     }

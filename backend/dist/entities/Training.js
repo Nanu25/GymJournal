@@ -30,8 +30,8 @@ __decorate([
     __metadata("design:type", User_1.User)
 ], Training.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'integer' }),
-    __metadata("design:type", Number)
+    (0, typeorm_1.Column)({ type: 'uuid' }),
+    __metadata("design:type", String)
 ], Training.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),

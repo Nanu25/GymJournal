@@ -232,6 +232,8 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             res.status(400).json({ message: 'No valid exercises provided' });
             return;
         }
+
+
         await trainingExerciseRepository.save(trainingExercises);
 
         await activityLogRepository.save({
@@ -272,20 +274,13 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
         const { date } = req.params;
         const trainingDate = new Date(date);
 
-        if (!req.user?.id) {
-            console.error('No user ID found in request during delete');
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
         // First find the training with its relations
         const training = await trainingRepository.findOne({
             where: {
                 date: Between(
                     new Date(trainingDate.setHours(0, 0, 0, 0)),
                     new Date(trainingDate.setHours(23, 59, 59, 999))
-                ),
-                userId: req.user.id
+                )
             },
             relations: ['trainingExercises']
         });
@@ -295,39 +290,31 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
             return;
         }
 
-        // Capture data for logging before deletion
-        const trainingId = training.id;
-        const trainingDateForLog = training.date;
-        // Map exercises to a simple structure to avoid circular references in JSON
-        const simplifiedExercises = training.trainingExercises?.map(te => ({
-            exerciseId: te.exerciseId,
-            weight: te.weight
-        })) || [];
+        // Capture ID before deletion for logging
+        const trainingId = String(training.id);
 
-        // Delete all related training exercises first
-        if (training.trainingExercises && training.trainingExercises.length > 0) {
+        // Delete the training exercises first (cascade should handle this but let's be explicit)
+        if (training.trainingExercises.length > 0) {
             await trainingExerciseRepository.remove(training.trainingExercises);
         }
 
-        // Then delete the training
+        // Delete the training
         await trainingRepository.remove(training);
 
         // Log activity
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: req.user!.id,
             action: ActionType.DELETE,
             entityType: 'Training',
-            entityId: String(trainingId),
-            details: { date: trainingDateForLog, exercises: simplifiedExercises },
+            entityId: trainingId,
+            details: { date },
             timestamp: new Date(),
         });
+
         res.status(200).json({ message: 'Training deleted successfully' });
     } catch (error) {
         console.error('Error deleting training:', error);
-        if (error instanceof Error) {
-            console.error('Stack:', error.stack);
-        }
-        res.status(500).json({ message: 'Error deleting training', error: error instanceof Error ? error.message : 'Unknown error' });
+        res.status(500).json({ message: 'Error deleting training', error });
     }
 };
 
