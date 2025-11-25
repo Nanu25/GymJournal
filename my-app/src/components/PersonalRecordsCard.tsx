@@ -488,7 +488,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             </div>
 
             {/* Training List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
                 {currentTrainings.length === 0 ? (
                     <div className="flex items-center justify-center h-48 bg-[#111c33] rounded-2xl border border-blue-500/10">
                         <p className="text-blue-200/50 text-xl">No training sessions found</p>
@@ -516,12 +516,12 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                     : "border-blue-500/10";
 
                         const statHighlight = isHighPerformer
-                            ? "bg-gradient-to-r from-amber-500/10 to-amber-600/10"
+                            ? "bg-gradient-to-r from-amber-500/5 to-amber-600/5"
                             : isLowPerformer
-                                ? "bg-gradient-to-r from-red-500/10 to-red-600/10"
+                                ? "bg-gradient-to-r from-red-500/5 to-red-600/5"
                                 : isAveragePerformer
-                                    ? "bg-gradient-to-r from-blue-500/10 to-blue-600/10"
-                                    : "bg-[#1a2234]";
+                                    ? "bg-gradient-to-r from-blue-500/5 to-blue-600/5"
+                                    : "bg-[#1a2234]/50";
 
                         const performanceIndicator = isHighPerformer
                             ? "text-amber-400"
@@ -529,74 +529,98 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                 ? "text-red-400"
                                 : isAveragePerformer
                                     ? "text-blue-400"
-                                    : "text-blue-200/70";
+                                    : "text-blue-200/50";
+
+                        // Calculate a "volume" score for visual bar (sum of weights)
+                        const totalVolume = Object.values(training.exercises).reduce((a, b) => a + b, 0);
+                        const maxVolume = Math.max(...currentTrainings.map(t => Object.values(t.exercises).reduce((a, b) => a + b, 0)));
+                        const volumePercentage = maxVolume > 0 ? (totalVolume / maxVolume) * 100 : 0;
 
                         return (
                             <div
                                 key={`${training.date}-${index}`}
-                                className={`rounded-2xl overflow-hidden border ${borderColor} transition-all duration-200 ${expandedTraining === originalIndex ? "ring-2 ring-blue-500/50" : ""
+                                className={`rounded-lg overflow-hidden border ${borderColor} transition-all duration-200 hover:border-blue-500/30 ${expandedTraining === originalIndex ? "ring-1 ring-blue-500/30 bg-[#151e32]" : "bg-[#111c33]"
                                     }`}
                             >
-                                <div className={`p-5 ${statHighlight}`}>
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                                        <div
-                                            className="flex items-center cursor-pointer flex-grow w-full"
-                                            onClick={() => toggleExpandTraining(originalIndex)}
-                                        >
-                                            <div className="flex flex-col mr-6">
-                                                <span className="text-white font-bold text-xl">
-                                                    {training.date}
-                                                </span>
-                                                <span className={`${performanceIndicator} text-lg mt-1`}>
+                                <div
+                                    className={`px-4 py-3 cursor-pointer group ${statHighlight}`}
+                                    onClick={() => toggleExpandTraining(originalIndex)}
+                                >
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-6 min-w-0 flex-grow">
+                                            <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap w-24">
+                                                {training.date}
+                                            </span>
+
+                                            <div className="hidden sm:flex items-center gap-6 flex-grow">
+                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 whitespace-nowrap ${performanceIndicator}`}>
                                                     {exerciseCount} exercises
                                                 </span>
+                                                {prExercise && (
+                                                    <div className="flex items-center gap-2 text-sm text-blue-200/60 truncate min-w-[150px]">
+                                                        <span className="text-[10px] uppercase tracking-wider opacity-60">Top Lift</span>
+                                                        <span className="font-medium text-white/90">{prText}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex-grow">
-                                                <div className="text-white font-medium text-xl">PR: {prText}</div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                            {/* Action Buttons in Header - Always Visible */}
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    className="p-1.5 text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleUpdate(originalIndex);
+                                                    }}
+                                                    title="Edit"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    className="p-1.5 text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(training);
+                                                    }}
+                                                    title="Delete"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 2 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
-                                            <span className="text-blue-200/70 ml-6 mr-4 text-2xl transition-transform duration-200">
-                                                {expandedTraining === originalIndex ? "▲" : "▼"}
+
+                                            <span className={`text-blue-400/40 transform transition-transform duration-200 ${expandedTraining === originalIndex ? "rotate-180" : ""}`}>
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </span>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0">
-                                            <button
-                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg border border-emerald-400/20 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleUpdate(originalIndex);
-                                                }}
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                                Update
-                                            </button>
-                                            <button
-                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-rose-600 rounded-lg border border-rose-400/20 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-md shadow-rose-500/20 hover:shadow-rose-500/30 flex items-center justify-center gap-2"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(training);
-                                                }}
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                Delete
-                                            </button>
+                                    </div>
+
+                                    {/* Mobile stats summary */}
+                                    <div className="sm:hidden flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
+                                        <div className="flex items-center gap-3">
+                                            <span className={`${performanceIndicator}`}>{exerciseCount} ex</span>
+                                            {prExercise && <span className="text-white/70">{prText}</span>}
                                         </div>
                                     </div>
                                 </div>
+
                                 {expandedTraining === originalIndex && (
-                                    <div className="p-5 bg-[#111c33]/50 border-t border-blue-500/10">
-                                        <h4 className="text-white font-semibold text-lg mb-4">Exercises:</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="px-5 pb-5 pt-4 bg-[#0f1623]/50 border-t border-black/20">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {Object.entries(training.exercises).map(([exercise, weight], idx) => (
                                                 <div
                                                     key={idx}
-                                                    className="bg-[#111c33] p-4 rounded-xl flex justify-between items-center border border-blue-500/10 hover:border-blue-400/30 transition-all duration-200"
+                                                    className="flex justify-between items-center p-3 bg-white/[0.03] rounded-xl border border-white/5 hover:border-blue-500/20 hover:bg-white/[0.05] transition-all group"
                                                 >
-                                                    <span className="text-white text-base truncate mr-3">{exercise}</span>
-                                                    <span className="text-white font-bold text-base whitespace-nowrap px-4 py-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                                    <span className="text-blue-100/90 text-base font-medium truncate pr-4">{exercise}</span>
+                                                    <span className="text-white font-bold text-base bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
                                                         {weight} kg
                                                     </span>
                                                 </div>
@@ -633,7 +657,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             </div>
 
             {showDeleteDialog && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-md w-full border border-white/10">
                         <h3 className="text-2xl font-bold mb-4 text-white">Confirm Delete</h3>
                         <p className="mb-6 text-blue-200/70">Are you sure you want to delete this training session?</p>
@@ -658,8 +682,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             )}
 
             {updateFormOpen !== null && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-lg w-full max-h-screen overflow-y-auto border border-white/10">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-white/10 custom-scrollbar">
                         <h3 className="text-2xl font-bold mb-6 text-white">Update Training Session</h3>
                         <div className="mb-6">
                             <label className="block text-sm font-medium mb-2 text-blue-200">Date:</label>
