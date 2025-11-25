@@ -9,11 +9,7 @@ interface Message {
     timestamp: Date;
 }
 
-interface ChatPageProps {
-    onBackToDashboard: () => void;
-}
-
-const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
+const ChatPage: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
@@ -134,25 +130,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
     return (
         <div className="h-screen bg-[#080b14] flex flex-col">
             {/* Header */}
-            <header className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-b border-blue-500/10 flex-shrink-0">
-                <div className="container mx-auto px-4 py-3 sm:py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2 sm:space-x-4">
-                            <button
-                                onClick={onBackToDashboard}
-                                className="inline-flex items-center px-2 py-1 sm:px-4 sm:py-2 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                            >
-                                <svg className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                <span className="hidden sm:inline">Back to Dashboard</span>
-                                <span className="sm:hidden">Back</span>
-                            </button>
-                            <h1 className="text-lg sm:text-2xl font-bold text-white">AI Fitness Assistant</h1>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {/* Header removed as it is replaced by Global Navbar */}
 
             {/* Chat Container */}
             <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
@@ -165,8 +143,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBackToDashboard }) => {
                         >
                             <div
                                 className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-4 shadow-lg backdrop-blur-sm ${message.isUser
-                                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none border border-blue-500/20'
-                                        : 'bg-[#1e293b]/80 text-white rounded-bl-none border border-white/10'
+                                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none border border-blue-500/20'
+                                    : 'bg-[#1e293b]/80 text-white rounded-bl-none border border-white/10'
                                     }`}
                             >
                                 <div className="prose prose-sm prose-invert max-w-none leading-relaxed">

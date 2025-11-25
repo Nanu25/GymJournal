@@ -53,7 +53,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
         });
         if (!response.ok) throw new Error('Failed to fetch metrics');
         const data = await response.json();
-        
+
         // Update all fields
         setNewWeight(data.weight?.toString() || '');
         setHeight(data.height?.toString() || '');
@@ -76,7 +76,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
         // Keep using cached values if fetch fails
       }
     };
-    
+
     // Fetch in background to get all fields, but form is already pre-filled from cache
     fetchMetrics();
   }, []);
@@ -96,11 +96,11 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       }
       const response = await fetch('/api/user', {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           weight: weightNum,
           height: parseFloat(height) || undefined,
           age: parseInt(age) || undefined,
@@ -111,7 +111,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       });
       if (!response.ok) throw new Error('Failed to update metrics');
       await response.json();
-      
+
       // Update cache with new values
       try {
         sessionStorage.setItem(USER_METRICS_CACHE_KEY, JSON.stringify({
@@ -121,7 +121,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       } catch (error) {
         console.warn('Unable to update metrics cache:', error);
       }
-      
+
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);
@@ -135,15 +135,7 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
         <div className="max-w-2xl mx-auto">
           <div className="bg-[#0f172a] rounded-[32px] shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl p-8">
             <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={onBackToDashboard}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-[#111c33] rounded-xl border border-blue-500/10 hover:border-blue-500/30 hover:bg-[#1a2234] transition-all duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Dashboard
-              </button>
+              {/* Back button removed as it is replaced by Global Navbar */}
             </div>
             <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
               Edit Metrics

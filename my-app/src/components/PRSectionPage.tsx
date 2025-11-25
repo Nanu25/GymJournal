@@ -6,13 +6,9 @@ interface TrainingEntry {
     exercises: { [key: string]: number };
 }
 
-interface PRSectionPageProps {
-    onBackToDashboard: () => void;
-}
-
 const TRAININGS_CACHE_KEY = 'dashboard_trainings_cache';
 
-const PRSectionPage: React.FC<PRSectionPageProps> = ({ onBackToDashboard }) => {
+const PRSectionPage: React.FC = () => {
     // Try to load from cache first for instant display
     const [trainings, setTrainings] = useState<TrainingEntry[]>(() => {
         try {
@@ -86,20 +82,7 @@ const PRSectionPage: React.FC<PRSectionPageProps> = ({ onBackToDashboard }) => {
                             Personal Records
                         </h1>
                     </div>
-                    <button
-                        onClick={onBackToDashboard}
-                        className="group flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all duration-200 backdrop-blur-sm"
-                    >
-                        <svg
-                            className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Dashboard
-                    </button>
+                    {/* Back button removed as it is replaced by Global Navbar */}
                 </div>
             </header>
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">

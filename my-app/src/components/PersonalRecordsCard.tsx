@@ -50,8 +50,6 @@ type SortDirection = "asc" | "desc";
 interface PersonalRecordsCardProps {
     trainings: TrainingEntry[];
     setTrainings: React.Dispatch<React.SetStateAction<TrainingEntry[]>>;
-    onNavigateToMetricsSection: () => void;
-    onNavigateToTrainingSelector: () => void;
     onUpdateTraining?: (training: TrainingEntry, index: number) => void;
     onTrainingChange?: (trainings: TrainingEntry[]) => void;
     profile?: {
@@ -66,8 +64,6 @@ interface PersonalRecordsCardProps {
 const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     trainings,
     setTrainings,
-    onNavigateToMetricsSection,
-    onNavigateToTrainingSelector,
     onUpdateTraining,
     onTrainingChange,
     profile,
@@ -315,8 +311,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error('Not authenticated');
                 }
 
-                // Ensure the date is in YYYY-MM-DD format
-                const formattedDate = new Date(updateFormData.date).toISOString().split('T')[0];
+                // Use the date string directly as it should be in YYYY-MM-DD format from the date input
+                const formattedDate = updateFormData.date;
 
                 const response = await fetch(`/api/trainings/${formattedDate}`, {
                     method: 'PUT',
@@ -336,7 +332,26 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     throw new Error(responseData.message || 'Failed to update training');
                 }
 
-                // Optionally refresh from server
+                // Update local state immediately
+                setTrainings(prev => {
+                    const updated = prev.map((t, i) => {
+                        if (i === updateFormOpen) {
+                            return {
+                                ...t,
+                                date: formattedDate,
+                                exercises: exercisesObject
+                            };
+                        }
+                        return t;
+                    });
+
+                    if (onTrainingChange) {
+                        onTrainingChange(updated);
+                    }
+                    return updated;
+                });
+
+                // Optionally refresh from server to ensure consistency
                 if (onRequestFullRefresh) {
                     await onRequestFullRefresh();
                 }
@@ -432,8 +447,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     <button
                         onClick={() => handleSort("date")}
                         className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "date"
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
-                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                            : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
                             }`}
                     >
                         Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -441,8 +456,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     <button
                         onClick={() => handleSort("pr")}
                         className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "pr"
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
-                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                            : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
                             }`}
                     >
                         PR {sortField === "pr" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -450,8 +465,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                     <button
                         onClick={() => handleSort("exercises")}
                         className={`px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 border ${sortField === "exercises"
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
-                                : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20"
+                            : "bg-[#111c33] text-white border-blue-500/10 hover:border-blue-500/30"
                             }`}
                     >
                         #Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -532,7 +547,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                         </div>
                                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0">
                                             <button
-                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg border border-blue-400/50 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg border border-emerald-400/20 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdate(originalIndex);
@@ -544,7 +559,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                                 Update
                                             </button>
                                             <button
-                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-lg border border-red-400/50 hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md shadow-red-500/20 hover:shadow-red-500/30 flex items-center justify-center gap-2"
+                                                className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-rose-600 rounded-lg border border-rose-400/20 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-md shadow-rose-500/20 hover:shadow-rose-500/30 flex items-center justify-center gap-2"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(training);
@@ -601,42 +616,23 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
                 <Pagination pageCount={pageCount} onPageChange={handlePageChange} />
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <button
-                        className="flex-1 py-4 text-base font-semibold text-center text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
-                        onClick={onNavigateToTrainingSelector}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Training Session
-                    </button>
-                    <button
-                        className="flex-1 py-4 text-base font-semibold text-center text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl border border-purple-400/50 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 flex items-center justify-center gap-2"
-                        onClick={onNavigateToMetricsSection}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Metrics
-                    </button>
-                </div>
+
             </div>
 
             {showDeleteDialog && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-stone-800 p-8 rounded-xl shadow-2xl max-w-md w-full border border-stone-700/30">
+                    <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-md w-full border border-white/10">
                         <h3 className="text-2xl font-bold mb-4 text-white">Confirm Delete</h3>
-                        <p className="mb-6 text-stone-300">Are you sure you want to delete this training session?</p>
+                        <p className="mb-6 text-blue-200/70">Are you sure you want to delete this training session?</p>
                         <div className="flex justify-end space-x-4">
                             <button
-                                className="px-6 py-2 bg-stone-700/50 text-black rounded-lg hover:bg-stone-700/70 transition-all duration-200"
+                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200"
                                 onClick={cancelDelete}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-6 py-2 bg-red-500/80 text-black rounded-lg hover:bg-red-500 transition-all duration-200"
+                                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl border border-rose-500/20 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-lg shadow-rose-500/20"
                                 onClick={confirmDelete}
                             >
                                 Delete
@@ -648,25 +644,25 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
             {updateFormOpen !== null && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-stone-800 p-8 rounded-xl shadow-2xl max-w-lg w-full max-h-screen overflow-y-auto border border-stone-700/30">
+                    <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-lg w-full max-h-screen overflow-y-auto border border-white/10">
                         <h3 className="text-2xl font-bold mb-6 text-white">Update Training Session</h3>
                         <div className="mb-6">
-                            <label className="block text-sm font-medium mb-2 text-stone-300">Date:</label>
+                            <label className="block text-sm font-medium mb-2 text-blue-200">Date:</label>
                             <input
-                                type="text"
+                                type="date"
                                 value={updateFormData.date}
                                 onChange={(e) => handleUpdateInputChange(e, "date")}
-                                className="w-full px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                                className="w-full px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
                             />
                         </div>
                         <div className="mb-6">
-                            <label className="block text-sm font-medium mb-2 text-stone-300">Exercises:</label>
+                            <label className="block text-sm font-medium mb-2 text-blue-200">Exercises:</label>
                             {updateFormData.exercises.map((exercise, idx) => (
                                 <div key={idx} className="flex mb-3 space-x-2">
                                     <select
                                         value={exercise.name}
                                         onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
-                                        className="flex-grow px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                                        className="flex-grow px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
                                     >
                                         <option value="" disabled>Select exercise</option>
                                         {exerciseOptions.length > 0 ? (
@@ -683,12 +679,12 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                                         placeholder="Weight (kg)"
                                         value={exercise.weight}
                                         onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
-                                        className="w-24 px-4 py-2 bg-stone-700/50 border border-stone-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-stone-500/50"
+                                        className="w-24 px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => removeExerciseField(idx)}
-                                        className="px-4 py-2 bg-red-500/80 text-black rounded-lg hover:bg-red-500 transition-all duration-200"
+                                        className="px-4 py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all duration-200"
                                     >
                                         ✕
                                     </button>
@@ -697,20 +693,20 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                             <button
                                 type="button"
                                 onClick={addExerciseField}
-                                className="mt-3 px-4 py-2 bg-blue-500/80 text-black rounded-lg hover:bg-blue-500 transition-all duration-200"
+                                className="mt-3 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all duration-200 w-full"
                             >
-                                Add Exercise
+                                + Add Exercise
                             </button>
                         </div>
                         <div className="flex justify-end space-x-4 mt-6">
                             <button
-                                className="px-6 py-2 bg-stone-700/50 text-black rounded-lg hover:bg-stone-700/70 transition-all duration-200"
+                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200"
                                 onClick={cancelUpdateForm}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-6 py-2 bg-green-500/80 text-black rounded-lg hover:bg-green-500 transition-all duration-200"
+                                className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl border border-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20"
                                 onClick={submitUpdateForm}
                             >
                                 Save Changes

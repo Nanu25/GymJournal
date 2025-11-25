@@ -27,7 +27,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-blue-500/10 via-purple-500/10 to-transparent"></div>
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiA0OGM2LjYyNyAwIDEyLTUuMzczIDEyLTEycy01LjM3My0xMi0xMi0xMi0xMiA1LjM3My0xMiAxMiA1LjM3MyAxMiAxMiAxMnptMC0yYy01LjUyMyAwLTEwLTQuNDc3LTEwLTEwczQuNDc3LTEwIDEwLTEwIDEwIDQuNDc3IDEwIDEwLTQuNDc3IDEwLTEwIDEweiIgZmlsbD0iIzEwMTcyOCIvPjwvZz48L3N2Zz4=')] opacity-5"></div>
-        
+
         {/* Animated gradient orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/30 rounded-full filter blur-xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/30 rounded-full filter blur-xl animate-pulse delay-1000"></div>
@@ -36,25 +36,27 @@ const LoginPage: React.FC<LoginPageProps> = ({
       {/* Main content container - fully scrollable */}
       <div className="relative min-h-screen flex flex-col">
         <div className="container mx-auto px-4 flex-grow">
-          <main className="flex flex-col md:flex-row justify-between py-8 gap-8 items-stretch h-full min-h-[600px]">
-            {/* Left section with form */}
-            <div className="w-full md:w-1/2 flex flex-col justify-center">
-              <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-4 sm:p-6 md:p-8 overflow-auto relative h-full flex flex-col justify-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-transparent opacity-50"></div>
-                <div className="relative">
+          <main className="flex flex-col items-center py-8 gap-12 min-h-[600px]">
+            {/* Login Form Section */}
+            <div className="w-full max-w-md md:max-w-4xl flex flex-col justify-center">
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/10 p-4 sm:p-6 md:p-12 overflow-visible relative flex flex-col justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-transparent opacity-50 rounded-3xl"></div>
+                <div className="relative w-full">
                   <WelcomeSection />
-                  <LoginForm
-                    onLoginSuccess={onLoginSuccess}
-                    onNavigateToRegistration={handleNavigateToRegistration}
-                    onGoogleLoginSuccess={onGoogleLoginSuccess}
-                  />
+                  <div className="mt-8">
+                    <LoginForm
+                      onLoginSuccess={onLoginSuccess}
+                      onNavigateToRegistration={handleNavigateToRegistration}
+                      onGoogleLoginSuccess={onGoogleLoginSuccess}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right section */}
-            <div className="w-full md:w-1/2 h-full flex flex-col justify-center">
-              <div className="md:sticky md:top-8 h-full flex flex-col justify-center">
+            {/* Right Section (Info/Decorative) - Now below */}
+            <div className="w-full max-w-md md:max-w-4xl flex flex-col justify-center">
+              <div className="h-full flex flex-col justify-center">
                 <RightSection />
               </div>
             </div>

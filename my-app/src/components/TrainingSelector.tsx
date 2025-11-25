@@ -218,15 +218,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                 <div className="max-w-5xl mx-auto">
                     <div className="bg-[#0f172a] rounded-[32px] shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl p-8">
                         <div className="flex items-center justify-between mb-6">
-                            <button
-                                onClick={onCancel}
-                                className="flex items-center gap-2 px-4 py-2 text-white bg-[#111c33] rounded-xl border border-blue-500/10 hover:border-blue-500/30 hover:bg-[#1a2234] transition-all duration-200"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                Back to Dashboard
-                            </button>
+                            {/* Back button removed as it is replaced by Global Navbar */}
                         </div>
                         <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
                             Add Training Session
@@ -288,8 +280,8 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                                 key={category.category}
                                                 onClick={() => setActiveCategory(category.category)}
                                                 className={`px-4 py-2 rounded-xl text-lg transition-all duration-200 ${activeCategory === category.category
-                                                        ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20"
-                                                        : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
+                                                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                                    : "bg-[#1a2234] text-blue-200 border border-blue-500/10 hover:border-blue-500/30"
                                                     }`}
                                             >
                                                 {category.category}

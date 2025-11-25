@@ -9,6 +9,7 @@ import ChatPage from "./components/ChatPage";
 import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
 import PRSectionPage from "./components/PRSectionPage";
 import { useAuth } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
 
 const App = () => {
     const { token } = useAuth();
@@ -102,33 +103,9 @@ const App = () => {
         setCurrentPage("registration");
     };
 
-    const navigateToMetricsSection = () => {
-        setCurrentPage("editMetrics");
-    };
 
-    const navigateToTrainingSelector = () => {
-        setCurrentPage("trainingSelector");
-    };
 
-    const navigateToActivityLogs = () => {
-        setCurrentPage("activityLogs");
-    };
 
-    const navigateToChat = () => {
-        setCurrentPage("chat");
-    };
-
-    const navigateToPRSection = () => {
-        setCurrentPage("prSection");
-    };
-
-    const navigateBackFromPRSection = () => {
-        if (typeof window !== "undefined" && prHistoryEntryAdded.current) {
-            window.history.back();
-        } else {
-            setCurrentPage("dashboard");
-        }
-    };
 
     const handleGoogleLoginSuccess = (user: any) => {
         setGoogleUser(user);
@@ -140,72 +117,70 @@ const App = () => {
         setCurrentPage("dashboard");
     };
 
+    const handleNavigate = (page: string) => {
+        setCurrentPage(page);
+    };
+
+    const showNavbar = !['login', 'registration', 'googleSetup'].includes(currentPage);
+
     return (
-        <div className="w-screen h-screen flex flex-col">
-            {currentPage === "login" && (
-                <LoginPage
-                    onLoginSuccess={navigateToDashboard}
-                    onNavigateToRegistration={navigateToRegistration}
-                    onGoogleLoginSuccess={handleGoogleLoginSuccess}
-                />
-            )}
-            {currentPage === "dashboard" && (
-                <DashboardPage
+        <div className="w-screen h-screen flex flex-col bg-[#080b14] overflow-hidden">
+            {showNavbar && (
+                <Navbar
+                    currentPage={currentPage}
+                    onNavigate={handleNavigate}
                     onLogout={navigateToLogin}
-                    onNavigateToMetricsSection={navigateToMetricsSection}
-                    onNavigateToActivityLogs={navigateToActivityLogs}
-                    onNavigateToChat={navigateToChat}
-                    onNavigateToPRSection={navigateToPRSection}
-                    navigateToTrainingSelector={navigateToTrainingSelector}
                 />
             )}
-            {currentPage === "registration" && (
-                <GymJournalRegistration
-                    onNavigateToLogin={navigateToLogin}
-                />
-            )}
-            {currentPage === "editMetrics" && (
-                <EditMetrics onBackToDashboard={navigateToDashboard} />
-            )}
-            {currentPage === "trainingSelector" && (
-                <TrainingSelector
-                    onTrainingAdded={() => {
-                        navigateToDashboard();
-                        // Optionally refresh the dashboard data here if needed
-                    }}
-                    onCancel={navigateToDashboard}
-                />
-            )}
-            {currentPage === "activityLogs" && (
-                <div className="flex flex-col h-full">
-                    <div className="bg-white border-b border-gray-200 px-4 py-3">
-                        <button 
-                            onClick={navigateToDashboard}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            <svg className="mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Dashboard
-                        </button>
+
+            <div className="flex-1 overflow-auto">
+                {currentPage === "login" && (
+                    <LoginPage
+                        onLoginSuccess={navigateToDashboard}
+                        onNavigateToRegistration={navigateToRegistration}
+                        onGoogleLoginSuccess={handleGoogleLoginSuccess}
+                    />
+                )}
+                {currentPage === "dashboard" && (
+                    <DashboardPage />
+                )}
+                {currentPage === "registration" && (
+                    <GymJournalRegistration
+                        onNavigateToLogin={navigateToLogin}
+                    />
+                )}
+                {currentPage === "editMetrics" && (
+                    <EditMetrics onBackToDashboard={navigateToDashboard} />
+                )}
+                {currentPage === "trainingSelector" && (
+                    <TrainingSelector
+                        onTrainingAdded={() => {
+                            navigateToDashboard();
+                            // Optionally refresh the dashboard data here if needed
+                        }}
+                        onCancel={navigateToDashboard}
+                    />
+                )}
+                {currentPage === "activityLogs" && (
+                    <div className="flex flex-col h-full">
+                        <div className="flex-1 overflow-auto">
+                            <ActivityLogs />
+                        </div>
                     </div>
-                    <div className="flex-1 overflow-auto">
-                        <ActivityLogs />
-                    </div>
-                </div>
-            )}
-            {currentPage === "chat" && (
-                <ChatPage onBackToDashboard={navigateToDashboard} />
-            )}
-            {currentPage === "prSection" && (
-                <PRSectionPage onBackToDashboard={navigateBackFromPRSection} />
-            )}
-            {currentPage === "googleSetup" && googleUser && (
-                <GoogleUserSetupPage
-                    user={googleUser}
-                    onComplete={handleGoogleSetupComplete}
-                />
-            )}
+                )}
+                {currentPage === "chat" && (
+                    <ChatPage onBackToDashboard={navigateToDashboard} />
+                )}
+                {currentPage === "prSection" && (
+                    <PRSectionPage />
+                )}
+                {currentPage === "googleSetup" && googleUser && (
+                    <GoogleUserSetupPage
+                        user={googleUser}
+                        onComplete={handleGoogleSetupComplete}
+                    />
+                )}
+            </div>
         </div>
     );
 };
