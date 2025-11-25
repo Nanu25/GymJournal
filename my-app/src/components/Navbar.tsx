@@ -72,7 +72,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, onLogout }) =>
                                 <button
                                     key={item.id}
                                     onClick={() => onNavigate(item.id)}
-                                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 w-36 ${currentPage === item.id
+                                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 min-w-[120px] whitespace-nowrap ${currentPage === item.id
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                                         : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                         }`}

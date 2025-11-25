@@ -133,9 +133,9 @@ const ChatPage: React.FC = () => {
             {/* Header removed as it is replaced by Global Navbar */}
 
             {/* Chat Container */}
-            <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-2 sm:px-4 py-4 sm:py-8 overflow-hidden">
+            <div className="flex-1 flex flex-col max-w-[95%] lg:max-w-7xl mx-auto w-full px-2 sm:px-4 pt-4 sm:pt-8 pb-2 sm:pb-4 overflow-hidden">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto mb-4 space-y-6 pr-2 custom-scrollbar">
                     {messages.map((message) => (
                         <div
                             key={message.id}
@@ -199,14 +199,14 @@ const ChatPage: React.FC = () => {
                     </div>
                     {/* Quick Messages */}
                     <div
-                        className={`overflow-hidden transition-all duration-300 mb-4 ${showQuickMessages ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}
+                        className={`overflow-hidden transition-all duration-300 ${showQuickMessages ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0 pointer-events-none mb-0'}`}
                     >
                         <div className="flex flex-wrap gap-2">
                             {quickMessages.map((msg, idx) => (
                                 <button
                                     key={idx}
                                     type="button"
-                                    className="px-4 py-2 bg-white/5 text-gray-300 border border-white/5 rounded-xl text-xs sm:text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
+                                    className="px-3 py-1.5 bg-white/5 text-gray-300 border border-white/5 rounded-lg text-[10px] sm:text-xs hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-200"
                                     onClick={() => handleQuickMessage(msg)}
                                     disabled={isLoading}
                                 >

@@ -295,7 +295,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                         {searchTerm ? `Search Results (${displayedExercises.length})` : `${activeCategory} Exercises`}
                                     </h3>
                                     {displayedExercises.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {displayedExercises.map((exercise) => (
                                                 <div key={`${exercise.category}-${exercise.name}`} className="bg-[#0f172a] p-4 rounded-xl border border-blue-500/10">
                                                     <div className="flex justify-between items-center mb-2">

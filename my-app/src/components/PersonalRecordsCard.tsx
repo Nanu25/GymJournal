@@ -84,6 +84,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [exerciseStats, setExerciseStats] = useState({ max: 0, min: 0, avg: 0 });
     const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     // Client-side filtering and sorting
     const filteredAndSortedTrainings = React.useMemo(() => {
@@ -150,10 +152,11 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     };
 
     const confirmDelete = async () => {
-        if (!trainingToDelete) {
+        if (!trainingToDelete || isDeleting) {
             return;
         }
 
+        setIsDeleting(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -168,8 +171,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
+            // If the resource is not found (404), consider it already deleted
+            if (!response.ok && response.status !== 404) {
+                const errorData = await response.json().catch(() => ({})); // Handle non-JSON error responses safely
                 throw new Error(errorData.message || 'Failed to delete training');
             }
 
@@ -184,7 +188,11 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
 
             // Optionally refresh from server
             if (onRequestFullRefresh) {
-                await onRequestFullRefresh();
+                try {
+                    await onRequestFullRefresh();
+                } catch (refreshError) {
+                    console.warn('Training deleted locally, but failed to refresh list from server:', refreshError);
+                }
             }
 
             setTrainingToDelete(null);
@@ -192,6 +200,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
         } catch (error) {
             console.error('Error deleting training:', error);
             alert(`Failed to delete training: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -297,7 +307,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
     };
 
     const submitUpdateForm = async () => {
-        if (updateFormOpen !== null) {
+        if (updateFormOpen !== null && !isUpdating) {
             const exercisesObject: { [key: string]: number } = {};
             updateFormData.exercises.forEach((exercise) => {
                 if (exercise.name.trim()) {
@@ -305,6 +315,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                 }
             });
 
+            setIsUpdating(true);
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
@@ -360,6 +371,8 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
             } catch (error) {
                 console.error('Error in update process:', error);
                 alert(`Failed to update training: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            } finally {
+                setIsUpdating(false);
             }
         }
     };
@@ -626,16 +639,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         <p className="mb-6 text-blue-200/70">Are you sure you want to delete this training session?</p>
                         <div className="flex justify-end space-x-4">
                             <button
-                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200"
+                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={cancelDelete}
+                                disabled={isDeleting}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl border border-rose-500/20 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-lg shadow-rose-500/20"
+                                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl border border-rose-500/20 hover:from-rose-600 hover:to-rose-700 transition-all duration-200 shadow-lg shadow-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={confirmDelete}
+                                disabled={isDeleting}
                             >
-                                Delete
+                                {isDeleting ? 'Deleting...' : 'Delete'}
                             </button>
                         </div>
                     </div>
@@ -700,16 +715,18 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({
                         </div>
                         <div className="flex justify-end space-x-4 mt-6">
                             <button
-                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200"
+                                className="px-6 py-2 bg-white/5 text-white rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={cancelUpdateForm}
+                                disabled={isUpdating}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl border border-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20"
+                                className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl border border-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={submitUpdateForm}
+                                disabled={isUpdating}
                             >
-                                Save Changes
+                                {isUpdating ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </div>

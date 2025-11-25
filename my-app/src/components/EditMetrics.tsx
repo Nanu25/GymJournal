@@ -81,14 +81,19 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
     fetchMetrics();
   }, []);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Handle edit by sending updated metrics to backend
   const handleEdit = async () => {
+    if (isSubmitting) return;
+
     const weightNum = parseFloat(newWeight);
     if (isNaN(weightNum) || weightNum <= 0) {
       alert('Please enter a valid positive weight');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -126,6 +131,8 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
     } catch (error) {
       console.error('Error updating metrics:', error);
       alert('Failed to update metrics');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -235,13 +242,15 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleEdit}
-                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 shadow-lg shadow-emerald-500/20"
+                disabled={isSubmitting}
+                className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 transition-all duration-200 shadow-lg shadow-emerald-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-emerald-600 hover:to-emerald-700'}`}
               >
-                Save Changes
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 onClick={onBackToDashboard}
-                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl border border-gray-500/50 hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg shadow-gray-500/20"
+                disabled={isSubmitting}
+                className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl border border-gray-500/50 transition-all duration-200 shadow-lg shadow-gray-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-gray-700 hover:to-gray-800'}`}
               >
                 Cancel
               </button>

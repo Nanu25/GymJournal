@@ -75,7 +75,7 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
             });
 
             // Ensure date is properly formatted
-            const date = training.date instanceof Date 
+            const date = training.date instanceof Date
                 ? training.date.toISOString().split('T')[0]
                 : new Date(training.date).toISOString().split('T')[0];
 
@@ -148,7 +148,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
-        
+
         console.log(`Creating training for user ${req.user.id} on date ${date} with ${Object.keys(exercises).length} exercises`);
 
         // Check if database is initialized
@@ -157,7 +157,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             res.status(503).json({ message: 'Database service unavailable, please try again later' });
             return;
         }
-        
+
         //check if the date is unique
         try {
             console.log(`Checking for existing training on ${date} for user ID: ${req.user.id} (type: ${typeof req.user.id})`);
@@ -177,7 +177,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         const training = new Training();
         training.date = new Date(date);
         training.userId = req.user.id;
-        
+
         // Store exercises directly in the exercises column as well
         const exercisesRecord: Record<string, number> = {};
         for (const [key, value] of Object.entries(exercises)) {
@@ -186,7 +186,7 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             }
         }
         training.exercises = exercisesRecord;
-        
+
         console.log(`Creating training with userId: ${training.userId} (type: ${typeof training.userId})`);
         console.log(`Exercises data: ${JSON.stringify(training.exercises)}`);
 
@@ -232,8 +232,6 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
             res.status(400).json({ message: 'No valid exercises provided' });
             return;
         }
-
-  
         await trainingExerciseRepository.save(trainingExercises);
 
         await activityLogRepository.save({
@@ -261,8 +259,8 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         if (error instanceof Error) {
             console.error('Error stack:', error.stack);
         }
-        res.status(500).json({ 
-            message: 'Error creating training', 
+        res.status(500).json({
+            message: 'Error creating training',
             error: error instanceof Error ? error.message : 'Unknown error',
             details: error instanceof Error ? error.stack : undefined
         });
@@ -273,22 +271,38 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
     try {
         const { date } = req.params;
         const trainingDate = new Date(date);
-        
+
+        if (!req.user?.id) {
+            console.error('No user ID found in request during delete');
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
         // First find the training with its relations
-        const training = await trainingRepository.findOne({ 
-            where: { 
+        const training = await trainingRepository.findOne({
+            where: {
                 date: Between(
                     new Date(trainingDate.setHours(0, 0, 0, 0)),
                     new Date(trainingDate.setHours(23, 59, 59, 999))
-                )
+                ),
+                userId: req.user.id
             },
             relations: ['trainingExercises']
         });
-        
+
         if (!training) {
             res.status(404).json({ message: 'Training not found' });
             return;
         }
+
+        // Capture data for logging before deletion
+        const trainingId = training.id;
+        const trainingDateForLog = training.date;
+        // Map exercises to a simple structure to avoid circular references in JSON
+        const simplifiedExercises = training.trainingExercises?.map(te => ({
+            exerciseId: te.exerciseId,
+            weight: te.weight
+        })) || [];
 
         // Delete all related training exercises first
         if (training.trainingExercises && training.trainingExercises.length > 0) {
@@ -297,19 +311,23 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
 
         // Then delete the training
         await trainingRepository.remove(training);
+
         // Log activity
         await activityLogRepository.save({
-            userId: req.user!.id,
+            userId: req.user.id,
             action: ActionType.DELETE,
             entityType: 'Training',
-            entityId: String(training.id),
-            details: { date: training.date, exercises: training.trainingExercises },
+            entityId: String(trainingId),
+            details: { date: trainingDateForLog, exercises: simplifiedExercises },
             timestamp: new Date(),
         });
         res.status(200).json({ message: 'Training deleted successfully' });
     } catch (error) {
         console.error('Error deleting training:', error);
-        res.status(500).json({ message: 'Error deleting training', error });
+        if (error instanceof Error) {
+            console.error('Stack:', error.stack);
+        }
+        res.status(500).json({ message: 'Error deleting training', error: error instanceof Error ? error.message : 'Unknown error' });
     }
 };
 
@@ -318,10 +336,10 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
         console.log('Update request received:', { params: req.params, body: req.body });
         const { date } = req.params;
         const { exercises } = req.body;
-        
+
         const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
-        
+
         const endDate = new Date(date);
         endDate.setHours(23, 59, 59, 999);
 
@@ -333,14 +351,14 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
 
         console.log('Finding training for date range:', { startDate, endDate });
         // Find the training with its relations
-        const training = await trainingRepository.findOne({ 
-            where: { 
+        const training = await trainingRepository.findOne({
+            where: {
                 date: Between(startDate, endDate),
                 userId: req.user.id
             },
             relations: ['trainingExercises', 'trainingExercises.exercise']
         });
-        
+
         if (!training) {
             console.log('Training not found for date:', date);
             res.status(404).json({ message: 'Training not found' });
@@ -422,8 +440,8 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
         if (error instanceof Error) {
             console.error('Error stack:', error.stack);
         }
-        res.status(500).json({ 
-            message: 'Error updating training', 
+        res.status(500).json({
+            message: 'Error updating training',
             error: error instanceof Error ? error.message : 'Unknown error',
             details: error instanceof Error ? error.stack : undefined
         });
@@ -433,13 +451,13 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
 export const getMuscleGroupDistribution = async (req: Request, res: Response): Promise<void> => {
     try {
         console.log('[CONTROLLER] getMuscleGroupDistribution called');
-        
+
         if (!req.user?.id) {
             console.log('[CONTROLLER] getMuscleGroupDistribution: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
-        
+
         console.log('[CONTROLLER] getMuscleGroupDistribution: Starting query for user', req.user.id);
         console.time('[CONTROLLER] muscleGroupQuery');
 
@@ -485,19 +503,19 @@ export const getExerciseProgressData = async (req: Request, res: Response): Prom
         });
 
         const progressData = trainings
-            .filter((training: Training) => 
-                training.trainingExercises.some((te: TrainingExercise) => 
+            .filter((training: Training) =>
+                training.trainingExercises.some((te: TrainingExercise) =>
                     te.exercise.name === exercise
                 )
             )
             .map((training: Training) => {
-                const exerciseData = training.trainingExercises.find((te: TrainingExercise) => 
+                const exerciseData = training.trainingExercises.find((te: TrainingExercise) =>
                     te.exercise.name === exercise
                 );
-                const date = training.date instanceof Date 
+                const date = training.date instanceof Date
                     ? training.date.toISOString().split('T')[0]
                     : new Date(training.date).toISOString().split('T')[0];
-                
+
                 return {
                     date,
                     weight: Number(exerciseData?.weight || 0)
@@ -515,13 +533,13 @@ export const getExerciseProgressData = async (req: Request, res: Response): Prom
 export const getTotalWeightPerSession = async (req: Request, res: Response): Promise<void> => {
     try {
         console.log('[CONTROLLER] getTotalWeightPerSession called');
-        
+
         if (!req.user?.id) {
             console.log('[CONTROLLER] getTotalWeightPerSession: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
-        
+
         console.log('[CONTROLLER] getTotalWeightPerSession: Starting query for user', req.user.id);
         console.time('[CONTROLLER] totalWeightQuery');
 
@@ -559,13 +577,13 @@ export const getTotalWeightPerSession = async (req: Request, res: Response): Pro
 export const getUniqueExercises = async (req: Request, res: Response): Promise<void> => {
     try {
         console.log('[CONTROLLER] getUniqueExercises called');
-        
+
         if (!req.user?.id) {
             console.log('[CONTROLLER] getUniqueExercises: No user ID found');
             res.status(401).json({ message: 'User not authenticated' });
             return;
         }
-        
+
         console.log('[CONTROLLER] getUniqueExercises: Starting query for user', req.user.id);
         console.time('[CONTROLLER] uniqueExercisesQuery');
 
@@ -584,7 +602,7 @@ export const getUniqueExercises = async (req: Request, res: Response): Promise<v
         console.log('[CONTROLLER] getUniqueExercises: Query returned', result.length, 'exercises');
 
         const uniqueExercises = result.map(item => item.name);
-        
+
         console.log('[CONTROLLER] getUniqueExercises: Sending response');
         res.status(200).json(uniqueExercises);
     } catch (error) {
