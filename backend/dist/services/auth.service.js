@@ -22,7 +22,7 @@ class AuthService {
             password: hashedPassword,
         });
         await userRepository.save(user);
-        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
         return { user, token };
     }
     static async login(email, password) {
@@ -38,7 +38,7 @@ class AuthService {
         if (!isPasswordValid) {
             throw new Error('Invalid password');
         }
-        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
+        const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         return { user, token };
     }
     static async loginWithGoogle(googleToken) {
@@ -71,7 +71,7 @@ class AuthService {
                 await userRepository.save(user);
                 createdNewUser = true;
             }
-            const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
+            const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
             return { user, token, createdNewUser };
         }
         catch (error) {

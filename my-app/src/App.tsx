@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
-import GymJournalRegistration from "./components/GymJournalRegistration";
+import RegistrationPage from "./components/RegistrationPage";
 import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
@@ -14,7 +14,7 @@ import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-    const { token } = useAuth();
+    const { token, logout } = useAuth();
     const [currentPage, setCurrentPage] = useState("login");
     const [googleUser, setGoogleUser] = useState<any>(null);
     const prHistoryEntryAdded = useRef(false);
@@ -98,6 +98,7 @@ const App = () => {
     };
 
     const navigateToLogin = () => {
+        logout();
         setCurrentPage("login");
     };
 
@@ -154,7 +155,7 @@ const App = () => {
                     <DashboardPage />
                 )}
                 {currentPage === "registration" && (
-                    <GymJournalRegistration
+                    <RegistrationPage
                         onNavigateToLogin={navigateToLogin}
                     />
                 )}
@@ -178,7 +179,7 @@ const App = () => {
                     </div>
                 )}
                 {currentPage === "chat" && (
-                    <ChatPage onBackToDashboard={navigateToDashboard} />
+                    <ChatPage />
                 )}
                 {currentPage === "prSection" && (
                     <PRSectionPage />

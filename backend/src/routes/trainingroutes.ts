@@ -4,12 +4,14 @@ import {
     getAllTrainings,
     createTraining,
     updateTrainingByDate,
-    deleteTraining,
+    deleteTraining
+} from "../controllers/TrainingController";
+import {
     getMuscleGroupDistribution,
     getExerciseProgressData,
     getUniqueExercises,
     getTotalWeightPerSession
-} from "../controllers/TrainingController";
+} from "../controllers/StatsController";
 
 const router = Router();
 

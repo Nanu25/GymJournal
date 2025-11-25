@@ -8,6 +8,9 @@ const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 require("dotenv/config");
+const helmet_1 = __importDefault(require("helmet"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const compression_1 = __importDefault(require("compression"));
 const trainingroutes_1 = __importDefault(require("./routes/trainingroutes"));
 const userroutes_1 = __importDefault(require("./routes/userroutes"));
 const exerciseroutes_1 = __importDefault(require("./routes/exerciseroutes"));
@@ -26,6 +29,10 @@ if (!fs_1.default.existsSync(uploadsDir)) {
 const publicDir = path_1.default.join(__dirname, '..', 'public');
 if (!fs_1.default.existsSync(publicDir)) {
     fs_1.default.mkdirSync(publicDir, { recursive: true });
+}
+if (!process.env.JWT_SECRET) {
+    console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
+    process.exit(1);
 }
 const app = (0, express_1.default)();
 const corsOptions = {
@@ -50,6 +57,19 @@ app.use((req, res, next) => {
     });
     next();
 });
+app.use((0, helmet_1.default)({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
+app.use((0, compression_1.default)());
+const limiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', limiter);
 app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use(express_1.default.static(publicDir));
