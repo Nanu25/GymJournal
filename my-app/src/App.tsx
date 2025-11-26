@@ -8,6 +8,7 @@ import { ActivityLogs } from "./components/ActivityLogs";
 import ChatPage from "./components/ChatPage";
 import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
 import PRSectionPage from "./components/PRSectionPage";
+import ContactPage from "./components/ContactPage";
 import { useAuth } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 
@@ -124,7 +125,11 @@ const App = () => {
         setCurrentPage(page);
     };
 
-    const showNavbar = !['login', 'registration', 'googleSetup'].includes(currentPage);
+    const navigateToContact = () => {
+        setCurrentPage("contact");
+    };
+
+    const showNavbar = !['login', 'registration', 'googleSetup', 'contact'].includes(currentPage);
 
     return (
         <div className="w-screen h-screen flex flex-col bg-[#080b14] overflow-hidden">
@@ -149,6 +154,7 @@ const App = () => {
                         onLoginSuccess={navigateToDashboard}
                         onNavigateToRegistration={navigateToRegistration}
                         onGoogleLoginSuccess={handleGoogleLoginSuccess}
+                        onNavigateToContact={navigateToContact}
                     />
                 )}
                 {currentPage === "dashboard" && (
@@ -157,6 +163,7 @@ const App = () => {
                 {currentPage === "registration" && (
                     <RegistrationPage
                         onNavigateToLogin={navigateToLogin}
+                        onNavigateToContact={navigateToContact}
                     />
                 )}
                 {currentPage === "editMetrics" && (
@@ -188,7 +195,11 @@ const App = () => {
                     <GoogleUserSetupPage
                         user={googleUser}
                         onComplete={handleGoogleSetupComplete}
+                        onNavigateToContact={navigateToContact}
                     />
+                )}
+                {currentPage === "contact" && (
+                    <ContactPage onNavigateToLogin={navigateToLogin} />
                 )}
             </div>
         </div>

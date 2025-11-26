@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { UserPlus, Scale, Ruler, Calendar, Users, Clock, Repeat, Calendar as CalendarIcon, User, Mail, Lock, AlertCircle, Check, X, Loader2 } from "lucide-react";
-import WelcomeSection from "./WelcomeSection";
+import { Scale, User, Mail, Lock, AlertCircle, Check, X, Ruler, Calendar, Users, Calendar as CalendarIcon, Clock, Repeat, Loader2, UserPlus } from "lucide-react";
+
 import { api, UserData } from "../services/api";
 
 interface RegistrationFormProps {

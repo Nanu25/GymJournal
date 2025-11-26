@@ -93,7 +93,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between items-center ml-1">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
-            <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Forgot?</a>
           </div>
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
@@ -111,6 +110,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 <Lock className={`w-5 h-5 ${error ? 'text-red-400/50' : 'text-slate-400'}`} />
               </div>
             </div>
+          </div>
+          <div className="flex justify-end">
+            <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium">Forgot Password?</a>
           </div>
         </div>
 

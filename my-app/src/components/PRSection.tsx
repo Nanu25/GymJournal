@@ -3,6 +3,8 @@ import { trainingService, TotalWeightData } from "../services/trainingService";
 import MuscleGroupChart from "./MuscleGroupChart";
 import ProgressChart from "./ProgressChart";
 import TotalWeightChart from "./TotalWeightChart";
+import TrainingHeatmap from "./TrainingHeatmap";
+import MuscleBalanceRadar from "./MuscleBalanceRadar";
 
 interface PieChartData {
     name: string;
@@ -20,6 +22,7 @@ const PRSection: React.FC = () => {
     const [totalWeightData, setTotalWeightData] = useState<TotalWeightData[]>([]);
     const [exerciseList, setExerciseList] = useState<string[]>([]);
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+    const [trainingDates, setTrainingDates] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -45,8 +48,14 @@ const PRSection: React.FC = () => {
                 const weightData = await trainingService.getTotalWeightPerSession();
                 setTotalWeightData(weightData);
 
-                // Fetch Exercise List for Progress Chart
+                // Fetch All Trainings for Heatmap & Progress
                 const trainings = await trainingService.getAllTrainings();
+
+                // Extract dates for Heatmap
+                const dates = trainings.map(t => t.date);
+                setTrainingDates(dates);
+
+                // Extract Exercises for Progress Chart
                 const exercises = new Set<string>();
                 trainings.forEach(training => {
                     Object.keys(training.exercises).forEach(ex => exercises.add(ex));
@@ -95,10 +104,20 @@ const PRSection: React.FC = () => {
 
     return (
         <div className="w-full space-y-8 pb-8">
+            {/* Consistency Heatmap - Full Width */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                <TrainingHeatmap dates={trainingDates} />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Muscle Group Distribution Chart */}
                 <MuscleGroupChart data={muscleGroupData} />
 
+                {/* Muscle Balance Radar Chart */}
+                <MuscleBalanceRadar data={muscleGroupData} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Progress Over Time Chart */}
                 <ProgressChart
                     data={progressData}
@@ -106,10 +125,10 @@ const PRSection: React.FC = () => {
                     exerciseList={exerciseList}
                     onExerciseChange={setSelectedExercise}
                 />
-            </div>
 
-            {/* Total Volume Chart */}
-            <TotalWeightChart data={totalWeightData} />
+                {/* Total Volume Chart */}
+                <TotalWeightChart data={totalWeightData} />
+            </div>
         </div>
     );
 };

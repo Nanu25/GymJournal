@@ -21,7 +21,7 @@ const TrainingList: React.FC<TrainingListProps> = ({
 }) => {
     const [expandedTraining, setExpandedTraining] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12; // Increased for grid view
 
     const pageCount = Math.max(1, Math.ceil(trainings.length / itemsPerPage));
     const currentTrainings = trainings.slice(
@@ -46,85 +46,61 @@ const TrainingList: React.FC<TrainingListProps> = ({
     }
 
     return (
-        <div className="space-y-3">
-            {currentTrainings.map((training, index) => {
-                // Calculate original index if needed, but for display we use current slice
-                // For update/delete we need to pass the correct identifier or object
-                // Here we pass the index relative to the current page for UI, but the parent might need more info
-                // Actually, let's pass the training object or find the index in the full list
-                // The parent (PersonalRecordsCard) handles the logic.
-                // We'll pass the index relative to the *filtered* list if the parent expects that,
-                // OR we can just pass the training object itself if possible.
-                // The onUpdate prop in PersonalRecordsCard expects an index.
-                // Let's find the index in the full `trainings` array passed to this component.
-                const originalIndex = trainings.findIndex(t => t.date === training.date);
+        <div className="space-y-6">
+            {/* Masonry Grid Layout */}
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                {currentTrainings.map((training, index) => {
+                    const originalIndex = trainings.findIndex(t => t.date === training.date);
 
-                const prExercise = Object.entries(training.exercises).reduce((max, [name, weight]) =>
-                    !max || weight > max.weight ? { name, weight } : max
-                    , null as { name: string; weight: number } | null);
+                    const prExercise = Object.entries(training.exercises).reduce((max, [name, weight]) =>
+                        !max || weight > max.weight ? { name, weight } : max
+                        , null as { name: string; weight: number } | null);
 
-                const exerciseCount = Object.keys(training.exercises).length;
-                const prText = prExercise ? `${prExercise.name}: ${prExercise.weight} kg` : "None";
+                    const exerciseCount = Object.keys(training.exercises).length;
 
-                const isHighPerformer = exerciseCount === exerciseStats.max;
-                const isLowPerformer = exerciseCount === exerciseStats.min;
-                const isAveragePerformer = exerciseCount === Math.round((exerciseStats.max + exerciseStats.min) / 2);
+                    const isHighPerformer = exerciseCount === exerciseStats.max;
+                    const isLowPerformer = exerciseCount === exerciseStats.min;
+                    const isAveragePerformer = exerciseCount === Math.round((exerciseStats.max + exerciseStats.min) / 2);
 
-                const borderColor = isHighPerformer
-                    ? "border-amber-500/30"
-                    : isLowPerformer
-                        ? "border-red-500/30"
-                        : isAveragePerformer
-                            ? "border-blue-500/30"
-                            : "border-blue-500/10";
+                    const borderColor = isHighPerformer
+                        ? "border-amber-500/30"
+                        : isLowPerformer
+                            ? "border-red-500/30"
+                            : isAveragePerformer
+                                ? "border-blue-500/30"
+                                : "border-blue-500/10";
 
-                const statHighlight = isHighPerformer
-                    ? "bg-gradient-to-r from-amber-500/5 to-amber-600/5"
-                    : isLowPerformer
-                        ? "bg-gradient-to-r from-red-500/5 to-red-600/5"
-                        : isAveragePerformer
-                            ? "bg-gradient-to-r from-blue-500/5 to-blue-600/5"
-                            : "bg-[#1a2234]/50";
+                    const statHighlight = isHighPerformer
+                        ? "bg-gradient-to-r from-amber-500/5 to-amber-600/5"
+                        : isLowPerformer
+                            ? "bg-gradient-to-r from-red-500/5 to-red-600/5"
+                            : isAveragePerformer
+                                ? "bg-gradient-to-r from-blue-500/5 to-blue-600/5"
+                                : "bg-[#1a2234]/50";
 
-                const performanceIndicator = isHighPerformer
-                    ? "text-amber-400"
-                    : isLowPerformer
-                        ? "text-red-400"
-                        : isAveragePerformer
-                            ? "text-blue-400"
-                            : "text-blue-200/50";
-
-                return (
-                    <div
-                        key={`${training.date}-${index}`}
-                        className={`rounded-lg overflow-hidden border ${borderColor} transition-all duration-200 hover:border-blue-500/30 ${expandedTraining === originalIndex ? "ring-1 ring-blue-500/30 bg-[#151e32]" : "bg-[#111c33]"
-                            }`}
-                    >
+                    return (
                         <div
-                            className={`px-4 py-3 cursor-pointer group ${statHighlight}`}
-                            onClick={() => toggleExpandTraining(originalIndex)}
+                            key={`${training.date}-${index}`}
+                            className={`break-inside-avoid mb-6 rounded-2xl overflow-hidden border ${borderColor} transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 ${expandedTraining === originalIndex ? "ring-1 ring-blue-500/30 bg-[#151e32] scale-[1.02]" : "bg-[#111c33] hover:-translate-y-1"
+                                }`}
                         >
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-6 min-w-0 flex-grow">
-                                    <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap w-24">
-                                        {training.date}
-                                    </span>
-
-                                    <div className="hidden sm:flex items-center gap-6 flex-grow">
-                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 whitespace-nowrap ${performanceIndicator}`}>
-                                            {exerciseCount} exercises
-                                        </span>
-                                        {prExercise && (
-                                            <div className="flex items-center gap-2 text-sm text-blue-200/60 truncate min-w-[150px]">
-                                                <span className="text-[10px] uppercase tracking-wider opacity-60">Top Lift</span>
-                                                <span className="font-medium text-white/90">{prText}</span>
-                                            </div>
-                                        )}
+                            <div
+                                className={`p-5 cursor-pointer group ${statHighlight}`}
+                                onClick={() => toggleExpandTraining(originalIndex)}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-white font-bold text-lg tracking-wide">
+                                            {training.date}
+                                        </h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 text-blue-200/70">
+                                                {exerciseCount} Exercises
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-3 flex-shrink-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <button
                                             className="p-1.5 text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
                                             onClick={(e) => {
@@ -150,7 +126,19 @@ const TrainingList: React.FC<TrainingListProps> = ({
                                             </svg>
                                         </button>
                                     </div>
+                                </div>
 
+                                {prExercise && (
+                                    <div className="mb-4 p-3 bg-black/20 rounded-xl border border-white/5">
+                                        <p className="text-[10px] uppercase tracking-wider text-blue-400/60 mb-1">Top Lift</p>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-blue-100">{prExercise.name}</span>
+                                            <span className="text-sm font-bold text-white">{prExercise.weight} kg</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-center">
                                     <span className={`text-blue-400/40 transform transition-transform duration-200 ${expandedTraining === originalIndex ? "rotate-180" : ""}`}>
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -159,49 +147,41 @@ const TrainingList: React.FC<TrainingListProps> = ({
                                 </div>
                             </div>
 
-                            {/* Mobile stats summary */}
-                            <div className="sm:hidden flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
-                                <div className="flex items-center gap-3">
-                                    <span className={`${performanceIndicator}`}>{exerciseCount} ex</span>
-                                    {prExercise && <span className="text-white/70">{prText}</span>}
+                            {expandedTraining === originalIndex && (
+                                <div className="px-5 pb-5 pt-2 bg-[#0f1623]/50 border-t border-black/20">
+                                    <div className="space-y-2">
+                                        {Object.entries(training.exercises).map(([exercise, weight], idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex justify-between items-center p-2 rounded-lg hover:bg-white/[0.03] transition-colors"
+                                            >
+                                                <span className="text-blue-200/80 text-sm truncate pr-4">{exercise}</span>
+                                                <span className="text-white font-semibold text-sm">
+                                                    {weight} kg
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
-
-                        {expandedTraining === originalIndex && (
-                            <div className="px-5 pb-5 pt-4 bg-[#0f1623]/50 border-t border-black/20">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {Object.entries(training.exercises).map(([exercise, weight], idx) => (
-                                        <div
-                                            key={idx}
-                                            className="flex justify-between items-center p-3 bg-white/[0.03] rounded-xl border border-white/5 hover:border-blue-500/20 hover:bg-white/[0.05] transition-all group"
-                                        >
-                                            <span className="text-blue-100/90 text-base font-medium truncate pr-4">{exercise}</span>
-                                            <span className="text-white font-bold text-base bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
-                                                {weight} kg
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
 
             <div className="pt-6 border-t border-blue-500/10 space-y-6">
                 <div className="flex flex-wrap justify-center gap-6 text-sm">
                     <div className="flex items-center">
                         <div className="w-2.5 h-2.5 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full mr-2"></div>
-                        <span className="text-emerald-200">Most exercises ({exerciseStats.max})</span>
+                        <span className="text-emerald-200">High Volume</span>
                     </div>
                     <div className="flex items-center">
                         <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mr-2"></div>
-                        <span className="text-blue-200">Average ({exerciseStats.avg})</span>
+                        <span className="text-blue-200">Average</span>
                     </div>
                     <div className="flex items-center">
                         <div className="w-2.5 h-2.5 bg-gradient-to-r from-red-400 to-red-600 rounded-full mr-2"></div>
-                        <span className="text-red-200">Least exercises ({exerciseStats.min})</span>
+                        <span className="text-red-200">Light Session</span>
                     </div>
                 </div>
 
