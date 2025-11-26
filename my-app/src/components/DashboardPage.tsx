@@ -7,16 +7,16 @@ const DashboardPage: React.FC = () => {
     const { profile } = useUserProfile();
 
     return (
-        <div className="min-h-screen bg-[#080b14] overflow-x-hidden">
+        <div className="min-h-full flex flex-col bg-[#080b14] overflow-x-hidden">
             {/* Responsive Main Content */}
-            <main className="container mx-auto px-2 sm:px-4 md:px-6 py-6 sm:py-8">
+            <main className="flex-1 container mx-auto px-2 sm:px-4 md:px-6 py-6 sm:py-8">
                 <PersonalRecordsCard
                     profile={profile}
                 />
             </main>
 
             {/* Responsive Footer */}
-            <footer className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-t border-blue-500/10 mt-12">
+            <footer className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-t border-blue-500/10 mt-auto">
                 <div className="container mx-auto px-2 sm:px-4 md:px-6 py-4">
                     <p className="text-center text-xs sm:text-sm md:text-base text-blue-200/70 font-medium">
                         © 2025 Fitness Journal | Created by Grancea Alexandru
