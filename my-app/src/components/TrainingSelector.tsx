@@ -4,6 +4,8 @@ import ExerciseCategoryFilter from "./ExerciseCategoryFilter";
 import ExerciseGrid from "./ExerciseGrid";
 import { useTrainingForm } from "../hooks/useTrainingForm";
 import { TrainingEntry } from "../services/trainingService";
+import { GlassCard } from "./ui/GlassCard";
+import { NeoButton } from "./ui/NeoButton";
 
 interface TrainingSelectorProps {
     onTrainingAdded: (training: TrainingEntry) => void;
@@ -34,7 +36,7 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
         <div className="min-h-screen bg-[#080b14] overflow-x-hidden py-8">
             <div className="container mx-auto px-6">
                 <div className="max-w-5xl mx-auto">
-                    <div className="bg-[#0f172a] rounded-[32px] shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl p-8">
+                    <GlassCard className="shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)]">
                         <div className="flex items-center justify-between mb-6">
                             {/* Back button removed as it is replaced by Global Navbar */}
                         </div>
@@ -79,26 +81,26 @@ const TrainingSelector: React.FC<TrainingSelectorProps> = ({ onTrainingAdded, on
                                 />
 
                                 <div className="flex gap-4 pt-4">
-                                    <button
+                                    <NeoButton
                                         onClick={handleSaveTraining}
                                         disabled={isSubmitting}
-                                        className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-300'
-                                            }`}
+                                        isLoading={isSubmitting}
+                                        className="flex-1 py-6 text-xl"
                                     >
-                                        {isSubmitting ? 'Saving...' : 'Save Training'}
-                                    </button>
-                                    <button
+                                        Save Training
+                                    </NeoButton>
+                                    <NeoButton
                                         onClick={onCancel}
                                         disabled={isSubmitting}
-                                        className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl border border-gray-500/50 hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg shadow-gray-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                            }`}
+                                        variant="secondary"
+                                        className="flex-1 py-6 text-xl"
                                     >
                                         Cancel
-                                    </button>
+                                    </NeoButton>
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </GlassCard>
                 </div>
             </div>
         </div>

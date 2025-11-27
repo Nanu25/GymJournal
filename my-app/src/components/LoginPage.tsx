@@ -25,8 +25,8 @@ const LoginPage: React.FC<LoginPageProps> = ({
 
   return (
     <AuthLayout
-      title="Welcome"
-      subtitle="Sign in to continue your journey."
+      title="Welcome Back"
+      subtitle="Ready to crush your goals? Sign in to track your progress."
       maxWidth="max-w-3xl"
       onContactClick={onNavigateToContact}
     >

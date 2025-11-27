@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { useUserProfile } from '../hooks/useUserProfile';
+
 interface NavbarProps {
     onLogout: () => void;
 }
@@ -8,6 +10,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
+    const { profile } = useUserProfile();
 
     const navItems = [
         {
@@ -43,7 +46,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-            )
+            ),
+            adminOnly: true
         },
         {
             id: 'editMetrics', path: '/edit-metrics', label: 'Metrics', icon: (
@@ -52,7 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
                 </svg>
             )
         },
-    ];
+    ].filter(item => !item.adminOnly || profile?.isAdmin);
 
     const isActive = (path: string) => {
         return location.pathname === path;

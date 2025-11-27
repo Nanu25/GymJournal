@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { TrainingService } from '../services/TrainingService';
 import { TrainingFilterOptions } from '../repositories/TrainingRepository';
 
@@ -12,7 +12,7 @@ declare global {
     }
 }
 
-export const getAllTrainings = async (req: Request, res: Response): Promise<void> => {
+export const getAllTrainings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         if (!req.user?.id) {
             res.status(401).json({ message: 'User not authenticated' });
@@ -37,12 +37,11 @@ export const getAllTrainings = async (req: Request, res: Response): Promise<void
         const result = await TrainingService.getAllTrainings(options);
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error fetching trainings:', error);
-        res.status(500).json({ message: 'Error fetching trainings' });
+        next(error);
     }
 };
 
-export const createTraining = async (req: Request, res: Response): Promise<void> => {
+export const createTraining = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { date, exercises } = req.body;
 
@@ -64,26 +63,11 @@ export const createTraining = async (req: Request, res: Response): Promise<void>
         const result = await TrainingService.createTraining(req.user.id, date, exercises);
         res.status(201).json(result);
     } catch (error) {
-        console.error('Error creating training:', error);
-        if (error instanceof Error) {
-            if (error.message === 'Training for this date already exists') {
-                res.status(400).json({ message: error.message });
-                return;
-            }
-            if (error.message === 'No valid exercises provided') {
-                res.status(400).json({ message: error.message });
-                return;
-            }
-            if (error.message === 'Database service unavailable') {
-                res.status(503).json({ message: error.message });
-                return;
-            }
-        }
-        res.status(500).json({ message: 'Error creating training' });
+        next(error);
     }
 };
 
-export const deleteTraining = async (req: Request, res: Response): Promise<void> => {
+export const deleteTraining = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { date } = req.params;
 
@@ -95,16 +79,11 @@ export const deleteTraining = async (req: Request, res: Response): Promise<void>
         await TrainingService.deleteTraining(req.user.id, date);
         res.status(200).json({ message: 'Training deleted successfully' });
     } catch (error) {
-        console.error('Error deleting training:', error);
-        if (error instanceof Error && error.message === 'Training not found') {
-            res.status(404).json({ message: 'Training not found' });
-            return;
-        }
-        res.status(500).json({ message: 'Error deleting training' });
+        next(error);
     }
 };
 
-export const updateTrainingByDate = async (req: Request, res: Response): Promise<void> => {
+export const updateTrainingByDate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { date } = req.params;
         const { exercises } = req.body;
@@ -117,17 +96,6 @@ export const updateTrainingByDate = async (req: Request, res: Response): Promise
         const result = await TrainingService.updateTraining(req.user.id, date, exercises);
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error updating training:', error);
-        if (error instanceof Error) {
-            if (error.message === 'Training not found') {
-                res.status(404).json({ message: 'Training not found' });
-                return;
-            }
-            if (error.message === 'No valid exercises provided') {
-                res.status(400).json({ message: error.message });
-                return;
-            }
-        }
-        res.status(500).json({ message: 'Error updating training' });
+        next(error);
     }
 };

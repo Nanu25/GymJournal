@@ -20,7 +20,7 @@ export const useTrainingData = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortField, setSortField] = useState<SortField>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-    const [exerciseStats, setExerciseStats] = useState<ExerciseStats>({ max: 0, min: 0, avg: 0 });
+
 
     // Filtering & Sorting Logic
     const filteredAndSortedTrainings = useMemo(() => {
@@ -59,18 +59,16 @@ export const useTrainingData = () => {
     }, [trainingsData, searchTerm, sortField, sortDirection]);
 
     // Calculate Stats
-    useEffect(() => {
+    const exerciseStats = useMemo(() => {
         if (filteredAndSortedTrainings.length > 0) {
             const exerciseCounts = filteredAndSortedTrainings.map(t => Object.keys(t.exercises).length);
-            const stats = {
+            return {
                 min: Math.min(...exerciseCounts),
                 max: Math.max(...exerciseCounts),
                 avg: Math.round(exerciseCounts.reduce((a, b) => a + b, 0) / exerciseCounts.length)
             };
-            setExerciseStats(stats);
-        } else {
-            setExerciseStats({ max: 0, min: 0, avg: 0 });
         }
+        return { max: 0, min: 0, avg: 0 };
     }, [filteredAndSortedTrainings]);
 
     // Handlers

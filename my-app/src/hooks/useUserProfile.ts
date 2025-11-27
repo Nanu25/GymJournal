@@ -5,6 +5,7 @@ interface UserProfile {
     name: string;
     weight?: number;
     height?: number;
+    isAdmin?: boolean;
 }
 
 interface UseUserProfileReturn {
@@ -22,7 +23,8 @@ export const useUserProfile = (): UseUserProfileReturn => {
         return {
             name: cachedUser?.name || "Fitness Enthusiast",
             weight: cachedMetrics?.weight,
-            height: cachedMetrics?.height
+            height: cachedMetrics?.height,
+            isAdmin: cachedUser?.isAdmin
         };
     });
 
@@ -38,7 +40,8 @@ export const useUserProfile = (): UseUserProfileReturn => {
             setProfile({
                 name: data.name || "Fitness Enthusiast",
                 weight: data.weight ?? data.metrics?.weight,
-                height: data.height ?? data.metrics?.height
+                height: data.height ?? data.metrics?.height,
+                isAdmin: data.isAdmin
             });
         } catch (err) {
             console.error("Error fetching user profile:", err);

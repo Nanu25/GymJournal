@@ -100,7 +100,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
             {/* Name Input */}
             <div className="group relative">
               <div className="relative">
-                <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">Full Name</label>
+                <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -121,7 +123,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
             {/* Email Input */}
             <div className="group relative">
               <div className="relative">
-                <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">Email Address</label>
+                <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <input
                     type="email"
@@ -143,7 +147,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
               {/* Password Input */}
               <div className="group relative">
                 <div className="relative">
-                  <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">Password</label>
+                  <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">
+                    Password <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
                     <input
                       type="password"
@@ -164,7 +170,9 @@ const RegistrationForm = ({ onNavigateToLogin }: RegistrationFormProps) => {
               {/* Confirm Password Input */}
               <div className="group relative">
                 <div className="relative">
-                  <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">Confirm Password</label>
+                  <label className="block text-xs font-medium text-blue-200/70 mb-1.5 ml-1 uppercase tracking-wider">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
                     <input
                       type="password"
