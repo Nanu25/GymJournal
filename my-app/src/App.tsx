@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import RegistrationPage from "./components/RegistrationPage";
-import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
+import EditMetrics from "./components/EditMetrics";
 import TrainingSelector from "@/components/TrainingSelector.tsx";
 import { ActivityLogs } from "./components/ActivityLogs";
 import ChatPage from "./components/ChatPage";
@@ -11,125 +12,26 @@ import PRSectionPage from "./components/PRSectionPage";
 import ContactPage from "./components/ContactPage";
 import { useAuth } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import { User } from "./types/index";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import { Toaster } from "react-hot-toast";
 
-const App = () => {
-    const { token, logout } = useAuth();
-    const [currentPage, setCurrentPage] = useState("login");
-    const [googleUser, setGoogleUser] = useState<any>(null);
-    const prHistoryEntryAdded = useRef(false);
-    const trainingSelectorHistoryAdded = useRef(false);
-    const editMetricsHistoryAdded = useRef(false);
+// Wrapper component to handle Google Login state which needs to be passed to GoogleUserSetupPage
+const AppRoutes = () => {
+    const { logout } = useAuth();
+    const [googleUser, setGoogleUser] = useState<User | null>(null);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        if (token) {
-            setCurrentPage("dashboard");
-        } else {
-            setCurrentPage("login");
-        }
-    }, [token]);
-
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-
-        if (currentPage !== "prSection") {
-            prHistoryEntryAdded.current = false;
-        }
-        if (currentPage !== "trainingSelector") {
-            trainingSelectorHistoryAdded.current = false;
-        }
-        if (currentPage !== "editMetrics") {
-            editMetricsHistoryAdded.current = false;
-        }
-
-        // Handle PR Section
-        if (currentPage === "prSection") {
-            const handlePopState = () => {
-                prHistoryEntryAdded.current = false;
-                setCurrentPage("dashboard");
-            };
-
-            window.history.pushState({ page: "prSection" }, "", "#pr-section");
-            prHistoryEntryAdded.current = true;
-            window.addEventListener("popstate", handlePopState);
-
-            return () => {
-                window.removeEventListener("popstate", handlePopState);
-            };
-        }
-
-        // Handle Training Selector
-        if (currentPage === "trainingSelector") {
-            const handlePopState = () => {
-                trainingSelectorHistoryAdded.current = false;
-                setCurrentPage("dashboard");
-            };
-
-            window.history.pushState({ page: "trainingSelector" }, "", "#add-training");
-            trainingSelectorHistoryAdded.current = true;
-            window.addEventListener("popstate", handlePopState);
-
-            return () => {
-                window.removeEventListener("popstate", handlePopState);
-            };
-        }
-
-        // Handle Edit Metrics
-        if (currentPage === "editMetrics") {
-            const handlePopState = () => {
-                editMetricsHistoryAdded.current = false;
-                setCurrentPage("dashboard");
-            };
-
-            window.history.pushState({ page: "editMetrics" }, "", "#edit-metrics");
-            editMetricsHistoryAdded.current = true;
-            window.addEventListener("popstate", handlePopState);
-
-            return () => {
-                window.removeEventListener("popstate", handlePopState);
-            };
-        }
-    }, [currentPage]);
-
-    const navigateToDashboard = () => {
-        setCurrentPage("dashboard");
-    };
-
-    const navigateToLogin = () => {
-        logout();
-        setCurrentPage("login");
-    };
-
-    const navigateToRegistration = () => {
-        setCurrentPage("registration");
-    };
-
-
-
-
-
-    const handleGoogleLoginSuccess = (user: any) => {
+    const handleGoogleLoginSuccess = (user: User) => {
         setGoogleUser(user);
-        setCurrentPage("googleSetup");
+        navigate("/google-setup");
     };
 
     const handleGoogleSetupComplete = () => {
         setGoogleUser(null);
-        setCurrentPage("dashboard");
+        navigate("/dashboard");
     };
-
-    const handleNavigate = (page: string) => {
-        setCurrentPage(page);
-    };
-
-    const navigateToContact = () => {
-        setCurrentPage("contact");
-    };
-
-    const showNavbar = !['login', 'registration', 'googleSetup', 'contact'].includes(currentPage);
 
     return (
         <div className="w-screen h-screen flex flex-col bg-[#080b14] overflow-hidden">
@@ -140,69 +42,114 @@ const App = () => {
                     border: '1px solid rgba(59, 130, 246, 0.2)',
                 },
             }} />
-            {showNavbar && (
-                <Navbar
-                    currentPage={currentPage}
-                    onNavigate={handleNavigate}
-                    onLogout={navigateToLogin}
-                />
-            )}
+
+            {/* Navbar is shown on protected routes mostly, but we can control it via layout or check path */}
+            {/* Ideally Navbar should be part of a Layout component for protected routes. 
+                For now, we'll render it conditionally based on route or let pages handle it? 
+                Actually, Navbar was global. Let's make it global but conditionally hidden. */}
+            <NavbarWrapper onLogout={() => { logout(); navigate("/login"); }} />
 
             <div className="flex-1 overflow-auto">
-                {currentPage === "login" && (
-                    <LoginPage
-                        onLoginSuccess={navigateToDashboard}
-                        onNavigateToRegistration={navigateToRegistration}
-                        onGoogleLoginSuccess={handleGoogleLoginSuccess}
-                        onNavigateToContact={navigateToContact}
-                    />
-                )}
-                {currentPage === "dashboard" && (
-                    <DashboardPage />
-                )}
-                {currentPage === "registration" && (
-                    <RegistrationPage
-                        onNavigateToLogin={navigateToLogin}
-                        onNavigateToContact={navigateToContact}
-                    />
-                )}
-                {currentPage === "editMetrics" && (
-                    <EditMetrics onBackToDashboard={navigateToDashboard} />
-                )}
-                {currentPage === "trainingSelector" && (
-                    <TrainingSelector
-                        onTrainingAdded={() => {
-                            navigateToDashboard();
-                            // Optionally refresh the dashboard data here if needed
-                        }}
-                        onCancel={navigateToDashboard}
-                    />
-                )}
-                {currentPage === "activityLogs" && (
-                    <div className="flex flex-col h-full">
-                        <div className="flex-1 overflow-auto">
-                            <ActivityLogs />
-                        </div>
-                    </div>
-                )}
-                {currentPage === "chat" && (
-                    <ChatPage />
-                )}
-                {currentPage === "prSection" && (
-                    <PRSectionPage />
-                )}
-                {currentPage === "googleSetup" && googleUser && (
-                    <GoogleUserSetupPage
-                        user={googleUser}
-                        onComplete={handleGoogleSetupComplete}
-                        onNavigateToContact={navigateToContact}
-                    />
-                )}
-                {currentPage === "contact" && (
-                    <ContactPage onNavigateToLogin={navigateToLogin} />
-                )}
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path="/login" element={
+                        <LoginPage
+                            onLoginSuccess={() => navigate("/dashboard")}
+                            onNavigateToRegistration={() => navigate("/register")}
+                            onGoogleLoginSuccess={handleGoogleLoginSuccess}
+                            onNavigateToContact={() => navigate("/contact")}
+                        />
+                    } />
+                    <Route path="/register" element={
+                        <RegistrationPage
+                            onNavigateToLogin={() => navigate("/login")}
+                            onNavigateToContact={() => navigate("/contact")}
+                        />
+                    } />
+                    <Route path="/contact" element={
+                        <ContactPage onNavigateToLogin={() => navigate("/login")} />
+                    } />
+
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/edit-metrics" element={
+                        <ProtectedRoute>
+                            <EditMetrics onBackToDashboard={() => navigate("/dashboard")} />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/add-training" element={
+                        <ProtectedRoute>
+                            <TrainingSelector
+                                onTrainingAdded={() => navigate("/dashboard")}
+                                onCancel={() => navigate("/dashboard")}
+                            />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/activity-logs" element={
+                        <ProtectedRoute>
+                            <div className="flex flex-col h-full">
+                                <div className="flex-1 overflow-auto">
+                                    <ActivityLogs />
+                                </div>
+                            </div>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/chat" element={
+                        <ProtectedRoute>
+                            <ChatPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/pr-section" element={
+                        <ProtectedRoute>
+                            <PRSectionPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/google-setup" element={
+                        googleUser ? (
+                            <GoogleUserSetupPage
+                                user={googleUser}
+                                onComplete={handleGoogleSetupComplete}
+                                onNavigateToContact={() => navigate("/contact")}
+                            />
+                        ) : (
+                            <Navigate to="/login" replace />
+                        )
+                    } />
+
+                    {/* Default Redirect */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
             </div>
         </div>
+    );
+};
+
+// Helper to conditionally render Navbar
+import { useLocation } from "react-router-dom";
+const NavbarWrapper = ({ onLogout }: { onLogout: () => void }) => {
+    const location = useLocation();
+    const hideNavbarPaths = ['/login', '/register', '/google-setup', '/contact'];
+    const showNavbar = !hideNavbarPaths.includes(location.pathname);
+
+    if (!showNavbar) return null;
+
+    return (
+        <Navbar
+            onLogout={onLogout}
+        />
+    );
+};
+
+const App = () => {
+    return (
+        <Router>
+            <AppRoutes />
+        </Router>
     );
 };
 

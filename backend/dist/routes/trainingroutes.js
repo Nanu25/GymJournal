@@ -14,5 +14,6 @@ router.get('/muscle-group-distribution', StatsController_1.getMuscleGroupDistrib
 router.get('/exercise-progress/:exercise', StatsController_1.getExerciseProgressData);
 router.get('/total-weight', StatsController_1.getTotalWeightPerSession);
 router.get('/exercises', StatsController_1.getUniqueExercises);
+router.get('/dates', StatsController_1.getTrainingDates);
 exports.default = router;
 //# sourceMappingURL=trainingroutes.js.map

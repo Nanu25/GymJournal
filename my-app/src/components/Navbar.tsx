@@ -1,52 +1,52 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 interface NavbarProps {
-    currentPage: string;
-    onNavigate: (page: string) => void;
     onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const location = useLocation();
 
     const navItems = [
         {
-            id: 'dashboard', label: 'Dashboard', icon: (
+            id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
             )
         },
         {
-            id: 'trainingSelector', label: 'Add Training', icon: (
+            id: 'trainingSelector', path: '/add-training', label: 'Add Training', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
             )
         },
         {
-            id: 'prSection', label: 'PRs & Analytics', icon: (
+            id: 'prSection', path: '/pr-section', label: 'PRs & Analytics', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
             )
         },
         {
-            id: 'chat', label: 'AI Coach', icon: (
+            id: 'chat', path: '/chat', label: 'AI Coach', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
             )
         },
         {
-            id: 'activityLogs', label: 'Activity Logs', icon: (
+            id: 'activityLogs', path: '/activity-logs', label: 'Activity Logs', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             )
         },
         {
-            id: 'editMetrics', label: 'Metrics', icon: (
+            id: 'editMetrics', path: '/edit-metrics', label: 'Metrics', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -54,32 +54,36 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, onLogout }) =>
         },
     ];
 
+    const isActive = (path: string) => {
+        return location.pathname === path;
+    };
+
     return (
         <nav className="sticky top-0 z-50 w-full bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <div className="flex-shrink-0 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+                    <Link to="/dashboard" className="flex-shrink-0 cursor-pointer">
                         <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                             GymJournal
                         </span>
-                    </div>
+                    </Link>
 
                     {/* Desktop Menu */}
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">
                             {navItems.map((item) => (
-                                <button
+                                <Link
                                     key={item.id}
-                                    onClick={() => onNavigate(item.id)}
-                                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 min-w-[120px] whitespace-nowrap ${currentPage === item.id
+                                    to={item.path}
+                                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 min-w-[120px] whitespace-nowrap ${isActive(item.path)
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                                         : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
                                     {item.icon}
                                     {item.label}
-                                </button>
+                                </Link>
                             ))}
                             <button
                                 onClick={onLogout}
@@ -118,20 +122,18 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, onLogout }) =>
             <div className={`md:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                 <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#0f172a] border-b border-white/5">
                     {navItems.map((item) => (
-                        <button
+                        <Link
                             key={item.id}
-                            onClick={() => {
-                                onNavigate(item.id);
-                                setIsMobileMenuOpen(false);
-                            }}
-                            className={`flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${currentPage === item.id
+                            to={item.path}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${isActive(item.path)
                                 ? 'bg-blue-600 text-white'
                                 : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             {item.icon}
                             {item.label}
-                        </button>
+                        </Link>
                     ))}
                     <button
                         onClick={() => {

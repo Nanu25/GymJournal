@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { TrainingEntry, trainingService } from '../services/trainingService';
 
+
 interface Exercise {
     name: string;
     weight: number;

@@ -4,10 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from '@react-oauth/google';
 import { AlertCircle, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 
+import { User } from "../types/index";
+
 interface LoginFormProps {
   onLoginSuccess: () => void;
-  onNavigateToRegistration: () => void;
-  onGoogleLoginSuccess: (user: any) => void;
+  onNavigateToRegistration?: () => void;
+  onGoogleLoginSuccess: (user: User) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -37,7 +39,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     try {
       const response = await api.auth.login({ email, password });
       if (response.success) {
-        login(response.data?.token || '', response.data?.user || {});
+        login(response.data?.token || '', (response.data?.user as User) || null);
         onLoginSuccess();
       } else {
         setError(response.error || "Login failed");
@@ -52,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   const handleSignup = () => {
-    onNavigateToRegistration();
+    onNavigateToRegistration?.();
   };
 
   return (
@@ -167,15 +169,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
               const response = await api.auth.loginWithGoogle({ token: credentialResponse.credential });
               if (response.success) {
                 const appToken = response.data?.token || '';
-                const user = response.data?.user || {};
+                const user = (response.data?.user as User) || null;
                 const createdNewUser = Boolean(response.data?.createdNewUser);
                 localStorage.setItem('token', appToken);
 
-                if (createdNewUser) {
+                if (createdNewUser && user) {
                   onGoogleLoginSuccess(user);
-                } else {
+                } else if (user) {
                   login(appToken, user);
                   onLoginSuccess();
+                } else {
+                  throw new Error("Invalid user data received");
                 }
               } else {
                 setError(response.error || "Google login failed");

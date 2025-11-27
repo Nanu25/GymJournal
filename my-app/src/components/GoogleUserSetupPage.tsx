@@ -1,13 +1,11 @@
 import GoogleUserDetailsForm from "./GoogleUserDetailsForm";
 import AuthLayout from "./AuthLayout";
 
+import { User } from "../types/index";
+
 interface GoogleUserSetupPageProps {
   onComplete: () => void;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  user: User;
   onNavigateToContact?: () => void;
 }
 

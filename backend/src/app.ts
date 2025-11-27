@@ -15,9 +15,8 @@ import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
-// Import chat controller to ensure it's initialized
-import { ChatController } from './controllers/chatController';
-ChatController.initialize();
+
+
 
 // Ensure 'uploads/' directory exists in both development and production
 const uploadsDir = path.join(__dirname, '..', 'uploads');

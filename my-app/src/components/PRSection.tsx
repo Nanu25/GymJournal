@@ -48,12 +48,12 @@ const PRSection: React.FC = () => {
                 const weightData = await trainingService.getTotalWeightPerSession();
                 setTotalWeightData(weightData);
 
-                // Fetch All Trainings for Heatmap & Progress
-                const trainings = await trainingService.getAllTrainings();
-
-                // Extract dates for Heatmap
-                const dates = trainings.map(t => t.date);
+                // Fetch Training Dates for Heatmap (Optimized)
+                const dates = await trainingService.getTrainingDates();
                 setTrainingDates(dates);
+
+                // Fetch All Trainings for Progress (still needed for exercise list)
+                const trainings = await trainingService.getAllTrainings();
 
                 // Extract Exercises for Progress Chart
                 const exercises = new Set<string>();

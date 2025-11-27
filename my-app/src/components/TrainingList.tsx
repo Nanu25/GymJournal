@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReactPaginate from 'react-paginate';
+import Masonry from 'react-masonry-css';
 
 interface TrainingEntry {
     date: string;
@@ -45,10 +46,20 @@ const TrainingList: React.FC<TrainingListProps> = ({
         );
     }
 
+    const breakpointColumnsObj = {
+        default: 3,
+        1024: 2,
+        768: 1
+    };
+
     return (
         <div className="space-y-6">
             {/* Masonry Grid Layout */}
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            <Masonry
+                breakpointCols={breakpointColumnsObj}
+                className="flex w-auto -ml-6"
+                columnClassName="pl-6 bg-clip-padding"
+            >
                 {currentTrainings.map((training, index) => {
                     const originalIndex = trainings.findIndex(t => t.date === training.date);
 
@@ -81,7 +92,7 @@ const TrainingList: React.FC<TrainingListProps> = ({
                     return (
                         <div
                             key={`${training.date}-${index}`}
-                            className={`break-inside-avoid mb-6 rounded-2xl overflow-hidden border ${borderColor} transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 ${expandedTraining === originalIndex ? "ring-1 ring-blue-500/30 bg-[#151e32] scale-[1.02]" : "bg-[#111c33] hover:-translate-y-1"
+                            className={`mb-6 rounded-2xl overflow-hidden border ${borderColor} transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 ${expandedTraining === originalIndex ? "ring-1 ring-blue-500/30 bg-[#151e32] scale-[1.02]" : "bg-[#111c33] hover:-translate-y-1"
                                 }`}
                         >
                             <div
@@ -167,7 +178,7 @@ const TrainingList: React.FC<TrainingListProps> = ({
                         </div>
                     );
                 })}
-            </div>
+            </Masonry>
 
             <div className="pt-6 border-t border-blue-500/10 space-y-6">
                 <div className="flex flex-wrap justify-center gap-6 text-sm">

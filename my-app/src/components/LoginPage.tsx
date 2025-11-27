@@ -2,10 +2,12 @@ import React from "react";
 import LoginForm from "./LoginForm";
 import AuthLayout from "./AuthLayout";
 
+import { User } from "../types/index";
+
 interface LoginPageProps {
   onLoginSuccess: () => void;
   onNavigateToRegistration?: () => void;
-  onGoogleLoginSuccess: (user: any) => void;
+  onGoogleLoginSuccess: (user: User) => void;
   onNavigateToContact?: () => void;
 }
 

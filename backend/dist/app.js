@@ -20,8 +20,6 @@ const fs_1 = __importDefault(require("fs"));
 const database_1 = require("./config/database");
 const auth_controller_1 = require("./controllers/auth.controller");
 const auth_1 = require("./middleware/auth");
-const chatController_1 = require("./controllers/chatController");
-chatController_1.ChatController.initialize();
 const uploadsDir = path_1.default.join(__dirname, '..', 'uploads');
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });

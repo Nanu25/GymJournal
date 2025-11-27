@@ -145,7 +145,7 @@ export const trainingService = {
      * Tries to return cached data first if available.
      */
     async getExercises(): Promise<{ category: string; exercises: string[] }[]> {
-        const EXERCISES_CACHE_KEY = 'training_exercises_cache_v3';
+        const EXERCISES_CACHE_KEY = 'training_exercises_cache_v2';
 
         try {
             const cached = sessionStorage.getItem(EXERCISES_CACHE_KEY);
@@ -167,12 +167,10 @@ export const trainingService = {
 
         const rawData = await response.json();
         let exerciseData: { category: string; exercises: string[] }[] = [];
-        let isMock = false;
 
         if ('source' in rawData && 'data' in rawData) {
             // New format with metadata
             exerciseData = rawData.data;
-            isMock = rawData.source === 'mock';
         } else if (Array.isArray(rawData)) {
             // Old format (direct array)
             exerciseData = rawData;
@@ -181,13 +179,10 @@ export const trainingService = {
             exerciseData = [];
         }
 
-        // Only cache if it's not mock data and we have data
-        if (!isMock && exerciseData.length > 0) {
-            try {
-                sessionStorage.setItem(EXERCISES_CACHE_KEY, JSON.stringify(exerciseData));
-            } catch (e) {
-                console.warn('Failed to write to session storage', e);
-            }
+        try {
+            sessionStorage.setItem(EXERCISES_CACHE_KEY, JSON.stringify(exerciseData));
+        } catch (e) {
+            console.warn('Failed to write to session storage', e);
         }
 
         return exerciseData;
