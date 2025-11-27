@@ -1,12 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
-import { trainingService } from '../services/trainingService';
-import { API_BASE_URL } from '../config';
+import { useState, useMemo, useEffect } from 'react';
+import { useExercises, useTrainingMutations } from './useTrainings';
+import { TrainingEntry } from '../services/trainingService';
 import toast from 'react-hot-toast';
 
-export interface TrainingEntry {
-    date: string;
-    exercises: { [key: string]: number };
-}
+
 
 interface TrainingData {
     [key: string]: number;
@@ -45,60 +42,34 @@ const DEFAULT_EXERCISE_CATEGORIES = [
 ];
 
 export const useTrainingForm = ({ onTrainingAdded }: UseTrainingFormProps = {}) => {
+    // TanStack Query Hooks
+    const { data: fetchedCategories = [], isLoading: loadingExercises, error: exercisesError } = useExercises();
+    const { createTraining } = useTrainingMutations();
+
+    // Form State
     const [trainingData, setTrainingData] = useState<TrainingData>({});
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-    const [exerciseCategories, setExerciseCategories] = useState<{ category: string; exercises: string[] }[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [exerciseStats, setExerciseStats] = useState<{ count: number, categories: number } | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Determine categories to use (fetched or default)
+    const exerciseCategories = useMemo(() => {
+        return fetchedCategories.length > 0 ? fetchedCategories : DEFAULT_EXERCISE_CATEGORIES;
+    }, [fetchedCategories]);
+
+    // Set initial active category
     useEffect(() => {
-        const fetchExercises = async () => {
-            try {
-                setLoading(true);
-                const exerciseData = await trainingService.getExercises();
+        if (exerciseCategories.length > 0 && !activeCategory) {
+            setActiveCategory(exerciseCategories[0].category);
+        }
+    }, [exerciseCategories, activeCategory]);
 
-                // Update state based on the data
-                const exerciseCount = exerciseData.reduce((total, cat) => total + cat.exercises.length, 0);
-                const categoriesCount = exerciseData.length;
-
-                setExerciseStats({
-                    count: exerciseCount,
-                    categories: categoriesCount
-                });
-
-                if (exerciseData.length > 0) {
-                    setExerciseCategories(exerciseData);
-                    setActiveCategory(exerciseData[0].category);
-                    setError(null);
-                } else {
-                    throw new Error('No exercise categories received');
-                }
-            } catch (err) {
-                console.error('Error fetching exercises from API:', err);
-                const errorMessage = err instanceof Error ? err.message : String(err);
-                setError(`Failed to fetch exercises: ${errorMessage}. Using default list.`);
-
-                // Use default exercise categories as fallback
-                setExerciseCategories(DEFAULT_EXERCISE_CATEGORIES);
-                if (DEFAULT_EXERCISE_CATEGORIES.length > 0) {
-                    setActiveCategory(DEFAULT_EXERCISE_CATEGORIES[0].category);
-                }
-
-                setExerciseStats({
-                    count: DEFAULT_EXERCISE_CATEGORIES.reduce((total, cat) => total + cat.exercises.length, 0),
-                    categories: DEFAULT_EXERCISE_CATEGORIES.length
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchExercises();
-    }, []);
+    // Derived Stats
+    const exerciseStats = useMemo(() => {
+        const count = exerciseCategories.reduce((total, cat) => total + cat.exercises.length, 0);
+        const categories = exerciseCategories.length;
+        return { count, categories };
+    }, [exerciseCategories]);
 
     const handleExerciseChange = (exercise: string, value: number) => {
         setTrainingData(prev => ({
@@ -108,60 +79,31 @@ export const useTrainingForm = ({ onTrainingAdded }: UseTrainingFormProps = {}) 
     };
 
     const handleSaveTraining = async () => {
-        if (isSubmitting) return;
-        setIsSubmitting(true);
+        if (createTraining.isPending) return;
+
+        const filteredData = Object.entries(trainingData)
+            .filter(([_, value]) => value > 0)
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
+                return acc;
+            }, {} as { [key: string]: number });
+
+        if (Object.keys(filteredData).length === 0) {
+            toast.error('Please add at least one exercise with weight greater than 0');
+            return;
+        }
 
         try {
-            const filteredData = Object.entries(trainingData)
-                .filter(([_, value]) => value > 0)
-                .reduce((acc, [key, value]) => {
-                    acc[key] = value;
-                    return acc;
-                }, {} as { [key: string]: number });
-
-            if (Object.keys(filteredData).length === 0) {
-                toast.error('Please add at least one exercise with weight greater than 0');
-                setIsSubmitting(false);
-                return;
-            }
-
-            const trainingEntry: TrainingEntry = {
-                date,
-                exercises: filteredData,
-            };
-
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('Not authenticated. Please log in again.');
-            }
-
-            const response = await fetch(`${API_BASE_URL}/trainings`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(trainingEntry),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to save training");
-            }
-
-            const savedTraining = await response.json();
-            toast.success('Training saved successfully!');
+            const newTraining = { date, exercises: filteredData };
+            await createTraining.mutateAsync(newTraining);
 
             // Call onTrainingAdded to trigger navigation back to dashboard
             if (onTrainingAdded) {
-                onTrainingAdded(savedTraining);
-            } else {
-                setIsSubmitting(false);
+                onTrainingAdded(newTraining);
             }
         } catch (error) {
+            // Error is handled by mutation onError
             console.error("Error saving training:", error);
-            toast.error(error instanceof Error ? error.message : "Failed to save training. Please try again.");
-            setIsSubmitting(false);
         }
     };
 
@@ -190,9 +132,9 @@ export const useTrainingForm = ({ onTrainingAdded }: UseTrainingFormProps = {}) 
         exerciseCategories,
         activeCategory,
         setActiveCategory,
-        isSubmitting,
-        loading,
-        error,
+        isSubmitting: createTraining.isPending,
+        loading: loadingExercises,
+        error: exercisesError ? (exercisesError as Error).message : null,
         exerciseStats,
         searchTerm,
         setSearchTerm,

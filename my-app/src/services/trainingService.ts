@@ -37,7 +37,7 @@ export const trainingService = {
             : Array.isArray(data) ? data : [];
 
         // Update cache
-        this.cacheTrainings(trainings);
+        trainingService.cacheTrainings(trainings);
 
         return trainings;
     },
@@ -98,6 +98,28 @@ export const trainingService = {
     },
 
     /**
+     * Creates a new training session.
+     */
+    async createTraining(data: { date: string; exercises: { [key: string]: number } }): Promise<void> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE_URL}/trainings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to create training');
+        }
+    },
+
+    /**
      * Updates an existing training session.
      */
     async updateTraining(date: string, data: { date: string; exercises: { [key: string]: number } }): Promise<void> {
@@ -138,6 +160,54 @@ export const trainingService = {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || 'Failed to delete training');
         }
+    },
+
+    /**
+     * Fetches distinct training dates for the heatmap.
+     */
+    async getTrainingDates(): Promise<string[]> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE_URL}/trainings/dates`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch training dates");
+
+        return await response.json();
+    },
+
+    /**
+     * Fetches progress data for a specific exercise.
+     */
+    async getExerciseProgress(exerciseName: string): Promise<{ date: string; weight: number }[]> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE_URL}/trainings/exercise-progress/${encodeURIComponent(exerciseName)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch exercise progress");
+
+        return await response.json();
+    },
+
+    /**
+     * Fetches list of unique exercises performed by the user.
+     */
+    async getUniqueExercises(): Promise<string[]> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE_URL}/trainings/exercises`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch unique exercises");
+
+        return await response.json();
     },
 
     /**

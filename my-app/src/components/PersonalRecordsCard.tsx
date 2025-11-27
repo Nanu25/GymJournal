@@ -16,6 +16,8 @@ interface PersonalRecordsCardProps {
 const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) => {
     const {
         trainings,
+        isLoading,
+        error,
         searchTerm,
         setSearchTerm,
         sortField,
@@ -73,6 +75,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
             // Error handled by hook
         }
     };
+
+    if (isLoading) {
+        return <div className="text-white text-center py-8">Loading trainings...</div>;
+    }
+
+    if (error) {
+        return <div className="text-red-500 text-center py-8">Error loading trainings: {error}</div>;
+    }
 
     return (
         <section id="personal-records-card" className="w-full space-y-6">

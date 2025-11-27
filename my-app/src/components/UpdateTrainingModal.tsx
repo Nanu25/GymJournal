@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { TrainingEntry, trainingService } from '../services/trainingService';
+import { TrainingEntry } from '../services/trainingService';
+import { useExercises } from '../hooks/useTrainings';
 
 
 interface Exercise {
@@ -21,7 +22,13 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
         exercises: []
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+
+    // Use TanStack Query for exercises
+    const { data: exerciseCategories = [] } = useExercises();
+
+    const exerciseOptions = useMemo(() => {
+        return exerciseCategories.flatMap(group => group.exercises);
+    }, [exerciseCategories]);
 
     useEffect(() => {
         if (isOpen && initialData) {
@@ -29,26 +36,6 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                 date: initialData.date,
                 exercises: Object.entries(initialData.exercises).map(([name, weight]) => ({ name, weight }))
             });
-
-            const loadExercises = async () => {
-                try {
-                    const data = await trainingService.getExercises();
-                    // Flatten the grouped exercises into a single list of names
-                    const allExercises = data.flatMap(group => group.exercises);
-                    setExerciseOptions(allExercises);
-                } catch (error) {
-                    console.error('Failed to load exercises:', error);
-                    // Fallback to session storage if service fails (though service handles cache)
-                    const cached = sessionStorage.getItem('training_exercises_cache_v3');
-                    if (cached) {
-                        const parsed = JSON.parse(cached);
-                        if (Array.isArray(parsed)) {
-                            setExerciseOptions(parsed.flatMap((g: any) => g.exercises));
-                        }
-                    }
-                }
-            };
-            loadExercises();
         }
     }, [isOpen, initialData]);
 

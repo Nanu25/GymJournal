@@ -13,7 +13,7 @@ const MuscleBalanceRadar: React.FC<MuscleBalanceRadarProps> = ({ data }) => {
         : data;
 
     return (
-        <div className="w-full bg-[#0f172a]/50 backdrop-blur-xl border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col h-[400px]">
+        <div className="w-full bg-[#0f172a]/50 backdrop-blur-xl border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col h-full min-h-[450px]">
             <div className="mb-4">
                 <h3 className="text-xl font-bold text-white mb-1">Muscle Balance</h3>
                 <p className="text-sm text-slate-400">Distribution of training volume</p>

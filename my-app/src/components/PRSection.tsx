@@ -1,106 +1,61 @@
-import React, { useEffect, useState } from "react";
-import { trainingService, TotalWeightData } from "../services/trainingService";
+import React, { useState, useMemo, useEffect } from "react";
+
 import MuscleGroupChart from "./MuscleGroupChart";
 import ProgressChart from "./ProgressChart";
 import TotalWeightChart from "./TotalWeightChart";
 import TrainingHeatmap from "./TrainingHeatmap";
 import MuscleBalanceRadar from "./MuscleBalanceRadar";
+import { useStats } from "../hooks/useStats";
 
 interface PieChartData {
     name: string;
     value: number;
 }
 
-interface LineChartData {
-    date: string;
-    weight: number;
-}
-
 const PRSection: React.FC = () => {
-    const [muscleGroupData, setMuscleGroupData] = useState<PieChartData[]>([]);
-    const [progressData, setProgressData] = useState<LineChartData[]>([]);
-    const [totalWeightData, setTotalWeightData] = useState<TotalWeightData[]>([]);
-    const [exerciseList, setExerciseList] = useState<string[]>([]);
+    const {
+        useMuscleDistribution,
+        useTotalWeight,
+        useTrainingDates,
+        useExerciseProgress,
+        useUniqueExercises
+    } = useStats();
+
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
-    const [trainingDates, setTrainingDates] = useState<string[]>([]);
 
+    // Fetch Data using Hooks
+    const { data: muscleGroupDataRaw } = useMuscleDistribution();
+    const { data: totalWeightData = [] } = useTotalWeight();
+    const { data: trainingDates = [] } = useTrainingDates();
+    const { data: exerciseList = [] } = useUniqueExercises();
+    const { data: progressData = [] } = useExerciseProgress(selectedExercise);
+
+    // Set initial selected exercise
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch Muscle Group Distribution
-                const muscleData = await trainingService.getMuscleGroupDistribution();
-                const formattedMuscleData = Object.entries(muscleData)
-                    .map(([name, value]) => ({
-                        name,
-                        value: Number(value) || 0
-                    }))
-                    .filter(item => item.value > 0);
+        if (exerciseList.length > 0 && !selectedExercise) {
+            setSelectedExercise(exerciseList[0]);
+        }
+    }, [exerciseList, selectedExercise]);
 
-                if (formattedMuscleData.length === 0) {
-                    formattedMuscleData.push({
-                        name: "No exercises recorded",
-                        value: 1
-                    });
-                }
-                setMuscleGroupData(formattedMuscleData);
+    // Format Muscle Group Data
+    const muscleGroupData: PieChartData[] = useMemo(() => {
+        if (!muscleGroupDataRaw) return [];
 
-                // Fetch Total Weight Per Session
-                const weightData = await trainingService.getTotalWeightPerSession();
-                setTotalWeightData(weightData);
+        const formatted = Object.entries(muscleGroupDataRaw)
+            .map(([name, value]) => ({
+                name,
+                value: Number(value) || 0
+            }))
+            .filter(item => item.value > 0);
 
-                // Fetch Training Dates for Heatmap (Optimized)
-                const dates = await trainingService.getTrainingDates();
-                setTrainingDates(dates);
-
-                // Fetch All Trainings for Progress (still needed for exercise list)
-                const trainings = await trainingService.getAllTrainings();
-
-                // Extract Exercises for Progress Chart
-                const exercises = new Set<string>();
-                trainings.forEach(training => {
-                    Object.keys(training.exercises).forEach(ex => exercises.add(ex));
-                });
-                const uniqueExercises = Array.from(exercises).sort();
-                setExerciseList(uniqueExercises);
-
-                if (uniqueExercises.length > 0 && !selectedExercise) {
-                    setSelectedExercise(uniqueExercises[0]);
-                }
-
-            } catch (error) {
-                console.error("Error fetching analytics data:", error);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        const fetchProgressData = async () => {
-            if (!selectedExercise) {
-                setProgressData([]);
-                return;
-            }
-
-            try {
-                const trainings = await trainingService.getAllTrainings();
-
-                const data: LineChartData[] = trainings
-                    .filter(t => t.exercises[selectedExercise] !== undefined)
-                    .map(t => ({
-                        date: t.date,
-                        weight: t.exercises[selectedExercise]
-                    }))
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-                setProgressData(data);
-            } catch (error) {
-                console.error("Error fetching progress data:", error);
-            }
-        };
-
-        fetchProgressData();
-    }, [selectedExercise]);
+        if (formatted.length === 0) {
+            formatted.push({
+                name: "No exercises recorded",
+                value: 1
+            });
+        }
+        return formatted;
+    }, [muscleGroupDataRaw]);
 
     return (
         <div className="w-full space-y-8 pb-8">
@@ -117,7 +72,7 @@ const PRSection: React.FC = () => {
                 <MuscleBalanceRadar data={muscleGroupData} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
                 {/* Progress Over Time Chart */}
                 <ProgressChart
                     data={progressData}

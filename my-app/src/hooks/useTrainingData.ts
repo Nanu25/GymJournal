@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { trainingService, TrainingEntry } from '../services/trainingService';
-import toast from 'react-hot-toast';
+import { useState, useMemo, useEffect } from 'react';
+import { useTrainings, useTrainingMutations } from './useTrainings';
+
 
 export type SortField = "date" | "pr" | "exercises" | null;
 export type SortDirection = "asc" | "desc";
@@ -12,12 +12,9 @@ interface ExerciseStats {
 }
 
 export const useTrainingData = () => {
-    // Data State
-    const [trainings, setTrainings] = useState<TrainingEntry[]>(() => {
-        return trainingService.getCachedTrainings();
-    });
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // TanStack Query Hooks
+    const { data: trainingsData = [], isLoading, error } = useTrainings();
+    const { deleteTraining: deleteMutation, updateTraining: updateMutation } = useTrainingMutations();
 
     // Filter & Sort State
     const [searchTerm, setSearchTerm] = useState("");
@@ -25,31 +22,9 @@ export const useTrainingData = () => {
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [exerciseStats, setExerciseStats] = useState<ExerciseStats>({ max: 0, min: 0, avg: 0 });
 
-    // Fetch Trainings
-    const fetchTrainings = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const data = await trainingService.getAllTrainings();
-            setTrainings(data);
-            setError(null);
-        } catch (err) {
-            console.error("Error fetching trainings:", err);
-            setError("Failed to load training history");
-            // Fallback to cache if fetch fails is already handled by initial state, 
-            // but we might want to keep showing cached data if we have it.
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Initial Fetch
-    useEffect(() => {
-        fetchTrainings();
-    }, [fetchTrainings]);
-
     // Filtering & Sorting Logic
     const filteredAndSortedTrainings = useMemo(() => {
-        let result = [...trainings];
+        let result = [...trainingsData];
 
         // Apply search filter
         if (searchTerm) {
@@ -81,7 +56,7 @@ export const useTrainingData = () => {
         }
 
         return result;
-    }, [trainings, searchTerm, sortField, sortDirection]);
+    }, [trainingsData, searchTerm, sortField, sortDirection]);
 
     // Calculate Stats
     useEffect(() => {
@@ -109,46 +84,17 @@ export const useTrainingData = () => {
     };
 
     const deleteTraining = async (date: string) => {
-        try {
-            await trainingService.deleteTraining(date);
-            setTrainings(prev => {
-                const updated = prev.filter(t => t.date !== date);
-                trainingService.cacheTrainings(updated);
-                return updated;
-            });
-            toast.success('Training deleted successfully');
-        } catch (error) {
-            console.error('Error deleting training:', error);
-            toast.error(`Failed to delete training: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            throw error;
-        }
+        await deleteMutation.mutateAsync(date);
     };
 
     const updateTraining = async (date: string, exercises: Record<string, number>) => {
-        try {
-            await trainingService.updateTraining(date, { date, exercises });
-            setTrainings(prev => {
-                const updated = prev.map(t => {
-                    if (t.date === date) {
-                        return { ...t, exercises };
-                    }
-                    return t;
-                });
-                trainingService.cacheTrainings(updated);
-                return updated;
-            });
-            toast.success('Training updated successfully');
-        } catch (error) {
-            console.error('Error updating training:', error);
-            toast.error(`Failed to update training: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            throw error;
-        }
+        await updateMutation.mutateAsync({ date, data: { exercises } });
     };
 
     return {
         trainings: filteredAndSortedTrainings,
         isLoading,
-        error,
+        error: error ? (error as Error).message : null,
         searchTerm,
         setSearchTerm,
         sortField,
@@ -157,6 +103,6 @@ export const useTrainingData = () => {
         exerciseStats,
         deleteTraining,
         updateTraining,
-        refreshTrainings: fetchTrainings
+        refreshTrainings: () => { } // No-op, query handles this
     };
 };

@@ -4,7 +4,7 @@ import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import RegistrationPage from "./components/RegistrationPage";
 import EditMetrics from "./components/EditMetrics";
-import TrainingSelector from "@/components/TrainingSelector.tsx";
+import TrainingSelector from "./components/TrainingSelector";
 import { ActivityLogs } from "./components/ActivityLogs";
 import ChatPage from "./components/ChatPage";
 import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
@@ -145,11 +145,27 @@ const NavbarWrapper = ({ onLogout }: { onLogout: () => void }) => {
     );
 };
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 5 * 60 * 1000, // 5 minutes
+        },
+    },
+});
+
 const App = () => {
     return (
-        <Router>
-            <AppRoutes />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+            <Router>
+                <AppRoutes />
+            </Router>
+            <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
     );
 };
 

@@ -52,7 +52,9 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-xl font-bold text-white mb-1">Training Consistency</h3>
-                    <p className="text-sm text-slate-400">Last 12 months activity</p>
+                    <p className="text-sm text-slate-400">
+                        {dates.length} sessions in the last 12 months
+                    </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                     <span>Less</span>
@@ -62,16 +64,16 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                <div className="flex gap-1 min-w-max">
+            <div className="w-full">
+                <div className="flex gap-1 w-full h-full min-w-[700px]">
                     {weeks.map((week, weekIndex) => (
-                        <div key={weekIndex} className="flex flex-col gap-1">
+                        <div key={weekIndex} className="flex flex-col gap-1 flex-1">
                             {week.map((day, dayIndex) => (
                                 <TooltipProvider key={`${weekIndex}-${dayIndex}`}>
                                     <Tooltip>
-                                        <TooltipTrigger>
+                                        <TooltipTrigger asChild>
                                             <div
-                                                className={`w-3 h-3 rounded-sm transition-all duration-200 hover:scale-125 ${getIntensityClass(day.count)}`}
+                                                className={`w-full aspect-square rounded-sm transition-all duration-200 hover:scale-125 ${getIntensityClass(day.count)}`}
                                             />
                                         </TooltipTrigger>
                                         <TooltipContent className="bg-slate-900 border border-white/10 text-xs">

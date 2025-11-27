@@ -2,7 +2,8 @@ import React from "react";
 import TrainingFormHeader from "./TrainingFormHeader";
 import ExerciseCategoryFilter from "./ExerciseCategoryFilter";
 import ExerciseGrid from "./ExerciseGrid";
-import { useTrainingForm, TrainingEntry } from "../hooks/useTrainingForm";
+import { useTrainingForm } from "../hooks/useTrainingForm";
+import { TrainingEntry } from "../services/trainingService";
 
 interface TrainingSelectorProps {
     onTrainingAdded: (training: TrainingEntry) => void;

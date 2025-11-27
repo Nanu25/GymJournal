@@ -25,7 +25,7 @@ const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ data }) => {
     return (
         <div
             ref={elementRef}
-            className={`w-full p-6 sm:p-8 rounded-3xl bg-[#1e293b]/50 border border-white/5 backdrop-blur-sm shadow-xl overflow-hidden transition-all duration-1000 ease-out ${isVisible
+            className={`w-full p-6 sm:p-8 rounded-3xl bg-[#1e293b]/50 border border-white/5 backdrop-blur-sm shadow-xl overflow-hidden transition-all duration-1000 ease-out h-full flex flex-col ${isVisible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-8'
                 }`}
