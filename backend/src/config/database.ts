@@ -9,9 +9,9 @@ import { MonitoredUser } from '../entities/MonitoredUser';
 
 // Load environment variables from .env in local development
 if (process.env.NODE_ENV !== 'production') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('dotenv').config();
-  // Make sure to set DATABASE_URL in your .env file for local development
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('dotenv').config();
+    // Make sure to set DATABASE_URL in your .env file for local development
 }
 
 console.log('[DB_CONFIG] Starting database configuration...');
@@ -42,7 +42,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
                 extra: {
                     // PostgreSQL specific settings
                     max: 20,
-                    idleTimeoutMillis: 30000, 
+                    idleTimeoutMillis: 30000,
                     connectionTimeoutMillis: 10000,
                     // Configure statement timeout to avoid Heroku H12 errors
                     statement_timeout: 25000 // 25 seconds, below Heroku's 30s timeout
@@ -53,7 +53,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
             throw error;
         }
     }
-    
+
     console.log('[DB_CONFIG] DATABASE_URL not found, using local development database configuration');
     // Fallback to local development configuration
     return {
@@ -61,7 +61,7 @@ const getDatabaseConfig = (): DataSourceOptions => {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
         username: process.env.DB_USERNAME || 'postgres',
-        password: process.env.DB_PASSWORD || 'alexinfo',
+        password: process.env.DB_PASSWORD, // No default password for security
         database: process.env.DB_NAME || 'fitness_journal'
     };
 };
@@ -80,12 +80,13 @@ try {
 
     appDataSourceInstance = new DataSource({
         ...dbConfig,
-        synchronize: process.env.NODE_ENV !== 'production', // Only true in development
+        synchronize: false, // Disable synchronize when using migrations
         logging: process.env.NODE_ENV !== 'production', // Only log in development
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: [],
+        migrations: ['src/migrations/**/*.ts'],
+        migrationsTableName: 'migrations',
         cache: {
             duration: 60000 // Cache query results for 1 minute
         }
@@ -98,14 +99,14 @@ try {
 }
 
 // Create and export the data source
-export const AppDataSource = appDataSourceInstance; 
+export const AppDataSource = appDataSourceInstance;
 
 // Add a wrapper function to help with debugging and connection retries
 export const initializeDatabase = async () => {
     console.log('[DB_INIT] Starting database initialization...');
     const MAX_RETRIES = 5;
     let retries = 0;
-    
+
     while (retries < MAX_RETRIES) {
         try {
             if (retries > 0) {
@@ -113,35 +114,35 @@ export const initializeDatabase = async () => {
                 // Wait before retrying (exponential backoff)
                 await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
             }
-            
+
             console.time('[DB_INIT] Database connection time');
             // If AppDataSource is already initialized, destroy it first
             if (AppDataSource.isInitialized) {
                 console.log('[DB_INIT] DataSource already initialized, destroying first');
                 await AppDataSource.destroy();
             }
-            
+
             await AppDataSource.initialize();
             console.timeEnd('[DB_INIT] Database connection time');
             console.log('[DB_INIT] Database connection successful!');
-            
+
             // Test a simple query to verify it's really working
             console.time('[DB_INIT] Test query time');
             const userCount = await AppDataSource.getRepository(User).count();
             console.timeEnd('[DB_INIT] Test query time');
             console.log(`[DB_INIT] Database test query complete. Found ${userCount} users.`);
-            
+
             return true;
         } catch (error) {
-            console.error(`[DB_INIT] Error during database initialization (attempt ${retries+1}/${MAX_RETRIES}):`, error);
+            console.error(`[DB_INIT] Error during database initialization (attempt ${retries + 1}/${MAX_RETRIES}):`, error);
             retries++;
-            
+
             if (retries >= MAX_RETRIES) {
                 console.error('[DB_INIT] All retry attempts failed. Could not connect to database.');
                 return false;
             }
         }
     }
-    
+
     return false;
 }; 

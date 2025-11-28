@@ -6,10 +6,10 @@ export class ActivityLogController {
         try {
             const { userId, entityType, startDate, endDate } = req.query;
 
-            // Convert userId to number or undefined based on its presence
-            let userIdValue: number | undefined = undefined;
+            // Convert userId to string or undefined based on its presence
+            let userIdValue: string | undefined = undefined;
             if (userId !== undefined && userId !== '') {
-                userIdValue = Number(userId);
+                userIdValue = userId as string;
             }
 
             const logs = await LoggingService.getActivityLogs(

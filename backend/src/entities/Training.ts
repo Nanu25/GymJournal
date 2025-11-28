@@ -15,8 +15,8 @@ export class Training extends BaseEntity {
     @JoinColumn({ name: 'userId' })
     user!: User;
 
-    @Column({ type: 'integer' })
-    userId!: number;
+    @Column({ type: 'uuid' })
+    userId!: string;
     
     @Column({ type: 'jsonb', nullable: true })
     exercises!: Record<string, number> | null;

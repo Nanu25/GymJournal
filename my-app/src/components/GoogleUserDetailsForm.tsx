@@ -3,13 +3,11 @@ import { Scale, Ruler, Calendar, Users, Clock, Repeat, Calendar as CalendarIcon,
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
+import { User } from "../types/index";
+
 interface GoogleUserDetailsFormProps {
   onComplete: () => void;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  user: User;
 }
 
 interface UserDetails {
@@ -65,7 +63,16 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
         // Update the auth context with the complete user data
         const token = localStorage.getItem('token');
         if (token) {
-          login(token, response.data);
+          // The API response structure for updateProfile might return the user object directly or wrapped
+          // Based on the error, it seems to be wrapped or the type inference is confused.
+          // If response.data contains the user fields directly, we cast it.
+          // If the error says it has a 'user' property, we use that.
+          // The previous error suggested response.data might be the login response type which has { user, token }.
+          // Let's try to handle both or inspect the error more closely.
+          // Error said: Type '{ user: ... } ...' is missing ...
+          // So response.data HAS a user property.
+          const updatedUser = (response.data as any).user || response.data;
+          login(token, updatedUser as User);
         }
         onComplete();
       } else {
@@ -110,7 +117,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Weight (kg)
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="number"
                 name="weight"
                 value={formData.weight || ''}
@@ -129,7 +136,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Height (cm)
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="number"
                 name="height"
                 value={formData.height || ''}
@@ -148,7 +155,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Age
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="number"
                 name="age"
                 value={formData.age || ''}
@@ -167,7 +174,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Gender
             </label>
             <div className="relative">
-              <select 
+              <select
                 name="gender"
                 value={formData.gender || ''}
                 onChange={handleChange}
@@ -188,7 +195,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Training Frequency (times/week)
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="number"
                 name="timesPerWeek"
                 value={formData.timesPerWeek || ''}
@@ -207,7 +214,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Time per Session (minutes)
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="number"
                 name="timePerSession"
                 value={formData.timePerSession || ''}
@@ -226,7 +233,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
               Preferred Repetition Range
             </label>
             <div className="relative">
-              <input 
+              <input
                 type="text"
                 name="repRange"
                 value={formData.repRange || ''}
@@ -240,8 +247,8 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
             </div>
           </div>
         </div>
-        
-        <button 
+
+        <button
           type="submit"
           disabled={isSubmitting}
           className="w-full py-3 px-4 mt-6 bg-gradient-to-r from-green-500 to-blue-600 text-white font-medium rounded-lg hover:from-green-600 hover:to-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:outline-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -249,7 +256,7 @@ const GoogleUserDetailsForm: React.FC<GoogleUserDetailsFormProps> = ({ onComplet
           <Check className="h-5 w-5" />
           {isSubmitting ? 'Completing Setup...' : 'Complete Profile Setup'}
         </button>
-        
+
         <div className="text-center mt-4">
           <p className="text-blue-200/70 text-sm">
             You can skip any field and update it later in your profile settings.

@@ -4,12 +4,15 @@ import {
     getAllTrainings,
     createTraining,
     updateTrainingByDate,
-    deleteTraining,
+    deleteTraining
+} from "../controllers/TrainingController";
+import {
     getMuscleGroupDistribution,
     getExerciseProgressData,
     getUniqueExercises,
-    getTotalWeightPerSession
-} from "../controllers/TrainingController";
+    getTotalWeightPerSession,
+    getTrainingDates
+} from "../controllers/StatsController";
 
 const router = Router();
 
@@ -33,5 +36,6 @@ router.get('/muscle-group-distribution', getMuscleGroupDistribution as RequestHa
 router.get('/exercise-progress/:exercise', getExerciseProgressData as RequestHandler);
 router.get('/total-weight', getTotalWeightPerSession as RequestHandler);
 router.get('/exercises', getUniqueExercises as RequestHandler);
+router.get('/dates', getTrainingDates as RequestHandler);
 
 export default router;

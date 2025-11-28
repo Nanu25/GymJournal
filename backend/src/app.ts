@@ -3,6 +3,9 @@ import cors from 'cors';
 import path from 'path';
 import multer from 'multer';
 import 'dotenv/config';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
 import exerciseRoutes from './routes/exerciseroutes';
@@ -12,9 +15,8 @@ import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
-// Import chat controller to ensure it's initialized
-import { ChatController } from './controllers/chatController';
-ChatController.initialize();
+
+
 
 // Ensure 'uploads/' directory exists in both development and production
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -26,6 +28,11 @@ if (!fs.existsSync(uploadsDir)) {
 const publicDir = path.join(__dirname, '..', 'public');
 if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
+}
+
+if (!process.env.JWT_SECRET) {
+    console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
+    process.exit(1);
 }
 
 const app = express();
@@ -49,17 +56,33 @@ const corsOptions = {
 app.use((req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
     console.log(`[REQUEST] ${req.method} ${req.url} - Started`);
-    
+
     // Add response finished handler
     res.on('finish', () => {
         const duration = Date.now() - start;
         console.log(`[REQUEST] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
     });
-    
+
     next();
 });
 
 // Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disabled for now to avoid issues with external scripts/images if any
+    crossOriginEmbedderPolicy: false
+}));
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', limiter); // Apply to API routes only
+
 app.use(cors(corsOptions));
 app.use(express.json());
 
@@ -75,11 +98,11 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
 // API status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
     console.log('[API] Status endpoint called');
-    res.json({ 
-        message: 'Gym Journal API is running', 
+    res.json({
+        message: 'Gym Journal API is running',
         time: new Date().toISOString(),
         environment: process.env.NODE_ENV,
-        dbConnected: AppDataSource.isInitialized 
+        dbConnected: AppDataSource.isInitialized
     });
 });
 

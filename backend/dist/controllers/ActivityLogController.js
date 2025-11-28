@@ -8,7 +8,7 @@ class ActivityLogController {
             const { userId, entityType, startDate, endDate } = req.query;
             let userIdValue = undefined;
             if (userId !== undefined && userId !== '') {
-                userIdValue = Number(userId);
+                userIdValue = userId;
             }
             const logs = await LoggingService_1.LoggingService.getActivityLogs(userIdValue, entityType, startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
             res.json(logs);

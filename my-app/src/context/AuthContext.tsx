@@ -1,31 +1,34 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 
+import { User } from "../types/index";
+
 interface AuthContextType {
   token: string | null;
-  user: any;
-  login: (token: string, user: any) => void;
+  user: User | null;
+  login: (token: string, user: User) => void;
   logout: () => void;
+  isAuthenticated: boolean;
   isProfileComplete: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    if (storedToken) setToken(storedToken);
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  const login = (token: string, user: any) => {
-    setToken(token);
-    setUser(user);
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+  const login = (newToken: string, newUser: User) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
   };
 
   const logout = () => {
@@ -37,14 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isProfileComplete = () => {
     if (!user) return false;
-    
+
     // Check if essential fitness metrics are filled
     const hasEssentialData = user.weight && user.height && user.age && user.gender;
     return !!hasEssentialData;
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isProfileComplete }}>
+    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated: !!token, isProfileComplete }}>
       {children}
     </AuthContext.Provider>
   );

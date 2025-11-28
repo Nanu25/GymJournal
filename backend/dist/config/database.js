@@ -50,7 +50,7 @@ const getDatabaseConfig = () => {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
         username: process.env.DB_USERNAME || 'postgres',
-        password: process.env.DB_PASSWORD || 'alexinfo',
+        password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME || 'fitness_journal'
     };
 };
@@ -65,12 +65,13 @@ try {
     console.log('[DB_CONFIG] Resolved database configuration:', JSON.stringify(dbConfig, (key, value) => key === 'password' ? '[REDACTED]' : value));
     appDataSourceInstance = new typeorm_1.DataSource({
         ...dbConfig,
-        synchronize: process.env.NODE_ENV !== 'production',
+        synchronize: false,
         logging: process.env.NODE_ENV !== 'production',
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: [],
+        migrations: ['src/migrations/**/*.ts'],
+        migrationsTableName: 'migrations',
         cache: {
             duration: 60000
         }

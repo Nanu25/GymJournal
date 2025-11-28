@@ -21,14 +21,14 @@ export class AuthService {
         await userRepository.save(user);
 
         const token = jwt.sign(
-            { userId: Number(user.id) },
-            process.env.JWT_SECRET || 'your-secret-key',
+            { userId: user.id },
+            process.env.JWT_SECRET!,
             { expiresIn: '24h' }
         );
 
         return { user, token };
     }
-    
+
     static async login(email: string, password: string): Promise<{ user: User; token: string }> {
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });
@@ -47,8 +47,8 @@ export class AuthService {
         }
 
         const token = jwt.sign(
-            { userId: Number(user.id) },
-            process.env.JWT_SECRET || 'your-secret-key',
+            { userId: user.id },
+            process.env.JWT_SECRET!,
             { expiresIn: '7d' }
         );
 
@@ -57,29 +57,29 @@ export class AuthService {
 
     static async loginWithGoogle(googleToken: string): Promise<{ user: User; token: string; createdNewUser: boolean }> {
         const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-        
+
         try {
             // Verify the Google token
             const ticket = await client.verifyIdToken({
                 idToken: googleToken,
                 audience: process.env.GOOGLE_CLIENT_ID,
             });
-            
+
             const payload = ticket.getPayload();
             if (!payload) {
                 throw new Error('Invalid Google token');
             }
 
             const userRepository = AppDataSource.getRepository(User);
-            
+
             // Check if user exists by Google ID
             let user = await userRepository.findOne({ where: { googleId: payload.sub } });
             let createdNewUser = false;
-            
+
             // If not found by Google ID, check by email
             if (!user) {
                 user = await userRepository.findOne({ where: { email: payload.email } });
-                
+
                 // If user exists but doesn't have Google ID, link it
                 if (user && !user.googleId) {
                     user.googleId = payload.sub;
@@ -101,8 +101,8 @@ export class AuthService {
             }
 
             const token = jwt.sign(
-                { userId: Number(user.id) },
-                process.env.JWT_SECRET || 'your-secret-key',
+                { userId: user.id },
+                process.env.JWT_SECRET!,
                 { expiresIn: '7d' }
             );
 
