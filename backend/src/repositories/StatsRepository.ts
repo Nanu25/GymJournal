@@ -14,7 +14,7 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .getRawMany();
 
         const muscleGroupCounts: { [key: string]: number } = {};
-        result.forEach(item => {
+        result.forEach((item: any) => {
             muscleGroupCounts[item.muscleGroup || 'Other'] = parseInt(item.count, 10);
         });
 
@@ -33,7 +33,7 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .orderBy('t.date', 'ASC')
             .getRawMany();
 
-        return result.map(item => ({
+        return result.map((item: any) => ({
             date: new Date(item.date).toISOString().split('T')[0],
             weight: Number(item.weight)
         }));
@@ -49,7 +49,7 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .orderBy('t.date', 'ASC')
             .getRawMany();
 
-        return result.map(item => ({
+        return result.map((item: any) => ({
             date: new Date(item.date).toISOString().split('T')[0],
             totalWeight: Number(item.totalWeight)
         }));
@@ -65,7 +65,7 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .orderBy('e.name', 'ASC')
             .getRawMany();
 
-        return result.map(item => item.name);
+        return result.map((item: any) => item.name);
     },
 
     async getTrainingDates(userId: string) {
@@ -75,6 +75,6 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .orderBy('t.date', 'ASC')
             .getRawMany();
 
-        return result.map(item => new Date(item.date).toISOString().split('T')[0]);
+        return result.map((item: any) => new Date(item.date).toISOString().split('T')[0]);
     }
 });

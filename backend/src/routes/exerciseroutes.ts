@@ -21,7 +21,7 @@ router.get('/', async (_req, res) => {
     }
 
     // Group by muscleGroup
-    const grouped = exercises.reduce((acc: Record<string, string[]>, ex) => {
+    const grouped = exercises.reduce((acc: Record<string, string[]>, ex: Exercise) => {
       const muscleGroup = ex.muscleGroup;
       if (!acc[muscleGroup]) {
         acc[muscleGroup] = [];
