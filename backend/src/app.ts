@@ -129,44 +129,41 @@ app.get('*', (req: Request, res: Response) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Use our new database initialization function
+// Initialize database first, then start server
 console.log('[APP] Starting database initialization...');
-
-// Start the server first, then initialize database
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-    console.log(`[APP] Server is running on port ${PORT}`);
-    console.log(`[APP] API available at http://localhost:${PORT}/api`);
-});
-
-// Initialize database in background
 initializeDatabase()
     .then((success) => {
-        if (!success) {
-            console.error('[APP] Database initialization failed, but server is running.');
-            console.error('[APP] Some features may not work properly.');
-        } else {
+        if (success) {
             console.log('[APP] Database initialization successful!');
+
+            const PORT = process.env.PORT || 3000;
+            const server = app.listen(PORT, () => {
+                console.log(`[APP] Server is running on port ${PORT}`);
+                console.log(`[APP] API available at http://localhost:${PORT}/api`);
+            });
+
+            // Graceful shutdown
+            const shutdown = () => {
+                console.log('[APP] Shutting down gracefully...');
+                server.close(async () => {
+                    console.log('[APP] Server closed');
+                    if (AppDataSource.isInitialized) {
+                        await AppDataSource.destroy();
+                        console.log('[APP] Database connection closed');
+                    }
+                    process.exit(0);
+                });
+            };
+
+            process.on('SIGTERM', shutdown);
+            process.on('SIGINT', shutdown);
+
+        } else {
+            console.error('[APP] Database initialization failed. Exiting.');
+            process.exit(1);
         }
     })
     .catch((error) => {
-        console.error('[APP] Error during database initialization:', error);
-        console.error('[APP] Server is running but database features may not work.');
+        console.error('[APP] Critical error during database initialization:', error);
+        process.exit(1);
     });
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('[APP] SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('[APP] Server closed');
-        process.exit(0);
-    });
-});
-
-process.on('SIGINT', () => {
-    console.log('[APP] SIGINT received, shutting down gracefully');
-    server.close(() => {
-        console.log('[APP] Server closed');
-        process.exit(0);
-    });
-});
