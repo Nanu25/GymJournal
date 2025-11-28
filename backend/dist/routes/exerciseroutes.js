@@ -5,19 +5,15 @@ const database_1 = require("../config/database");
 const Exercise_1 = require("../entities/Exercise");
 const router = (0, express_1.Router)();
 router.get('/', async (_req, res) => {
-    console.log('[EXERCISE_ROUTES] Getting exercise list...');
     try {
         if (!database_1.AppDataSource.isInitialized) {
             console.error('[EXERCISE_ROUTES] Database not initialized, using mock data');
             return sendMockExercises(res);
         }
-        console.log('[EXERCISE_ROUTES] Fetching exercises from database...');
         const exercises = await database_1.AppDataSource.getRepository(Exercise_1.Exercise).find();
         if (!exercises || exercises.length === 0) {
-            console.log('[EXERCISE_ROUTES] No exercises found in database, using mock data');
             return sendMockExercises(res);
         }
-        console.log(`[EXERCISE_ROUTES] Found ${exercises.length} exercises in the database`);
         const grouped = exercises.reduce((acc, ex) => {
             const muscleGroup = ex.muscleGroup;
             if (!acc[muscleGroup]) {
@@ -44,7 +40,6 @@ router.get('/', async (_req, res) => {
     }
 });
 function sendMockExercises(res) {
-    console.log('[EXERCISE_ROUTES] Sending mock exercise data');
     const mockExercises = [
         {
             category: 'Chest',
