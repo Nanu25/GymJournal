@@ -3,13 +3,14 @@ import { User } from '../entities/User';
 import bcrypt from '../utils/bcryptWrapper';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import { AppError } from '../utils/AppError';
 
 export class AuthService {
     static async register(userData: Partial<User>): Promise<{ user: User; token: string }> {
         const userRepository = AppDataSource.getRepository(User);
         const existingUser = await userRepository.findOne({ where: { email: userData.email } });
         if (existingUser) {
-            throw new Error('Email already exists');
+            throw new AppError('Email already exists', 400);
         }
 
         const hashedPassword = await bcrypt.hash(userData.password!, 10);
@@ -33,17 +34,17 @@ export class AuthService {
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });
         if (!user) {
-            throw new Error('User not found');
+            throw new AppError('User not found', 404);
         }
 
         // Check if user has a password (not a Google user)
         if (!user.password) {
-            throw new Error('This account uses Google login. Please sign in with Google.');
+            throw new AppError('This account uses Google login. Please sign in with Google.', 400);
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new Error('Invalid password');
+            throw new AppError('Invalid password', 401);
         }
 
         const token = jwt.sign(
@@ -67,7 +68,7 @@ export class AuthService {
 
             const payload = ticket.getPayload();
             if (!payload) {
-                throw new Error('Invalid Google token');
+                throw new AppError('Invalid Google token', 400);
             }
 
             const userRepository = AppDataSource.getRepository(User);
@@ -109,7 +110,7 @@ export class AuthService {
             return { user, token, createdNewUser };
         } catch (error) {
             console.error('Google authentication error:', error);
-            throw new Error('Google authentication failed');
+            throw new AppError('Google authentication failed', 401);
         }
     }
-} 
+}
