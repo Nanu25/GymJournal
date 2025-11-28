@@ -2,85 +2,47 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTrainingDates = exports.getUniqueExercises = exports.getTotalWeightPerSession = exports.getExerciseProgressData = exports.getMuscleGroupDistribution = void 0;
 const StatsService_1 = require("../services/StatsService");
-const getMuscleGroupDistribution = async (req, res) => {
+const asyncHandler_1 = require("../utils/asyncHandler");
+const AppError_1 = require("../utils/AppError");
+exports.getMuscleGroupDistribution = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     var _a;
-    try {
-        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-        const result = await StatsService_1.StatsService.getMuscleGroupDistribution(req.user.id);
-        res.status(200).json(result);
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+        throw new AppError_1.AppError('User not authenticated', 401);
     }
-    catch (error) {
-        console.error('[CONTROLLER] Error in getMuscleGroupDistribution:', error);
-        res.status(500).json({ message: 'Error getting muscle group distribution', error });
-    }
-};
-exports.getMuscleGroupDistribution = getMuscleGroupDistribution;
-const getExerciseProgressData = async (req, res) => {
+    const result = await StatsService_1.StatsService.getMuscleGroupDistribution(req.user.id);
+    res.status(200).json(result);
+});
+exports.getExerciseProgressData = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     var _a;
-    try {
-        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-        const { exercise } = req.params;
-        const result = await StatsService_1.StatsService.getExerciseProgress(req.user.id, exercise);
-        res.status(200).json(result);
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+        throw new AppError_1.AppError('User not authenticated', 401);
     }
-    catch (error) {
-        console.error('Error getting exercise progress data:', error);
-        res.status(500).json({ message: 'Error getting exercise progress data', error });
-    }
-};
-exports.getExerciseProgressData = getExerciseProgressData;
-const getTotalWeightPerSession = async (req, res) => {
+    const { exercise } = req.params;
+    const result = await StatsService_1.StatsService.getExerciseProgress(req.user.id, exercise);
+    res.status(200).json(result);
+});
+exports.getTotalWeightPerSession = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     var _a;
-    try {
-        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-        const result = await StatsService_1.StatsService.getTotalWeightPerSession(req.user.id);
-        res.status(200).json(result);
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+        throw new AppError_1.AppError('User not authenticated', 401);
     }
-    catch (error) {
-        console.error('[CONTROLLER] Error in getTotalWeightPerSession:', error);
-        res.status(500).json({ message: 'Error getting total weight per session', error });
-    }
-};
-exports.getTotalWeightPerSession = getTotalWeightPerSession;
-const getUniqueExercises = async (req, res) => {
+    const result = await StatsService_1.StatsService.getTotalWeightPerSession(req.user.id);
+    res.status(200).json(result);
+});
+exports.getUniqueExercises = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     var _a;
-    try {
-        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-        const result = await StatsService_1.StatsService.getUniqueExercises(req.user.id);
-        res.status(200).json(result);
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+        throw new AppError_1.AppError('User not authenticated', 401);
     }
-    catch (error) {
-        console.error('[CONTROLLER] Error in getUniqueExercises:', error);
-        res.status(500).json({ message: 'Error getting unique exercises', error });
-    }
-};
-exports.getUniqueExercises = getUniqueExercises;
-const getTrainingDates = async (req, res) => {
+    const result = await StatsService_1.StatsService.getUniqueExercises(req.user.id);
+    res.status(200).json(result);
+});
+exports.getTrainingDates = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     var _a;
-    try {
-        if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-        const result = await StatsService_1.StatsService.getTrainingDates(req.user.id);
-        res.status(200).json(result);
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.id)) {
+        throw new AppError_1.AppError('User not authenticated', 401);
     }
-    catch (error) {
-        console.error('[CONTROLLER] Error in getTrainingDates:', error);
-        res.status(500).json({ message: 'Error getting training dates', error });
-    }
-};
-exports.getTrainingDates = getTrainingDates;
+    const result = await StatsService_1.StatsService.getTrainingDates(req.user.id);
+    res.status(200).json(result);
+});
 //# sourceMappingURL=StatsController.js.map
