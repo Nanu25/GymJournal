@@ -1,12 +1,3 @@
-// Training.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, BaseEntity } from 'typeorm';
-import { User } from './User';
-import { TrainingExercise } from './TrainingExercise';
-
-@Entity('trainings')
-export class Training extends BaseEntity {
-```typescript
-// Training.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, BaseEntity } from 'typeorm';
 import { User } from './User';
 import { TrainingExercise } from './TrainingExercise';
@@ -25,7 +16,7 @@ export class Training extends BaseEntity {
 
     @Column({ type: 'uuid' })
     userId!: string;
-    
+
     @Column({ type: 'jsonb', nullable: true })
     exercises!: Record<string, number> | null;
 
@@ -34,4 +25,3 @@ export class Training extends BaseEntity {
     })
     trainingExercises!: TrainingExercise[];
 }
-```

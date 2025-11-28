@@ -1,13 +1,3 @@
-// Exercise.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { TrainingExercise } from './TrainingExercise';
-
-@Entity('exercises')
-export class Exercise {
-    @PrimaryGeneratedColumn('increment')
-    id!: number;
-
-// Exercise.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { TrainingExercise } from './TrainingExercise';
 
