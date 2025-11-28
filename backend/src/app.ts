@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
-import multer from 'multer';
+
 import 'dotenv/config';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -15,14 +15,11 @@ import fs from 'fs';
 import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
+import { errorHandler } from './middleware/error.middleware';
 
 
 
-// Ensure 'uploads/' directory exists in both development and production
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+
 
 // Ensure public directory exists
 const publicDir = path.join(__dirname, '..', 'public');
@@ -53,18 +50,10 @@ const corsOptions = {
 };
 
 // Request logging middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-    const start = Date.now();
-    console.log(`[REQUEST] ${req.method} ${req.url} - Started`);
-
-    // Add response finished handler
-    res.on('finish', () => {
-        const duration = Date.now() - start;
-        console.log(`[REQUEST] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
-    });
-
-    next();
-});
+// Request logging middleware - Removed for cleaner logs
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//     next();
+// });
 
 // Middleware
 app.use(helmet({
@@ -97,7 +86,7 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
 
 // API status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
-    console.log('[API] Status endpoint called');
+    // console.log('[API] Status endpoint called');
     res.json({
         message: 'Gym Journal API is running',
         time: new Date().toISOString(),
@@ -106,86 +95,9 @@ app.get('/api/status', (_req: Request, res: Response) => {
     });
 });
 
-// Define a request type that includes the `file` property for multer
-interface MulterRequest extends Request {
-    file?: Express.Multer.File;
-}
 
-// Configure multer storage
-const storage = multer.diskStorage({
-    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-        cb(null, uploadsDir);
-    },
-    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-        cb(null, file.originalname);
-    }
-});
 
-// File filter to allow only video files
-const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith('video/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only video files are allowed'));
-    }
-};
 
-// Initialize multer with a file size limit (100MB)
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 },
-    fileFilter: fileFilter,
-});
-
-app.use('/uploads', express.static(uploadsDir));
-
-// Upload video endpoint
-app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, _next: NextFunction): void => {
-    console.log('[API] Upload endpoint called');
-    if (!req.file) {
-        console.log('[API] Upload failed - no file');
-        res.status(400).json({ message: 'No file uploaded.' });
-        return;
-    }
-
-    console.log('[API] Upload successful:', req.file.filename);
-    res.json({ fileName: req.file.filename, filePath: `/uploads/${req.file.filename}` });
-});
-
-// Download video endpoint
-app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunction): void => {
-    const filePath: string = path.join(uploadsDir, req.params.filename);
-    console.log('[API] Download endpoint called for file:', req.params.filename);
-
-    res.download(filePath, (err: Error | null) => {
-        if (err) {
-            console.log('[API] Download failed:', err.message);
-            res.status(404).json({ message: 'File not found.' });
-        } else {
-            console.log('[API] Download successful');
-        }
-    });
-});
-
-// Get all videos endpoint
-app.get('/api/videos', (_req: Request, res: Response): void => {
-    console.log('[API] Videos endpoint called');
-    try {
-        fs.readdir(uploadsDir, (err, files) => {
-            if (err) {
-                console.error('[API] Error reading directory:', err);
-                res.status(500).json({ message: 'Error reading videos directory' });
-                return;
-            }
-            const videoFiles = files.filter(file => file.match(/\.(mp4|mov|avi)$/i));
-            console.log('[API] Videos endpoint returning', videoFiles.length, 'files');
-            res.status(200).json(videoFiles);
-        });
-    } catch (error) {
-        console.error('[API] Error:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
 
 // Add exercise routes (no authentication required for read-only data)
 app.use('/api/exercises', exerciseRoutes);
@@ -215,15 +127,7 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('[ERROR]', req.method, req.url, err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: err.message,
-        path: req.url
-    });
-});
+app.use(errorHandler);
 
 // Use our new database initialization function
 console.log('[APP] Starting database initialization...');

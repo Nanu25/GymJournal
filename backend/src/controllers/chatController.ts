@@ -1,16 +1,17 @@
 import { Request, Response } from 'express';
 import { ChatService } from '../services/ChatService';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 export class ChatController {
-    static async chat(req: Request, res: Response): Promise<void> {
+    static chat = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+        const { message } = req.body;
+
+        if (!message || typeof message !== 'string') {
+            throw new AppError('Message is required and must be a string', 400);
+        }
+
         try {
-            const { message } = req.body;
-
-            if (!message || typeof message !== 'string') {
-                res.status(400).json({ error: 'Message is required and must be a string' });
-                return;
-            }
-
             const responseText = await ChatService.generateResponse(message);
             res.json({ response: responseText });
         } catch (error) {
@@ -18,27 +19,15 @@ export class ChatController {
 
             if (error instanceof Error) {
                 if (error.message.includes('API_KEY') || error.message.includes('configured')) {
-                    res.status(500).json({
-                        error: 'Chat service configuration error.',
-                        details: error.message
-                    });
+                    throw new AppError(`Chat service configuration error. ${error.message}`, 500);
                 } else if (error.message.includes('quota') || error.message.includes('rate limit')) {
-                    res.status(429).json({
-                        error: 'API rate limit exceeded. Please try again later.',
-                        details: error.message
-                    });
+                    throw new AppError(`API rate limit exceeded. Please try again later. ${error.message}`, 429);
                 } else {
-                    res.status(500).json({
-                        error: 'Failed to process chat request',
-                        details: error.message
-                    });
+                    throw new AppError(`Failed to process chat request: ${error.message}`, 500);
                 }
             } else {
-                res.status(500).json({
-                    error: 'Failed to process chat request',
-                    details: 'Unknown error occurred'
-                });
+                throw new AppError('Failed to process chat request: Unknown error occurred', 500);
             }
         }
-    }
+    });
 }

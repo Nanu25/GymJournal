@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { TrainingService } from '../services/TrainingService';
 import { TrainingFilterOptions } from '../repositories/TrainingRepository';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 declare global {
     namespace Express {
@@ -12,90 +14,68 @@ declare global {
     }
 }
 
-export const getAllTrainings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const { searchTerm, sortField, sortDirection } = req.query;
-        const page = parseInt((req.query.page as string) || '1', 10);
-        const limitParam = req.query.limit as string | undefined;
-        const parsedLimit = limitParam !== undefined ? parseInt(limitParam, 10) : 5;
-        const limit = Number.isFinite(parsedLimit) && parsedLimit >= 0 ? parsedLimit : 5;
-
-        const options: TrainingFilterOptions = {
-            userId: req.user.id,
-            searchTerm: searchTerm as string,
-            sortField: sortField as string,
-            sortDirection: sortDirection as 'asc' | 'desc',
-            page,
-            limit
-        };
-
-        const result = await TrainingService.getAllTrainings(options);
-        res.status(200).json(result);
-    } catch (error) {
-        next(error);
+export const getAllTrainings = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
     }
-};
 
-export const createTraining = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-        const { date, exercises } = req.body;
+    const { searchTerm, sortField, sortDirection } = req.query;
+    const page = parseInt((req.query.page as string) || '1', 10);
+    const limitParam = req.query.limit as string | undefined;
+    const parsedLimit = limitParam !== undefined ? parseInt(limitParam, 10) : 5;
+    const limit = Number.isFinite(parsedLimit) && parsedLimit >= 0 ? parsedLimit : 5;
 
-        if (!date) {
-            res.status(400).json({ message: 'Date is required' });
-            return;
-        }
+    const options: TrainingFilterOptions = {
+        userId: req.user.id,
+        searchTerm: searchTerm as string,
+        sortField: sortField as string,
+        sortDirection: sortDirection as 'asc' | 'desc',
+        page,
+        limit
+    };
 
-        if (!exercises || Object.keys(exercises).length === 0) {
-            res.status(400).json({ message: 'At least one exercise is required' });
-            return;
-        }
+    const result = await TrainingService.getAllTrainings(options);
+    res.status(200).json(result);
+});
 
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
+export const createTraining = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { date, exercises } = req.body;
 
-        const result = await TrainingService.createTraining(req.user.id, date, exercises);
-        res.status(201).json(result);
-    } catch (error) {
-        next(error);
+    if (!date) {
+        throw new AppError('Date is required', 400);
     }
-};
 
-export const deleteTraining = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-        const { date } = req.params;
-
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        await TrainingService.deleteTraining(req.user.id, date);
-        res.status(200).json({ message: 'Training deleted successfully' });
-    } catch (error) {
-        next(error);
+    if (!exercises || Object.keys(exercises).length === 0) {
+        throw new AppError('At least one exercise is required', 400);
     }
-};
 
-export const updateTrainingByDate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-        const { date } = req.params;
-        const { exercises } = req.body;
-
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const result = await TrainingService.updateTraining(req.user.id, date, exercises);
-        res.status(200).json(result);
-    } catch (error) {
-        next(error);
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
     }
-};
+
+    const result = await TrainingService.createTraining(req.user.id, date, exercises);
+    res.status(201).json(result);
+});
+
+export const deleteTraining = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { date } = req.params;
+
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
+    await TrainingService.deleteTraining(req.user.id, date);
+    res.status(200).json({ message: 'Training deleted successfully' });
+});
+
+export const updateTrainingByDate = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { date } = req.params;
+    const { exercises } = req.body;
+
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
+    const result = await TrainingService.updateTraining(req.user.id, date, exercises);
+    res.status(200).json(result);
+});
