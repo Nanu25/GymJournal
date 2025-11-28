@@ -85,7 +85,7 @@ try {
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: ['src/migrations/**/*.ts'],
+        migrations: [process.env.NODE_ENV === 'production' ? 'dist/migrations/**/*.js' : 'src/migrations/**/*.ts'],
         migrationsTableName: 'migrations',
         cache: {
             duration: 60000 // Cache query results for 1 minute
