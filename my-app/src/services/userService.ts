@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config';
+import apiClient from './apiClient';
 
 export interface UserMetrics {
     weight?: number;
@@ -32,15 +32,8 @@ export const userService = {
      * Tries to return cached data first if available.
      */
     async getUserData(): Promise<UserData> {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Not authenticated');
-
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch user data');
-        const data = await response.json();
+        const response = await apiClient.get('/user');
+        const data = response.data;
 
         // Update cache
         this.cacheUserData(data);
@@ -52,20 +45,8 @@ export const userService = {
      * Updates the user's metrics.
      */
     async updateMetrics(metrics: UserMetrics): Promise<UserData> {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Not authenticated');
-
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(metrics),
-        });
-
-        if (!response.ok) throw new Error('Failed to update metrics');
-        const updatedData = await response.json();
+        const response = await apiClient.put('/user', metrics);
+        const updatedData = response.data;
 
         // Update cache
         this.cacheUserData(updatedData);

@@ -1,16 +1,8 @@
 import axios from 'axios';
+import apiClient from './apiClient';
 import { API_BASE_URL } from '../config';
 
-const API_URL = API_BASE_URL;
 
-// Add axios interceptor to include auth token in all requests
-axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
 
 export interface UserData {
     name: string;
@@ -59,7 +51,7 @@ export const api = {
     auth: {
         register: async (userData: UserData): Promise<AuthResponse> => {
             try {
-                const response = await axios.post(`${API_URL}/auth/register`, userData);
+                const response = await apiClient.post('/auth/register', userData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
@@ -71,7 +63,7 @@ export const api = {
 
         login: async (loginData: LoginData): Promise<AuthResponse> => {
             try {
-                const response = await axios.post(`${API_URL}/auth/login`, loginData);
+                const response = await apiClient.post('/auth/login', loginData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
@@ -83,7 +75,7 @@ export const api = {
 
         loginWithGoogle: async (googleData: GoogleLoginData): Promise<AuthResponse> => {
             try {
-                const response = await axios.post(`${API_URL}/auth/google`, googleData);
+                const response = await apiClient.post('/auth/google', googleData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
@@ -97,7 +89,7 @@ export const api = {
     user: {
         updateProfile: async (userData: Partial<UserData>): Promise<AuthResponse> => {
             try {
-                const response = await axios.put(`${API_URL}/user/profile`, userData);
+                const response = await apiClient.put('/user/profile', userData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
