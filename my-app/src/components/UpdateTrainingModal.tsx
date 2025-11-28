@@ -27,7 +27,7 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
     const { data: exerciseCategories = [] } = useExercises();
 
     const exerciseOptions = useMemo(() => {
-        return exerciseCategories.flatMap(group => group.exercises);
+        return exerciseCategories.flatMap((group: any) => group.exercises);
     }, [exerciseCategories]);
 
     useEffect(() => {
@@ -109,7 +109,7 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                             >
                                 <option value="" disabled>Select exercise</option>
                                 {exerciseOptions.length > 0 ? (
-                                    exerciseOptions.map((option) => (
+                                    exerciseOptions.map((option: string) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))
                                 ) : (

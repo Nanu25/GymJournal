@@ -71,7 +71,7 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
                             {week.map((day, dayIndex) => (
                                 <TooltipProvider key={`${weekIndex}-${dayIndex}`}>
                                     <Tooltip>
-                                        <TooltipTrigger asChild>
+                                        <TooltipTrigger>
                                             <div
                                                 className={`w-full aspect-square rounded-sm transition-all duration-200 hover:scale-125 ${getIntensityClass(day.count)}`}
                                             />

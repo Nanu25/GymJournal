@@ -1,15 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useTrainings, useTrainingMutations } from './useTrainings';
 
 
 export type SortField = "date" | "pr" | "exercises" | null;
 export type SortDirection = "asc" | "desc";
 
-interface ExerciseStats {
-    max: number;
-    min: number;
-    avg: number;
-}
+
 
 export const useTrainingData = () => {
     // TanStack Query Hooks

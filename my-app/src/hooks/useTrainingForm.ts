@@ -66,7 +66,7 @@ export const useTrainingForm = ({ onTrainingAdded }: UseTrainingFormProps = {}) 
 
     // Derived Stats
     const exerciseStats = useMemo(() => {
-        const count = exerciseCategories.reduce((total, cat) => total + cat.exercises.length, 0);
+        const count = exerciseCategories.reduce((total: number, cat: any) => total + cat.exercises.length, 0);
         const categories = exerciseCategories.length;
         return { count, categories };
     }, [exerciseCategories]);
@@ -113,15 +113,15 @@ export const useTrainingForm = ({ onTrainingAdded }: UseTrainingFormProps = {}) 
     const displayedExercises = useMemo(() => {
         if (!searchTerm.trim()) {
             return exerciseCategories
-                .find((cat) => cat.category === activeCategory)
-                ?.exercises.map(name => ({ name, category: activeCategory })) || [];
+                .find((cat: any) => cat.category === activeCategory)
+                ?.exercises.map((name: string) => ({ name, category: activeCategory })) || [];
         }
 
         const term = searchTerm.toLowerCase();
-        return exerciseCategories.flatMap(cat =>
+        return exerciseCategories.flatMap((cat: any) =>
             cat.exercises
-                .filter(ex => ex.toLowerCase().includes(term))
-                .map(name => ({ name, category: cat.category }))
+                .filter((ex: string) => ex.toLowerCase().includes(term))
+                .map((name: string) => ({ name, category: cat.category }))
         );
     }, [searchTerm, activeCategory, exerciseCategories]);
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { TrainingEntry } from "../services/trainingService";
 import TrainingList from "./TrainingList";
 import UpdateTrainingModal from "./UpdateTrainingModal";
