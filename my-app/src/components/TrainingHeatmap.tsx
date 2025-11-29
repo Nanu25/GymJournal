@@ -64,7 +64,7 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
                 </div>
             </div>
 
-            <div className="w-full">
+            <div className="w-full overflow-x-auto pb-2">
                 <div className="flex gap-1 w-full h-full min-w-[700px]">
                     {weeks.map((week, weekIndex) => (
                         <div key={weekIndex} className="flex flex-col gap-1 flex-1">

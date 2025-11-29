@@ -74,6 +74,12 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
                             )}
                         </div>
                     )}
+
+                    <div className="text-center pb-8">
+                        <p className="text-xs text-slate-600 font-medium">
+                            Made with ❤️ by <a href="https://agportfolio-a13e2a8e20e4.herokuapp.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">Grancea Alexandru</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

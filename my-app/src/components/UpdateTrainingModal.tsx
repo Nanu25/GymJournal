@@ -87,7 +87,7 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-[#1a2234] p-8 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-white/10 custom-scrollbar">
+            <div className="bg-[#1a2234] p-4 md:p-8 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-white/10 custom-scrollbar">
                 <h3 className="text-2xl font-bold mb-6 text-white">Update Training Session</h3>
                 <div className="mb-6">
                     <label className="block text-sm font-medium mb-2 text-blue-200">Date:</label>
@@ -100,42 +100,49 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                 </div>
                 <div className="mb-6">
                     <label className="block text-sm font-medium mb-2 text-blue-200">Exercises:</label>
-                    {formData.exercises.map((exercise, idx) => (
-                        <div key={idx} className="flex mb-3 space-x-2">
-                            <select
-                                value={exercise.name}
-                                onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
-                                className="flex-grow px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
-                            >
-                                <option value="" disabled>Select exercise</option>
-                                {exerciseOptions.length > 0 ? (
-                                    exerciseOptions.map((option: string) => (
-                                        <option key={option} value={option}>{option}</option>
-                                    ))
-                                ) : (
-                                    <option key={exercise.name} value={exercise.name}>{exercise.name}</option>
-                                )}
-                            </select>
-                            <input
-                                type="number" min="0"
-                                placeholder="Weight (kg)"
-                                value={exercise.weight}
-                                onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
-                                className="w-24 px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => removeExerciseField(idx)}
-                                className="px-4 py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all duration-200"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    ))}
+
+                    {/* Global Datalist for Autocomplete */}
+                    <datalist id="exercise-options">
+                        {exerciseOptions.map((option: string) => (
+                            <option key={option} value={option} />
+                        ))}
+                    </datalist>
+
+                    <div className="space-y-3">
+                        {formData.exercises.map((exercise, idx) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                                <div className="relative flex-grow">
+                                    <input
+                                        list="exercise-options"
+                                        value={exercise.name}
+                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
+                                        placeholder="Search or type exercise..."
+                                        className="w-full px-3 sm:px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 text-sm sm:text-base"
+                                    />
+                                </div>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="kg"
+                                    value={exercise.weight}
+                                    onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
+                                    className="w-16 sm:w-24 px-2 sm:px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 text-sm sm:text-base text-center"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => removeExerciseField(idx)}
+                                    className="p-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all duration-200 flex-shrink-0"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
                     <button
                         type="button"
                         onClick={addExerciseField}
-                        className="mt-3 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all duration-200 w-full"
+                        className="mt-4 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all duration-200 w-full text-sm sm:text-base font-medium"
                     >
                         + Add Exercise
                     </button>

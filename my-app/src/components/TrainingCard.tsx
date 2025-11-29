@@ -69,7 +69,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
                         </div>
                     </div>
 
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                         <button
                             className="p-1.5 text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
                             onClick={(e) => {

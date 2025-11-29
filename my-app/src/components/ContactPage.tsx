@@ -77,6 +77,15 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigateToLogin }) => {
             showSupportLink={false}
         >
             <div className="space-y-6">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
+                    <p className="text-blue-200 text-sm text-center">
+                        For direct support, please email us at:<br />
+                        <a href="mailto:alexandrugrancea25@gmail.com" className="font-bold text-blue-400 hover:text-blue-300 transition-colors">
+                            alexandrugrancea25@gmail.com
+                        </a>
+                    </p>
+                </div>
+
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl backdrop-blur-md flex items-center gap-3 animate-fade-in-up">
                         <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />

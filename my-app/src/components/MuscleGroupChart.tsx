@@ -6,7 +6,7 @@ import {
     ResponsiveContainer,
     Tooltip,
 } from "recharts";
-import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
+
 
 interface PieChartData {
     name: string;
@@ -20,15 +20,9 @@ interface MuscleGroupChartProps {
 const COLORS = ["#60A5FA", "#34D399", "#FBBF24", "#F87171", "#A78BFA", "#F472B6", "#22D3EE", "#FB923C", "#C084FC", "#C026D3"];
 
 const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ data }) => {
-    const { elementRef, isVisible } = useRevealOnScroll({ threshold: 0.2 });
-
     return (
         <div
-            ref={elementRef}
-            className={`w-full p-6 sm:p-8 rounded-3xl bg-[#1e293b]/50 border border-white/5 backdrop-blur-sm shadow-xl overflow-hidden transition-all duration-1000 ease-out h-full flex flex-col ${isVisible
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-8'
-                }`}
+            className="w-full p-6 sm:p-8 rounded-3xl bg-[#1e293b]/50 border border-white/5 backdrop-blur-sm shadow-xl overflow-hidden h-full flex flex-col"
         >
             <div className="flex items-center mb-8">
                 <div className="w-1.5 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full mr-4 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
@@ -37,8 +31,8 @@ const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ data }) => {
                 </h4>
             </div>
             {data.length > 0 ? (
-                <div className="w-full">
-                    <ResponsiveContainer width="100%" height={450} className="min-h-[450px]">
+                <div className="w-full h-[300px] sm:h-[450px]">
+                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}

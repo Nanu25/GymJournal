@@ -4,7 +4,7 @@ import TrainingList from "./TrainingList";
 import UpdateTrainingModal from "./UpdateTrainingModal";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { useTrainingData } from "../hooks/useTrainingData";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { NeoButton } from "./ui/NeoButton";
 import { NeoInput } from "./ui/NeoInput";
 import { GlassCard } from "./ui/GlassCard";
@@ -126,9 +126,10 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon={<Search className="w-5 h-5" />}
+                        onClear={() => setSearchTerm('')}
                     />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 items-center">
                     <NeoButton
                         variant={sortField === "date" ? "primary" : "secondary"}
                         onClick={() => handleSort("date")}
@@ -150,6 +151,16 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
                     >
                         Exercises {sortField === "exercises" && (sortDirection === "asc" ? "↑" : "↓")}
                     </NeoButton>
+
+                    {sortField && (
+                        <button
+                            onClick={() => handleSort(null)}
+                            className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                            title="Clear sort"
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 

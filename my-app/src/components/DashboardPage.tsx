@@ -19,7 +19,7 @@ const DashboardPage: React.FC = () => {
             <footer className="w-full bg-[#0f172a]/50 backdrop-blur-xl border-t border-blue-500/10 mt-auto">
                 <div className="container mx-auto px-2 sm:px-4 md:px-6 py-4">
                     <p className="text-center text-xs sm:text-sm md:text-base text-blue-200/70 font-medium">
-                        © 2025 Fitness Journal | Created by Grancea Alexandru
+                        © 2025 Fitness Journal | Created by <a href="https://agportfolio-a13e2a8e20e4.herokuapp.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">Grancea Alexandru</a>
                     </p>
                 </div>
             </footer>
