@@ -113,9 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex justify-end">
-            <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium">Forgot Password?</a>
-          </div>
+
         </div>
 
         {/* Login Button */}

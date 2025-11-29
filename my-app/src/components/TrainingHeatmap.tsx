@@ -47,6 +47,14 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
         return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
     };
 
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+        }
+    }, [weeks]);
+
     return (
         <div className="w-full bg-[#0f172a]/50 backdrop-blur-xl border border-white/5 rounded-3xl p-6 md:p-8">
             <div className="flex items-center justify-between mb-6">
@@ -64,7 +72,10 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
                 </div>
             </div>
 
-            <div className="w-full overflow-x-auto pb-2">
+            <div
+                ref={scrollContainerRef}
+                className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+            >
                 <div className="flex gap-1 w-full h-full min-w-[700px]">
                     {weeks.map((week, weekIndex) => (
                         <div key={weekIndex} className="flex flex-col gap-1 flex-1">

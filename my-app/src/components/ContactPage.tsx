@@ -1,175 +1,97 @@
 import React, { useState } from "react";
 import AuthLayout from "./AuthLayout";
-import { Send, MessageSquare, Type, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, ArrowRight, Copy, Check } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ContactPageProps {
     onNavigateToLogin?: () => void;
 }
 
 const ContactPage: React.FC<ContactPageProps> = ({ onNavigateToLogin }) => {
-    const [subject, setSubject] = useState("");
-    const [message, setMessage] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+    const email = "alexandrugrancea25@gmail.com";
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleCopy = (e: React.MouseEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
-        setError(null);
-
-        // Simulate API call
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            setSubmitted(true);
-            setSubject("");
-            setMessage("");
-        } catch (err) {
-            setError("Failed to send message. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
+        e.stopPropagation();
+        navigator.clipboard.writeText(email);
+        setCopied(true);
+        toast.success("Email copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
     };
-
-    if (submitted) {
-        return (
-            <AuthLayout
-                title="Message Sent"
-                subtitle="We'll get back to you as soon as possible."
-                maxWidth="max-w-3xl"
-                showSupportLink={false}
-            >
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
-                    <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20">
-                        <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-                    </div>
-                    <div className="space-y-2">
-                        <h3 className="text-2xl font-bold text-white">Thank You!</h3>
-                        <p className="text-slate-400 max-w-xs mx-auto">
-                            Your message has been received. Our support team will review it shortly.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setSubmitted(false)}
-                        className="mt-4 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all duration-200"
-                    >
-                        Send Another Message
-                    </button>
-
-                    {onNavigateToLogin && (
-                        <button
-                            onClick={onNavigateToLogin}
-                            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                        >
-                            Back to Login
-                        </button>
-                    )}
-                </div>
-            </AuthLayout>
-        );
-    }
 
     return (
         <AuthLayout
             title="Contact Support"
-            subtitle="How can we help you today?"
+            subtitle="I'm here to help"
             maxWidth="max-w-3xl"
             showSupportLink={false}
         >
-            <div className="space-y-6">
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
-                    <p className="text-blue-200 text-sm text-center">
-                        For direct support, please email us at:<br />
-                        <a href="mailto:alexandrugrancea25@gmail.com" className="font-bold text-blue-400 hover:text-blue-300 transition-colors">
-                            alexandrugrancea25@gmail.com
-                        </a>
+            <div className="flex flex-col items-center justify-center py-6 sm:py-10 space-y-8 sm:space-y-10">
+                <div className="relative group">
+                    <div className="absolute -inset-4 bg-blue-500/20 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition duration-500"></div>
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 bg-[#0f172a] rounded-full flex items-center justify-center border border-blue-500/20 shadow-2xl shadow-blue-500/10">
+                        <Mail className="w-10 h-10 sm:w-14 sm:h-14 text-blue-400" />
+                    </div>
+                </div>
+
+                <div className="text-center space-y-3 sm:space-y-4 max-w-md px-4">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Get in touch</h3>
+                    <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+                        I am here to help. If you have any issues with your account, including <strong>password resets</strong>, please email me directly.
                     </p>
                 </div>
 
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl backdrop-blur-md flex items-center gap-3 animate-fade-in-up">
-                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                        <span className="text-sm font-medium">{error}</span>
-                    </div>
-                )}
+                <div className="w-full max-w-sm px-4 sm:px-0">
+                    <div className="group relative w-full">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-500 to-emerald-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500 animate-gradient-x"></div>
+                        <div className="relative flex flex-col sm:flex-row items-center justify-between p-1 bg-[#1e293b] border border-white/10 rounded-2xl">
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                    {/* Subject Input */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Subject</label>
-                        <div className="relative group">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={subject}
-                                    onChange={(e) => setSubject(e.target.value)}
-                                    className="w-full h-12 px-4 text-base text-white bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 placeholder:text-slate-500 pl-11"
-                                    placeholder="I need help with..."
-                                    required
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                    <Type className="w-5 h-5 text-slate-400" />
+                            {/* Email Display (No Link) */}
+                            <div className="flex-1 flex items-center justify-center sm:justify-start gap-4 px-4 py-3 sm:py-4 w-full sm:w-auto rounded-xl transition-colors">
+                                <div className="hidden sm:flex w-10 h-10 rounded-full bg-blue-500/10 items-center justify-center border border-blue-500/20">
+                                    <Mail className="w-5 h-5 text-blue-400" />
                                 </div>
+                                <div className="flex flex-col text-center sm:text-left">
+                                    <span className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-bold mb-0.5">Email Me At</span>
+                                    <span className="text-sm sm:text-base font-bold text-white break-all sm:break-normal select-all">{email}</span>
+                                </div>
+                            </div>
+
+                            {/* Divider for mobile */}
+                            <div className="w-full h-px bg-white/5 sm:hidden my-1"></div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1 p-1 w-full sm:w-auto justify-center sm:justify-end">
+                                <button
+                                    onClick={handleCopy}
+                                    className="p-3 sm:p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all active:scale-95 flex items-center gap-2 sm:gap-0 w-full sm:w-auto justify-center"
+                                    title="Copy email"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="w-5 h-5 text-emerald-500" />
+                                            <span className="sm:hidden text-sm font-medium text-emerald-500">Copied</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-5 h-5" />
+                                            <span className="sm:hidden text-sm font-medium">Copy Email</span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
-
-                    {/* Message Input */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Message</label>
-                        <div className="relative group">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
-                            <div className="relative">
-                                <textarea
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    className="w-full h-40 px-4 py-3 text-base text-white bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 placeholder:text-slate-500 pl-11 resize-none"
-                                    placeholder="Describe your issue in detail..."
-                                    required
-                                />
-                                <div className="absolute top-3.5 left-0 pl-3.5 flex items-start pointer-events-none">
-                                    <MessageSquare className="w-5 h-5 text-slate-400" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Send Button */}
-                    <div className="group relative mt-4">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-500 to-emerald-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-500 animate-gradient-x"></div>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="relative w-full h-12 text-base font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden active:scale-[0.98]"
-                        >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        <span>Sending...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>Send Message</span>
-                                        <Send className="w-4 h-4" />
-                                    </>
-                                )}
-                            </span>
-                        </button>
-                    </div>
-                </form>
+                </div>
 
                 {onNavigateToLogin && (
-                    <div className="text-center mt-4">
-                        <button
-                            onClick={onNavigateToLogin}
-                            className="text-sm text-slate-400 hover:text-white transition-colors"
-                        >
-                            Back to Login
-                        </button>
-                    </div>
+                    <button
+                        onClick={onNavigateToLogin}
+                        className="text-sm text-slate-500 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/5"
+                    >
+                        Back to Login
+                    </button>
                 )}
             </div>
         </AuthLayout>

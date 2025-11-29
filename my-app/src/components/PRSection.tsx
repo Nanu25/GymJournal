@@ -64,11 +64,9 @@ const PRSection: React.FC = () => {
                 <TrainingHeatmap dates={trainingDates} />
             </div>
 
+            {/* Charts Grid - Side by Side on Desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Muscle Group Distribution Chart */}
                 <MuscleGroupChart data={muscleGroupData} />
-
-                {/* Muscle Balance Radar Chart */}
                 <MuscleBalanceRadar data={muscleGroupData} />
             </div>
 
