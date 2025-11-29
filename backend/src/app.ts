@@ -57,8 +57,9 @@ const corsOptions = {
 
 // Middleware
 app.use(helmet({
-    contentSecurityPolicy: false, // Disabled for now to avoid issues with external scripts/images if any
-    crossOriginEmbedderPolicy: false
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
 }));
 app.use(compression());
 
