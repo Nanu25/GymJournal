@@ -16,6 +16,100 @@ interface UpdateTrainingModalProps {
     initialData: TrainingEntry | null;
 }
 
+
+
+const SearchableExerciseSelect: React.FC<{
+    value: string;
+    options: string[];
+    onChange: (val: string) => void;
+    placeholder?: string;
+}> = ({ value, options, onChange, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const filteredOptions = options.filter(opt =>
+        opt.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="relative" ref={wrapperRef}>
+            <div
+                className="w-full px-4 py-3 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white flex items-center justify-between cursor-pointer hover:border-blue-500/30 transition-colors"
+                onClick={() => {
+                    setIsOpen(!isOpen);
+                    if (!isOpen) setSearch("");
+                }}
+            >
+                <span className={value ? "text-white" : "text-slate-500"}>
+                    {value || placeholder}
+                </span>
+                <div className="flex items-center gap-2">
+                    {value && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onChange("");
+                            }}
+                            className="p-1 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors"
+                        >
+                            ✕
+                        </button>
+                    )}
+                    <span className="text-slate-400 text-xs">▼</span>
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1e293b] border border-blue-500/20 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className="p-2 border-b border-white/5">
+                        <input
+                            autoFocus
+                            type="text"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#0f172a] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map(option => (
+                                <div
+                                    key={option}
+                                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-500/10 hover:text-blue-400 transition-colors ${option === value ? 'text-blue-400 bg-blue-500/5' : 'text-slate-300'}`}
+                                    onClick={() => {
+                                        onChange(option);
+                                        setIsOpen(false);
+                                        setSearch("");
+                                    }}
+                                >
+                                    {option}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                No exercises found
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClose, onUpdate, initialData }) => {
     const [formData, setFormData] = useState<{ date: string; exercises: Exercise[] }>({
         date: '',
@@ -101,23 +195,15 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                 <div className="mb-6">
                     <label className="block text-sm font-medium mb-2 text-blue-200">Exercises:</label>
 
-                    {/* Global Datalist for Autocomplete */}
-                    <datalist id="exercise-options">
-                        {exerciseOptions.map((option: string) => (
-                            <option key={option} value={option} />
-                        ))}
-                    </datalist>
-
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {formData.exercises.map((exercise, idx) => (
-                            <div key={idx} className="flex gap-2 items-center">
-                                <div className="relative flex-grow">
-                                    <input
-                                        list="exercise-options"
+                            <div key={idx} className="flex gap-2 items-start">
+                                <div className="relative flex-grow group">
+                                    <SearchableExerciseSelect
                                         value={exercise.name}
-                                        onChange={(e) => handleExerciseNameChange(idx, e.target.value)}
-                                        placeholder="Search or type exercise..."
-                                        className="w-full px-3 sm:px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 text-sm sm:text-base"
+                                        options={exerciseOptions}
+                                        onChange={(val) => handleExerciseNameChange(idx, val)}
+                                        placeholder="Select exercise"
                                     />
                                 </div>
                                 <input
@@ -126,12 +212,13 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                                     placeholder="kg"
                                     value={exercise.weight}
                                     onChange={(e) => handleExerciseWeightChange(idx, e.target.value)}
-                                    className="w-16 sm:w-24 px-2 sm:px-4 py-2 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 text-sm sm:text-base text-center"
+                                    className="w-20 px-3 py-3 bg-[#0f172a] border border-blue-500/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 text-center font-medium"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => removeExerciseField(idx)}
-                                    className="p-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all duration-200 flex-shrink-0"
+                                    className="p-3 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500/20 transition-all duration-200 flex-shrink-0"
+                                    title="Remove exercise"
                                 >
                                     ✕
                                 </button>
@@ -142,9 +229,9 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
                     <button
                         type="button"
                         onClick={addExerciseField}
-                        className="mt-4 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all duration-200 w-full text-sm sm:text-base font-medium"
+                        className="mt-4 px-4 py-3 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all duration-200 w-full font-medium flex items-center justify-center gap-2"
                     >
-                        + Add Exercise
+                        <span>+ Add Exercise</span>
                     </button>
                 </div>
                 <div className="flex justify-end space-x-4 mt-6">
