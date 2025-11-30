@@ -74,7 +74,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
                     </Link>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:block">
+                    <div className="hidden lg:block">
                         <div className="ml-10 flex items-baseline space-x-4">
                             {navItems.map((item) => (
                                 <Link
@@ -102,7 +102,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="-mr-2 flex md:hidden">
+                    <div className="-mr-2 flex lg:hidden">
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 focus:outline-none transition-colors"
@@ -123,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
             </div>
 
             {/* Mobile Menu */}
-            <div className={`md:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+            <div className={`lg:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                 <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#0f172a] border-b border-white/5">
                     {navItems.map((item) => (
                         <Link
