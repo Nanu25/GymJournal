@@ -81,8 +81,8 @@ export const useTrainingData = () => {
         await deleteMutation.mutateAsync(date);
     };
 
-    const updateTraining = async (date: string, exercises: Record<string, number>) => {
-        await updateMutation.mutateAsync({ date, data: { exercises } });
+    const updateTraining = async (originalDate: string, newDate: string, exercises: Record<string, number>) => {
+        await updateMutation.mutateAsync({ date: originalDate, data: { date: newDate, exercises } });
     };
 
     return {

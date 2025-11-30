@@ -20,7 +20,8 @@ export const useTrainingMutations = () => {
             toast.success('Training added successfully!');
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to add training');
+            const message = error.response?.data?.error || error.message || 'Failed to add training';
+            toast.error(message);
         },
     });
 
@@ -33,7 +34,8 @@ export const useTrainingMutations = () => {
             toast.success('Training updated successfully!');
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to update training');
+            const message = error.response?.data?.error || error.message || 'Failed to update training';
+            toast.error(message);
         },
     });
 
@@ -45,7 +47,8 @@ export const useTrainingMutations = () => {
             toast.success('Training deleted successfully!');
         },
         onError: (error: any) => {
-            toast.error(error.message || 'Failed to delete training');
+            const message = error.response?.data?.error || error.message || 'Failed to delete training';
+            toast.error(message);
         },
     });
 

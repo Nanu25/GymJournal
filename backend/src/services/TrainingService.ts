@@ -157,7 +157,7 @@ export class TrainingService {
         };
     }
 
-    static async updateTraining(userId: string, date: string, exercises: { [key: string]: number | string }) {
+    static async updateTraining(userId: string, date: string, exercises: { [key: string]: number | string }, newDate?: string) {
         const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
 
@@ -168,6 +168,18 @@ export class TrainingService {
 
         if (!training) {
             throw new Error('Training not found');
+        }
+
+        // Handle date update if newDate is provided and different
+        if (newDate && newDate !== date) {
+            const newDateObj = new Date(newDate);
+            // Check if a training already exists for the new date
+            const existingTraining = await TrainingRepository.findByDate(newDateObj, userId);
+            if (existingTraining) {
+                throw new Error('A training session already exists for the new date');
+            }
+            training.date = newDateObj;
+            await TrainingRepository.save(training);
         }
 
         const trainingExerciseRepository = AppDataSource.getRepository(TrainingExercise);
@@ -207,7 +219,7 @@ export class TrainingService {
             action: ActionType.UPDATE,
             entityType: 'Training',
             entityId: String(training.id),
-            details: { date, exercises },
+            details: { date: newDate || date, exercises },
             timestamp: new Date(),
         });
 

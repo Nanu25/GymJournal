@@ -70,12 +70,12 @@ export const deleteTraining = asyncHandler(async (req: Request, res: Response): 
 
 export const updateTrainingByDate = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { date } = req.params;
-    const { exercises } = req.body;
+    const { exercises, date: newDate } = req.body;
 
     if (!req.user?.id) {
         throw new AppError('User not authenticated', 401);
     }
 
-    const result = await TrainingService.updateTraining(req.user.id, date, exercises);
+    const result = await TrainingService.updateTraining(req.user.id, date, exercises, newDate);
     res.status(200).json(result);
 });

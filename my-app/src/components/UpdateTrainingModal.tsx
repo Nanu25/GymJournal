@@ -6,17 +6,15 @@ import { useExercises } from '../hooks/useTrainings';
 
 interface Exercise {
     name: string;
-    weight: number;
+    weight: number | string;
 }
 
 interface UpdateTrainingModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onUpdate: (date: string, exercises: Record<string, number>) => Promise<void>;
+    onUpdate: (originalDate: string, newDate: string, exercises: Record<string, number>) => Promise<void>;
     initialData: TrainingEntry | null;
 }
-
-
 
 const SearchableExerciseSelect: React.FC<{
     value: string;
@@ -141,14 +139,15 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
 
     const handleExerciseWeightChange = (index: number, value: string) => {
         const newExercises = [...formData.exercises];
-        newExercises[index].weight = Number(value);
+        // Allow empty string to clear the field, otherwise parse as number
+        newExercises[index].weight = value === '' ? '' : Number(value);
         setFormData({ ...formData, exercises: newExercises });
     };
 
     const addExerciseField = () => {
         setFormData({
             ...formData,
-            exercises: [...formData.exercises, { name: '', weight: 0 }]
+            exercises: [...formData.exercises, { name: '', weight: '' }]
         });
     };
 
@@ -161,13 +160,16 @@ const UpdateTrainingModal: React.FC<UpdateTrainingModalProps> = ({ isOpen, onClo
         const exercisesObject: Record<string, number> = {};
         formData.exercises.forEach((exercise) => {
             if (exercise.name.trim()) {
-                exercisesObject[exercise.name.trim()] = exercise.weight;
+                // Ensure weight is saved as a number, defaulting to 0 if empty
+                exercisesObject[exercise.name.trim()] = exercise.weight === '' ? 0 : Number(exercise.weight);
             }
         });
 
         setIsSubmitting(true);
         try {
-            await onUpdate(formData.date, exercisesObject);
+            if (initialData) {
+                await onUpdate(initialData.date, formData.date, exercisesObject);
+            }
             onClose();
         } catch (error) {
             console.error('Error updating training:', error);

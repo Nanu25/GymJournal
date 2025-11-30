@@ -79,21 +79,39 @@ const TrainingHeatmap: React.FC<ConsistencyHeatmapProps> = ({ dates }) => {
                 <div className="flex gap-1 w-full h-full min-w-[700px]">
                     {weeks.map((week, weekIndex) => (
                         <div key={weekIndex} className="flex flex-col gap-1 flex-1">
-                            {week.map((day, dayIndex) => (
-                                <TooltipProvider key={`${weekIndex}-${dayIndex}`}>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <div
-                                                className={`w-full aspect-square rounded-sm transition-all duration-200 hover:scale-125 ${getIntensityClass(day.count)}`}
-                                            />
-                                        </TooltipTrigger>
-                                        <TooltipContent className="bg-slate-900 border border-white/10 text-xs">
-                                            <p className="font-medium text-white">{day.date}</p>
-                                            <p className="text-slate-400">{day.count > 0 ? 'Training completed' : 'No training'}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            ))}
+                            {week.map((day, dayIndex) => {
+                                // Determine tooltip alignment based on week index (horizontal) and day index (vertical)
+                                let alignmentClass = "";
+
+                                // Horizontal alignment
+                                if (weekIndex < 4) {
+                                    alignmentClass += " !left-0 !-translate-x-0";
+                                } else if (weekIndex > weeks.length - 5) {
+                                    alignmentClass += " !right-0 !left-auto !-translate-x-0";
+                                }
+
+                                // Vertical alignment (Top row needs to flip down)
+                                if (dayIndex < 2) {
+                                    alignmentClass += " !top-full !mt-2 !bottom-auto !mb-0";
+                                }
+                                // Default vertical is bottom-full (above), which is fine for middle/bottom rows
+
+                                return (
+                                    <TooltipProvider key={`${weekIndex}-${dayIndex}`}>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <div
+                                                    className={`w-full aspect-square rounded-sm transition-all duration-200 hover:scale-125 ${getIntensityClass(day.count)}`}
+                                                />
+                                            </TooltipTrigger>
+                                            <TooltipContent className={`bg-slate-900 border border-white/10 text-xs ${alignmentClass}`}>
+                                                <p className="font-medium text-white">{day.date}</p>
+                                                <p className="text-slate-400">{day.count > 0 ? 'Training completed' : 'No training'}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
+                            })}
                         </div>
                     ))}
                 </div>

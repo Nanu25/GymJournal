@@ -53,7 +53,11 @@ export const trainingService = {
      * Updates an existing training session.
      */
     async updateTraining(date: string, data: { date: string; exercises: { [key: string]: number } }): Promise<void> {
-        await apiClient.put(`/trainings/${encodeURIComponent(date)}`, data);
+        // Send both the new date (in body) and exercises
+        await apiClient.put(`/trainings/${encodeURIComponent(date)}`, {
+            date: data.date,
+            exercises: data.exercises
+        });
     },
 
     /**

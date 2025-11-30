@@ -70,9 +70,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
         setUpdateFormOpen(index);
     };
 
-    const handleUpdateSubmit = async (date: string, exercises: { [key: string]: number }) => {
+    const handleUpdateSubmit = async (originalDate: string, newDate: string, exercises: { [key: string]: number }) => {
         try {
-            await updateTraining(date, exercises);
+            await updateTraining(originalDate, newDate, exercises);
             setUpdateFormOpen(null);
             setTrainingToUpdate(null);
         } catch (error) {
