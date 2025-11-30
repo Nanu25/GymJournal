@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AuthLayout from "./AuthLayout";
-import { Mail, ArrowRight, Copy, Check } from "lucide-react";
+import { Mail, Copy, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface ContactPageProps {
