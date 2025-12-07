@@ -8,12 +8,15 @@ import { Search, X } from "lucide-react";
 import { NeoButton } from "./ui/NeoButton";
 import { NeoInput } from "./ui/NeoInput";
 import { GlassCard } from "./ui/GlassCard";
+import MuscleHeatmap from "./MuscleHeatmap";
+import { useStats } from "../hooks/useStats";
 
 interface PersonalRecordsCardProps {
     profile?: {
         name?: string;
         weight?: number;
         height?: number;
+        gender?: string;
     };
 }
 
@@ -31,6 +34,9 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
         deleteTraining,
         updateTraining
     } = useTrainingData();
+
+    const { useRecentMuscleGroups } = useStats();
+    const { data: recentMuscleGroups = [] } = useRecentMuscleGroups();
 
     const [trainingToDelete, setTrainingToDelete] = useState<TrainingEntry | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -92,7 +98,7 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
         <section id="personal-records-card" className="w-full space-y-8">
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div>
+                <div className="flex-1">
                     <p className="text-sm uppercase tracking-[0.35em] text-blue-400/70 mb-2 font-medium">Training history for</p>
                     <h2 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
                         {profile?.name ?? "You"}
@@ -115,6 +121,14 @@ const PersonalRecordsCard: React.FC<PersonalRecordsCardProps> = ({ profile }) =>
                             <p className="text-2xl font-bold text-white mt-1">{trainings.length}</p>
                         </GlassCard>
                     </div>
+                </div>
+
+                {/* Muscle Heatmap */}
+                <div className="w-full flex justify-center lg:w-auto lg:block ml-0 lg:ml-8 mt-6 lg:mt-0">
+                    <MuscleHeatmap
+                        recentMuscleGroups={recentMuscleGroups}
+                        gender={profile?.gender}
+                    />
                 </div>
             </div>
 

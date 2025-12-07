@@ -48,3 +48,12 @@ export const getTrainingDates = asyncHandler(async (req: Request, res: Response)
     const result = await StatsService.getTrainingDates(req.user.id);
     res.status(200).json(result);
 });
+
+export const getRecentMuscleGroups = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
+    const result = await StatsService.getRecentMuscleGroups(req.user.id);
+    res.status(200).json(result);
+});

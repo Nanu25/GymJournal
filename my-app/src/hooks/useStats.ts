@@ -28,11 +28,17 @@ export const useStats = () => {
         queryFn: trainingService.getUniqueExercises,
     });
 
+    const useRecentMuscleGroups = () => useQuery({
+        queryKey: ['stats', 'recentMuscles'],
+        queryFn: trainingService.getRecentMuscleGroups,
+    });
+
     return {
         useMuscleDistribution,
         useTotalWeight,
         useTrainingDates,
         useExerciseProgress,
         useUniqueExercises,
+        useRecentMuscleGroups,
     };
 };

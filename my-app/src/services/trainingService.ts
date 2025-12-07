@@ -116,5 +116,13 @@ export const trainingService = {
             // Fallback or empty
             return [];
         }
+    },
+
+    /**
+     * Fetches muscle groups trained in the last 48 hours.
+     */
+    async getRecentMuscleGroups(): Promise<string[]> {
+        const response = await apiClient.get('/trainings/recent-muscles');
+        return response.data;
     }
 };

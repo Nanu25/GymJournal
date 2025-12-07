@@ -20,4 +20,8 @@ export class StatsService {
     static async getTrainingDates(userId: string) {
         return await StatsRepository.getTrainingDates(userId);
     }
+
+    static async getRecentMuscleGroups(userId: string) {
+        return await StatsRepository.getRecentMuscleGroups(userId);
+    }
 }

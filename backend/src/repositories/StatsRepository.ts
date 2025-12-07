@@ -76,5 +76,22 @@ export const StatsRepository = AppDataSource.getRepository(Training).extend({
             .getRawMany();
 
         return result.map((item: any) => new Date(item.date).toISOString().split('T')[0]);
+    },
+
+    async getRecentMuscleGroups(userId: string) {
+        // Calculate the date 48 hours ago
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        const dateString = twoDaysAgo.toISOString().split('T')[0];
+
+        const result = await this.createQueryBuilder('t')
+            .select('DISTINCT e.muscleGroup', 'muscleGroup')
+            .innerJoin('t.trainingExercises', 'te')
+            .innerJoin('te.exercise', 'e')
+            .where('t.userId = :userId', { userId })
+            .andWhere('t.date >= :dateString', { dateString })
+            .getRawMany();
+
+        return result.map((item: any) => item.muscleGroup);
     }
 });

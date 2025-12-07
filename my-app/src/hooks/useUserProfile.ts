@@ -5,6 +5,7 @@ interface UserProfile {
     name: string;
     weight?: number;
     height?: number;
+    gender?: string;
     isAdmin?: boolean;
 }
 
@@ -24,6 +25,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
             name: cachedUser?.name || "Fitness Enthusiast",
             weight: cachedMetrics?.weight,
             height: cachedMetrics?.height,
+            gender: cachedUser?.gender,
             isAdmin: cachedUser?.isAdmin
         };
     });
@@ -41,6 +43,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
                 name: data.name || "Fitness Enthusiast",
                 weight: data.weight ?? data.metrics?.weight,
                 height: data.height ?? data.metrics?.height,
+                gender: data.gender,
                 isAdmin: data.isAdmin
             });
         } catch (err) {

@@ -52,6 +52,12 @@ export const useChat = () => {
             // Use API_BASE_URL if available, otherwise fallback to relative path which might be proxied
             const url = API_BASE_URL ? `${API_BASE_URL}/chat` : '/api/chat';
 
+            // Get last 4 messages for context
+            const history = messages.slice(-4).map(msg => ({
+                role: msg.isUser ? 'user' : 'model',
+                content: msg.text
+            }));
+
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -59,7 +65,8 @@ export const useChat = () => {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    message: messageText
+                    message: messageText,
+                    history: history
                 })
             });
 
