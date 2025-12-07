@@ -21,6 +21,7 @@ export interface UserData {
     timePerSession?: number;
     repRange?: string;
     isAdmin?: boolean;
+    gender?: string;
 }
 
 const USER_METRICS_CACHE_KEY = 'dashboard_user_metrics_cache';
@@ -63,7 +64,8 @@ export const userService = {
             sessionStorage.setItem(USER_DATA_CACHE_KEY, JSON.stringify({
                 name: data.name,
                 email: data.email,
-                isAdmin: data.isAdmin
+                isAdmin: data.isAdmin,
+                gender: data.gender
             }));
 
             // Cache metrics specifically
@@ -96,7 +98,7 @@ export const userService = {
     /**
      * Retrieves cached user info (name, email) if available
      */
-    getCachedUserData(): { name?: string; isAdmin?: boolean } | null {
+    getCachedUserData(): { name?: string; isAdmin?: boolean; gender?: string } | null {
         try {
             const cached = sessionStorage.getItem(USER_DATA_CACHE_KEY);
             return cached ? JSON.parse(cached) : null;
