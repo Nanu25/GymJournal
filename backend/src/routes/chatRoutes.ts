@@ -101,7 +101,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
         const prompt = `${systemPrompt}${extraInfo}\n\nUser: ${message}\n\nAssistant:`;
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         console.log('Inline chat handler: Sending request to Gemini API...');
         const result = await model.generateContent(prompt);
         const text = result.response.text();
