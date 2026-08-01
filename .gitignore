@@ -7,5 +7,4 @@ coverage/
 .idea/
 .vscode/
 *.log
-backend/scripts/
 backend/src/scripts/migrateTrainings.ts

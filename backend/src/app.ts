@@ -127,44 +127,60 @@ app.get('*', (req: Request, res: Response) => {
     res.sendFile(path.join(publicDir, 'index.html'));
 });
 
+// Lazy database connection initialization for serverless requests
+app.use(async (req: Request, _res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/') && !AppDataSource.isInitialized) {
+        try {
+            await initializeDatabase();
+        } catch (error) {
+            console.error('[APP] Error connecting to database on request:', error);
+        }
+    }
+    next();
+});
+
 // Error handling middleware
 app.use(errorHandler);
 
-// Initialize database first, then start server
-console.log('[APP] Starting database initialization...');
-initializeDatabase()
-    .then((success) => {
-        if (success) {
-            console.log('[APP] Database initialization successful!');
+// Only start standalone HTTP server when not running in Vercel serverless environment
+if (!process.env.VERCEL) {
+    console.log('[APP] Starting database initialization...');
+    initializeDatabase()
+        .then((success) => {
+            if (success) {
+                console.log('[APP] Database initialization successful!');
 
-            const PORT = process.env.PORT || 3000;
-            const server = app.listen(PORT, () => {
-                console.log(`[APP] Server is running on port ${PORT}`);
-                console.log(`[APP] API available at http://localhost:${PORT}/api`);
-            });
-
-            // Graceful shutdown
-            const shutdown = () => {
-                console.log('[APP] Shutting down gracefully...');
-                server.close(async () => {
-                    console.log('[APP] Server closed');
-                    if (AppDataSource.isInitialized) {
-                        await AppDataSource.destroy();
-                        console.log('[APP] Database connection closed');
-                    }
-                    process.exit(0);
+                const PORT = process.env.PORT || 3000;
+                const server = app.listen(PORT, () => {
+                    console.log(`[APP] Server is running on port ${PORT}`);
+                    console.log(`[APP] API available at http://localhost:${PORT}/api`);
                 });
-            };
 
-            process.on('SIGTERM', shutdown);
-            process.on('SIGINT', shutdown);
+                // Graceful shutdown
+                const shutdown = () => {
+                    console.log('[APP] Shutting down gracefully...');
+                    server.close(async () => {
+                        console.log('[APP] Server closed');
+                        if (AppDataSource.isInitialized) {
+                            await AppDataSource.destroy();
+                            console.log('[APP] Database connection closed');
+                        }
+                        process.exit(0);
+                    });
+                };
 
-        } else {
-            console.error('[APP] Database initialization failed. Exiting.');
+                process.on('SIGTERM', shutdown);
+                process.on('SIGINT', shutdown);
+
+            } else {
+                console.error('[APP] Database initialization failed. Exiting.');
+                process.exit(1);
+            }
+        })
+        .catch((error) => {
+            console.error('[APP] Critical error during database initialization:', error);
             process.exit(1);
-        }
-    })
-    .catch((error) => {
-        console.error('[APP] Critical error during database initialization:', error);
-        process.exit(1);
-    });
+        });
+}
+
+export default app;

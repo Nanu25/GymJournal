@@ -55,8 +55,4 @@ CREATE TABLE IF NOT EXISTS "activity_logs" (
   "entityId" VARCHAR(255),
   "details" JSONB,
   "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert a test user with hashed password (password: password123)
-INSERT INTO "users" ("name", "email", "password", "isAdmin")
-VALUES ('Test User', 'test@example.com', '$2a$10$1Gm/P4JrOH9H5cJKFqH.9.XWy0sLZGzW.Qh0D.qoXMp.FS9OMzO86', true); 
+); 

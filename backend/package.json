@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "node ./node_modules/typescript/bin/tsc && node ../copy-frontend.js",
-    "heroku-postbuild": "npm run build",
+    "build": "tsc",
     "local-build": "node ./node_modules/typescript/bin/tsc && node dist/scripts/ensureUploadsDir.js",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -23,7 +22,7 @@
     "db:populate": "ts-node src/scripts/populateExercisesFromMuscleGroupMapping.ts"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=20.x"
   },
   "keywords": [],
   "author": "",

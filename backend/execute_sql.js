@@ -10,12 +10,14 @@ async function executeSql() {
     process.exit(1);
   }
 
+  const sslConfig = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1')
+    ? false
+    : { rejectUnauthorized: process.env.PG_SSL_REJECT_UNAUTHORIZED === 'true' };
+
   console.log('Connecting to database...');
   const client = new Client({
     connectionString: databaseUrl,
-    ssl: {
-      rejectUnauthorized: false // Required for Heroku PostgreSQL
-    }
+    ssl: sslConfig
   });
 
   try {
@@ -32,6 +34,7 @@ async function executeSql() {
 
   } catch (error) {
     console.error('Error during SQL execution:', error);
+    process.exitCode = 1;
   } finally {
     await client.end();
     console.log('Database connection closed');
