@@ -6,21 +6,73 @@ const Exercise_1 = require("../entities/Exercise");
 const router = (0, express_1.Router)();
 router.get('/', async (_req, res) => {
     try {
+        if (!database_1.AppDataSource.isInitialized) {
+            console.error('[EXERCISE_ROUTES] Database not initialized, using mock data');
+            return sendMockExercises(res);
+        }
         const exercises = await database_1.AppDataSource.getRepository(Exercise_1.Exercise).find();
+        if (!exercises || exercises.length === 0) {
+            return sendMockExercises(res);
+        }
         const grouped = exercises.reduce((acc, ex) => {
-            acc[ex.muscleGroup] = acc[ex.muscleGroup] || [];
-            acc[ex.muscleGroup].push(ex.name);
+            const muscleGroup = ex.muscleGroup;
+            if (!acc[muscleGroup]) {
+                acc[muscleGroup] = [];
+            }
+            acc[muscleGroup].push(ex.name);
             return acc;
         }, {});
         const result = Object.entries(grouped).map(([category, exercises]) => ({
             category,
             exercises,
         }));
-        res.json(result);
+        const responseWithMetadata = {
+            source: 'database',
+            count: exercises.length,
+            categories: result.length,
+            data: result
+        };
+        res.json(responseWithMetadata);
     }
     catch (err) {
-        res.status(500).json({ error: 'Failed to fetch exercises' });
+        console.error('[EXERCISE_ROUTES] Error fetching exercises:', err);
+        sendMockExercises(res);
     }
 });
+function sendMockExercises(res) {
+    const mockExercises = [
+        {
+            category: 'Chest',
+            exercises: ['Bench Press', 'Incline Press', 'Decline Press', 'Chest Fly', 'Push-ups']
+        },
+        {
+            category: 'Back',
+            exercises: ['Pull-ups', 'Lat Pulldown', 'Deadlift', 'Bent Over Row', 'T-Bar Row']
+        },
+        {
+            category: 'Legs',
+            exercises: ['Squat', 'Leg Press', 'Lunges', 'Leg Extension', 'Leg Curl', 'Calf Raise']
+        },
+        {
+            category: 'Shoulders',
+            exercises: ['Overhead Press', 'Lateral Raise', 'Front Raise', 'Reverse Fly', 'Shrugs']
+        },
+        {
+            category: 'Arms',
+            exercises: ['Bicep Curl', 'Tricep Extension', 'Hammer Curl', 'Skull Crusher', 'Chin-ups']
+        },
+        {
+            category: 'Core',
+            exercises: ['Crunches', 'Leg Raises', 'Plank', 'Russian Twist', 'Ab Wheel Rollout']
+        }
+    ];
+    const responseWithMetadata = {
+        source: 'mock',
+        count: mockExercises.reduce((sum, cat) => sum + cat.exercises.length, 0),
+        categories: mockExercises.length,
+        data: mockExercises
+    };
+    res.json(responseWithMetadata);
+}
 exports.default = router;
 //# sourceMappingURL=exerciseroutes.js.map

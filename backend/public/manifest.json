@@ -1,0 +1,17 @@
+{
+  "name": "Gym Journal",
+  "short_name": "Gym Journal",
+  "description": "Personal Fitness Tracking Application",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080b14",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+

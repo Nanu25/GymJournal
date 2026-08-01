@@ -1,110 +1,107 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
-import multer from 'multer';
+
+import 'dotenv/config';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import trainingRoutes from './routes/trainingroutes';
 import userRoutes from './routes/userroutes';
+import exerciseRoutes from './routes/exerciseroutes';
 import activityLogRoutes from './routes/activityLog.routes';
+import chatRoutes from './routes/chatRoutes';
 import fs from 'fs';
-import { AppDataSource } from './config/database';
+import { AppDataSource, initializeDatabase } from './config/database';
 import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
-import monitoredUserRoutes from './routes/monitoredUser.routes';
-import exerciseRoutes from './routes/exerciseroutes';
+import { errorHandler } from './middleware/error.middleware';
 
-// Ensure 'uploads/' directory exists
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
+
+
+
+
+// Ensure public directory exists
+const publicDir = path.join(__dirname, '..', 'public');
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
 }
 
+if (!process.env.JWT_SECRET) {
+    console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
+    process.exit(1);
+}
 
 const app = express();
 
-// Define a request type that includes the `file` property for multer
-interface MulterRequest extends Request {
-    file?: Express.Multer.File;
-}
-
-// Configure multer storage
-const storage = multer.diskStorage({
-    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-        cb(null, 'uploads/');
-    },
-    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-        cb(null, file.originalname);
-    }
-});
-
-// File filter to allow only video files
-const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith('video/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only video files are allowed'));
-    }
+// CORS Configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173', // Vite dev server
+        'http://localhost:3000',
+        'https://gym-journal-frontend.vercel.app', // Your Vercel frontend URL
+        'https://gymjournal-75451ef51cbf.herokuapp.com', // Your Heroku domain
+        /\.vercel\.app$/, // Allow any vercel.app subdomain
+        /\.herokuapp\.com$/ // Allow any herokuapp.com subdomain
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
+    credentials: true
 };
 
-// Initialize multer with a file size limit (100MB)
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 },
-    fileFilter: fileFilter,
-});
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Upload video endpoint
-app.post('/api/upload', upload.single('video'), (req: MulterRequest, res: Response, _next: NextFunction): void => {
-    if (!req.file) {
-        res.status(400).json({ message: 'No file uploaded.' });
-        return;
-    }
-
-    res.json({ fileName: req.file.filename, filePath: `/uploads/${req.file.filename}` });
-});
-
-// Download video endpoint
-app.get('/api/download/:filename', (req: Request, res: Response, _next: NextFunction): void => {
-    const filePath: string = path.join(__dirname, 'uploads', req.params.filename);
-
-    res.download(filePath, (err: Error | null) => {
-        if (err) {
-            res.status(404).json({ message: 'File not found.' });
-        }
-    });
-});
-
-// Get all videos endpoint
-app.get('/api/videos', (_req: Request, res: Response): void => {
-    try {
-        const uploadsDir = path.join(__dirname, 'uploads');
-        fs.readdir(uploadsDir, (err, files) => {
-            if (err) {
-                console.error('Error reading directory:', err);
-                res.status(500).json({ message: 'Error reading videos directory' });
-                return;
-            }
-            const videoFiles = files.filter(file => file.match(/\.(mp4|mov|avi)$/i));
-            res.status(200).json(videoFiles);
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
+// Request logging middleware
+// Request logging middleware - Removed for cleaner logs
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//     next();
+// });
 
 // Middleware
-app.use(cors());
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', limiter); // Apply to API routes only
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Initialize database connection
-AppDataSource.initialize()
-    .then(() => {
-        console.log('Database connection established');
-    })
-    .catch((error) => {
-        console.error('Error during database initialization:', error);
+// Serve static files from the public directory
+app.use(express.static(publicDir));
+
+// Root path handler - serve the React app
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// API status endpoint
+app.get('/api/status', (_req: Request, res: Response) => {
+    // console.log('[API] Status endpoint called');
+    res.json({
+        message: 'Gym Journal API is running',
+        time: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        dbConnected: AppDataSource.isInitialized
     });
+});
+
+
+
+
+
+// Add exercise routes (no authentication required for read-only data)
+app.use('/api/exercises', exerciseRoutes);
 
 // Add user routes with authentication
 app.use('/api/user', authenticateToken, userRoutes);
@@ -115,27 +112,59 @@ app.use('/api/trainings', authenticateToken, trainingRoutes);
 // Add activity log routes (admin only)
 app.use('/api/activity-logs', authenticateToken, activityLogRoutes);
 
-// Add monitored user routes
-app.use('/api/monitored-users', monitoredUserRoutes);
+// Add chat routes
+app.use('/api', chatRoutes);
 
-// Add exercise routes
-app.use('/api/exercises', exerciseRoutes);
-
-// Routes
-app.post('/api/auth/login', AuthController.login);
-
+// Auth routes
 app.post('/api/auth/register', AuthController.register);
+app.post('/api/auth/login', AuthController.login);
+app.post('/api/auth/google', AuthController.loginWithGoogle);
+
+
+// Fallback: serve index.html for any non-API route (for React Router)
+app.get('*', (req: Request, res: Response) => {
+    if (req.path.startsWith('/api/')) return;
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
 
 // Error handling middleware
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-    });
-});
+app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Initialize database first, then start server
+console.log('[APP] Starting database initialization...');
+initializeDatabase()
+    .then((success) => {
+        if (success) {
+            console.log('[APP] Database initialization successful!');
+
+            const PORT = process.env.PORT || 3000;
+            const server = app.listen(PORT, () => {
+                console.log(`[APP] Server is running on port ${PORT}`);
+                console.log(`[APP] API available at http://localhost:${PORT}/api`);
+            });
+
+            // Graceful shutdown
+            const shutdown = () => {
+                console.log('[APP] Shutting down gracefully...');
+                server.close(async () => {
+                    console.log('[APP] Server closed');
+                    if (AppDataSource.isInitialized) {
+                        await AppDataSource.destroy();
+                        console.log('[APP] Database connection closed');
+                    }
+                    process.exit(0);
+                });
+            };
+
+            process.on('SIGTERM', shutdown);
+            process.on('SIGINT', shutdown);
+
+        } else {
+            console.error('[APP] Database initialization failed. Exiting.');
+            process.exit(1);
+        }
+    })
+    .catch((error) => {
+        console.error('[APP] Critical error during database initialization:', error);
+        process.exit(1);
+    });

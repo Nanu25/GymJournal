@@ -1,324 +1,197 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config';
+import toast from 'react-hot-toast';
 
-interface ActivityLog {
-    id: string;
-    userId: string;
-    action: 'create' | 'read' | 'update' | 'delete';
-    entityType: string;
-    entityId?: string;
-    details: any;
+interface UserLog {
+    id: number;
+    userId: number;
+    action: string;
+    details: string;
     timestamp: string;
+    user: {
+        username: string;
+        email: string;
+    };
 }
 
 interface MonitoredUser {
-    id: string;
-    userId: string;
+    id: number;
     username: string;
-    reason: string;
-    detectedAt: string;
+    email: string;
+    role: string;
+    lastLogin: string;
 }
 
-export function ActivityLogs() {
-    const [logs, setLogs] = useState<ActivityLog[]>([]);
-    const [error, setError] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(true);
+export const ActivityLogs: React.FC = () => {
+    const [logs, setLogs] = useState<UserLog[]>([]);
     const [monitoredUsers, setMonitoredUsers] = useState<MonitoredUser[]>([]);
+    const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
-    const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
-
-    const fetchMonitoredUsers = async (token: string) => {
-        try {
-            setRefreshing(true);
-            const monitoredResp = await axios.get('http://localhost:3000/api/monitored-users', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setMonitoredUsers(monitoredResp.data);
-        } catch (err) {
-            setMonitoredUsers([]);
-        } finally {
-            setRefreshing(false);
-        }
-    };
 
     useEffect(() => {
-        const fetchLogs = async () => {
-            try {
-                setIsLoading(true);
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('No authentication token found. Please log in.');
-                    return;
-                }
-
-                // Fetch user info to check admin
-                const userResp = await axios.get('/api/user', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setIsAdmin(userResp.data.isAdmin === true);
-
-                // Fetch activity logs
-                const response = await axios.get('http://localhost:3000/api/activity-logs', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                setLogs(response.data);
-
-                // If admin, fetch monitored users
-                if (userResp.data.isAdmin === true) {
-                    fetchMonitoredUsers(token);
-                }
-            } catch (err: any) {
-                console.error('Error fetching logs:', err);
-                if (err.response?.status === 401) {
-                    setError('Authentication failed. Please log in again.');
-                } else if (err.response?.status === 403) {
-                    setError('Access denied. Admin privileges required.');
-                } else {
-                    setError('Failed to fetch activity logs. Please try again.');
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
+        checkAdminStatus();
         fetchLogs();
+        fetchMonitoredUsers();
     }, []);
 
-    const handleRefreshMonitored = async () => {
+    const checkAdminStatus = () => {
         const token = localStorage.getItem('token');
         if (token) {
-            await fetchMonitoredUsers(token);
-        }
-    };
-
-    const handleDeleteMonitoredUser = async (id: string) => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        try {
-            await axios.delete(`http://localhost:3000/api/monitored-users/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setMonitoredUsers(prev => prev.filter(user => user.id !== id));
-        } catch (err) {
-            alert('Failed to delete monitored user.');
-        }
-    };
-
-    const handleDeleteUser = async (userId: string) => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        try {
-            await axios.delete(`http://localhost:3000/api/user/${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            // Remove from monitored users list
-            setMonitoredUsers(prev => prev.filter(user => user.userId !== userId));
-            
-            // Also remove from monitored users in the backend
             try {
-                const monitoredUserId = monitoredUsers.find(user => user.userId === userId)?.id;
-                if (monitoredUserId) {
-                    await axios.delete(`http://localhost:3000/api/monitored-users/${monitoredUserId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                }
-            } catch (err) {
-                console.error('Error removing from monitored users:', err);
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setIsAdmin(payload.role === 'admin');
+            } catch (e) {
+                console.error('Error decoding token:', e);
             }
-
-            setShowConfirmDelete(null);
-        } catch (err) {
-            alert('Failed to delete user.');
         }
     };
 
-    if (error) {
+    const fetchLogs = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/admin/logs`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setLogs(data);
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchMonitoredUsers = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMonitoredUsers(data);
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    };
+
+    const handleDeleteUser = async (userId: number) => {
+        if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setMonitoredUsers(prev => prev.filter(u => u.id !== userId));
+                toast.success('User deleted successfully');
+            } else {
+                toast.error('Failed to delete monitored user.');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            toast.error('Failed to delete user.');
+        }
+    };
+
+    if (!isAdmin) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 shadow-sm">
-                        {error}
-                    </div>
-                </div>
+            <div className="flex items-center justify-center h-full text-white">
+                Access Denied. Admin privileges required.
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {isAdmin && (
-                    <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-xl font-bold text-yellow-800">Monitored Users (Suspicious Activity)</h3>
-                            <button
-                                className="px-3 py-1 bg-yellow-200 text-yellow-900 rounded hover:bg-yellow-300 text-sm font-semibold"
-                                onClick={handleRefreshMonitored}
-                                disabled={refreshing}
-                            >
-                                {refreshing ? 'Refreshing...' : 'Refresh'}
-                            </button>
-                        </div>
-                        {monitoredUsers.length === 0 ? (
-                            <div className="text-yellow-700 text-sm">No monitored users detected.</div>
-                        ) : (
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-yellow-100">
+        <div className="p-6 space-y-8 text-white">
+            {/* Monitored Users Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4 text-blue-400">Monitored Users</h2>
+                <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-blue-500/20">
+                    <table className="w-full text-left">
+                        <thead className="bg-blue-900/20">
+                            <tr>
+                                <th className="p-4">User</th>
+                                <th className="p-4">Email</th>
+                                <th className="p-4">Role</th>
+                                <th className="p-4">Last Login</th>
+                                <th className="p-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {monitoredUsers.map(user => (
+                                <tr key={user.id} className="border-t border-blue-500/10 hover:bg-white/5">
+                                    <td className="p-4">{user.username}</td>
+                                    <td className="p-4">{user.email}</td>
+                                    <td className="p-4">
+                                        <span className={`px-2 py-1 rounded text-xs ${user.role === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}`}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td className="p-4">{new Date(user.lastLogin).toLocaleDateString()}</td>
+                                    <td className="p-4">
+                                        <button
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            className="text-red-400 hover:text-red-300 text-sm"
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {/* Activity Logs Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4 text-blue-400">System Activity Logs</h2>
+                <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-blue-500/20">
+                    {loading ? (
+                        <div className="p-8 text-center text-gray-400">Loading logs...</div>
+                    ) : (
+                        <div className="max-h-[500px] overflow-y-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-blue-900/20 sticky top-0">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">User ID</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Username</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Reason</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Detected At</th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Actions</th>
+                                        <th className="p-4">Time</th>
+                                        <th className="p-4">User</th>
+                                        <th className="p-4">Action</th>
+                                        <th className="p-4">Details</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {monitoredUsers.map(user => (
-                                        <tr key={user.id}>
-                                            <td className="px-4 py-2 text-sm text-gray-900">{user.userId}</td>
-                                            <td className="px-4 py-2 text-sm text-gray-900">{user.username}</td>
-                                            <td className="px-4 py-2 text-sm text-gray-900">{user.reason}</td>
-                                            <td className="px-4 py-2 text-sm text-gray-900">{new Date(user.detectedAt).toLocaleString()}</td>
-                                            <td className="px-2 py-2 text-sm text-gray-900 flex items-center space-x-2">
-                                                <button
-                                                    className="text-red-500 hover:text-red-700 font-bold text-lg px-2 focus:outline-none"
-                                                    title="Remove from monitored list"
-                                                    onClick={() => handleDeleteMonitoredUser(user.id)}
-                                                >
-                                                    ×
-                                                </button>
-                                                <button
-                                                    className="text-sm px-2 py-1 bg-red-600 text-red rounded hover:bg-red-700 focus:outline-none"
-                                                    onClick={() => setShowConfirmDelete(user.userId)}
-                                                >
-                                                    Delete User
-                                                </button>
-                                                {showConfirmDelete === user.userId && (
-                                                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                                                            <h3 className="text-lg font-bold text-red-600 mb-4">Confirm User Deletion</h3>
-                                                            <p className="text-red-500 mb-6">
-                                                                Are you sure you want to permanently delete this user? This action cannot be undone.
-                                                            </p>
-                                                            <div className="flex justify-end space-x-3">
-                                                                <button
-                                                                    className="px-4 py-2 bg-gray-200 text-red-800 rounded hover:bg-gray-300"
-                                                                    onClick={() => setShowConfirmDelete(null)}
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                                <button
-                                                                    className="px-4 py-2 bg-red-600 text-red rounded hover:bg-red-700"
-                                                                    onClick={() => handleDeleteUser(user.userId)}
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                <tbody>
+                                    {logs.map(log => (
+                                        <tr key={log.id} className="border-t border-blue-500/10 hover:bg-white/5">
+                                            <td className="p-4 text-gray-400 text-sm">
+                                                {new Date(log.timestamp).toLocaleString()}
                                             </td>
+                                            <td className="p-4 font-medium text-blue-300">
+                                                {log.user?.username || 'Unknown'}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="px-2 py-1 rounded bg-blue-500/10 text-blue-200 text-xs border border-blue-500/20">
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-gray-300">{log.details}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                        )}
-                    </div>
-                )}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Activity Logs</h2>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Track all system activities and user actions
-                                </p>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                    {logs.length} Total Logs
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="flex items-center justify-center p-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                        </div>
-                    ) : logs.length === 0 ? (
-                        <div className="text-center py-12">
-                            <div className="text-gray-400 mb-4">
-                                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                            <p className="text-gray-500">No activity logs found.</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <div className="inline-block min-w-full align-middle">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Time
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                User ID
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Action
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Entity
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Details
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {logs.map((log) => (
-                                            <tr key={log.id} className="hover:bg-gray-50 transition-colors duration-150">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {new Date(log.timestamp).toLocaleString()}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {log.userId}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                        ${log.action === 'create' ? 'bg-green-100 text-green-800' : 
-                                                          log.action === 'update' ? 'bg-blue-100 text-blue-800' :
-                                                          log.action === 'delete' ? 'bg-red-100 text-red-800' :
-                                                          'bg-gray-100 text-gray-800'}`}>
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {log.entityType}
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-900">
-                                                    <div className="max-h-40 overflow-y-auto">
-                                                        <pre className="text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                            {JSON.stringify(log.details, null, 2)}
-                                                        </pre>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
                         </div>
                     )}
                 </div>
-            </div>
+            </section>
         </div>
     );
-} 
+};

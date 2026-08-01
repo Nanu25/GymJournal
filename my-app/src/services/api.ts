@@ -1,15 +1,8 @@
 import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = 'http://localhost:3000/api';
 
-// Add axios interceptor to include auth token in all requests
-axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+
 
 export interface UserData {
     name: string;
@@ -29,6 +22,10 @@ export interface LoginData {
     password: string;
 }
 
+export interface GoogleLoginData {
+    token: string;
+}
+
 export interface AuthResponse {
     success: boolean;
     data?: {
@@ -45,6 +42,7 @@ export interface AuthResponse {
             repRange?: string;
         };
         token: string;
+        createdNewUser?: boolean;
     };
     error?: string;
 }
@@ -53,7 +51,7 @@ export const api = {
     auth: {
         register: async (userData: UserData): Promise<AuthResponse> => {
             try {
-                const response = await axios.post(`${API_URL}/auth/register`, userData);
+                const response = await apiClient.post('/auth/register', userData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
@@ -65,13 +63,39 @@ export const api = {
 
         login: async (loginData: LoginData): Promise<AuthResponse> => {
             try {
-                const response = await axios.post(`${API_URL}/auth/login`, loginData);
+                const response = await apiClient.post('/auth/login', loginData);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
                     return error.response?.data || { success: false, error: 'Login failed' };
                 }
                 return { success: false, error: 'Login failed' };
+            }
+        },
+
+        loginWithGoogle: async (googleData: GoogleLoginData): Promise<AuthResponse> => {
+            try {
+                const response = await apiClient.post('/auth/google', googleData);
+                return response.data;
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    return error.response?.data || { success: false, error: 'Google login failed' };
+                }
+                return { success: false, error: 'Google login failed' };
+            }
+        },
+    },
+
+    user: {
+        updateProfile: async (userData: Partial<UserData>): Promise<AuthResponse> => {
+            try {
+                const response = await apiClient.put('/user/profile', userData);
+                return response.data;
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    return error.response?.data || { success: false, error: 'Profile update failed' };
+                }
+                return { success: false, error: 'Profile update failed' };
             }
         },
     },

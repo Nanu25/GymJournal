@@ -17,20 +17,20 @@ let TrainingExercise = class TrainingExercise {
 };
 exports.TrainingExercise = TrainingExercise;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
-    __metadata("design:type", String)
+    (0, typeorm_1.PrimaryGeneratedColumn)('increment'),
+    __metadata("design:type", Number)
 ], TrainingExercise.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
 ], TrainingExercise.prototype, "weight", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'integer' }),
+    __metadata("design:type", Number)
 ], TrainingExercise.prototype, "trainingId", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'integer' }),
+    __metadata("design:type", Number)
 ], TrainingExercise.prototype, "exerciseId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => Training_1.Training, training => training.trainingExercises),
@@ -43,6 +43,6 @@ __decorate([
     __metadata("design:type", Exercise_1.Exercise)
 ], TrainingExercise.prototype, "exercise", void 0);
 exports.TrainingExercise = TrainingExercise = __decorate([
-    (0, typeorm_1.Entity)()
+    (0, typeorm_1.Entity)('training_exercises')
 ], TrainingExercise);
 //# sourceMappingURL=TrainingExercise.js.map

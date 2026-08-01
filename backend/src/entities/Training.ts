@@ -1,24 +1,26 @@
-// Training.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, BaseEntity } from 'typeorm';
 import { User } from './User';
 import { TrainingExercise } from './TrainingExercise';
 
 @Entity('trainings')
 export class Training extends BaseEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column({ type: 'date' })
     date!: Date;
 
-    @ManyToOne(() => User, user => user.trainings)
+    @ManyToOne(() => User, (user: User) => user.trainings)
     @JoinColumn({ name: 'userId' })
     user!: User;
 
-    @Column()
-    userId!: string | undefined;
+    @Column({ type: 'uuid' })
+    userId!: string;
 
-    @OneToMany(() => TrainingExercise, trainingExercise => trainingExercise.training, {
+    @Column({ type: 'jsonb', nullable: true })
+    exercises!: Record<string, number> | null;
+
+    @OneToMany(() => TrainingExercise, (trainingExercise: TrainingExercise) => trainingExercise.training, {
         cascade: true
     })
     trainingExercises!: TrainingExercise[];

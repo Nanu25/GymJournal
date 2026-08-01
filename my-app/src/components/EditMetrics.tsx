@@ -1,85 +1,107 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
+import { userService, UserMetrics } from "../services/userService";
+
 
 interface EditMetricsProps {
   onBackToDashboard: () => void;
 }
 
 const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
-  // Personal information states
-  const [newWeight, setNewWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [age, setAge] = useState("");
+  // Load from cache first for instant display
+  const [newWeight, setNewWeight] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.weight?.toString() || '';
+  });
+  const [height, setHeight] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.height?.toString() || '';
+  });
+  const [age, setAge] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.age?.toString() || '';
+  });
+  const [timesPerWeek, setTimesPerWeek] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.timesPerWeek?.toString() || '';
+  });
+  const [timePerSession, setTimePerSession] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.timePerSession?.toString() || '';
+  });
+  const [repetitionRange, setRepetitionRange] = useState(() => {
+    const cached = userService.getCachedMetrics();
+    return cached?.repRange || '';
+  });
 
-  // Training metrics states
-  const [timesPerWeek, setTimesPerWeek] = useState("");
-  const [timePerSession, setTimePerSession] = useState("");
-  const [repetitionRange, setRepetitionRange] = useState("");
-
-  // Fetch initial metrics from backend on mount
+  // Fetch initial metrics from backend on mount (to get all fields including age, timesPerWeek, etc.)
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Not authenticated');
-        }
-        const response = await fetch('/api/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch metrics');
-        const data = await response.json();
-        setNewWeight(data.weight?.toString() || '');
-        setHeight(data.height?.toString() || '');
-        setAge(data.age?.toString() || '');
-        setTimesPerWeek(data.timesPerWeek?.toString() || '');
-        setTimePerSession(data.timePerSession?.toString() || '');
-        setRepetitionRange(data.repRange || '');
+        const data = await userService.getUserData();
+
+        // Update all fields if they are not already set (or to ensure sync)
+        // We use the nullish coalescing operator to default to empty string if undefined
+        setNewWeight(prev => prev || data.weight?.toString() || '');
+        setHeight(prev => prev || data.height?.toString() || '');
+        setAge(prev => prev || data.age?.toString() || '');
+        setTimesPerWeek(prev => prev || data.timesPerWeek?.toString() || '');
+        setTimePerSession(prev => prev || data.timePerSession?.toString() || '');
+        setRepetitionRange(prev => prev || data.repRange || '');
+
       } catch (error) {
         console.error('Error fetching metrics:', error);
+        // Keep using cached values if fetch fails
       }
     };
+
+    // Fetch in background to get all fields, but form is already pre-filled from cache
     fetchMetrics();
   }, []);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Handle edit by sending updated metrics to backend
   const handleEdit = async () => {
+    if (isSubmitting) return;
+
     const weightNum = parseFloat(newWeight);
     if (isNaN(weightNum) || weightNum <= 0) {
       alert('Please enter a valid positive weight');
       return;
     }
 
+    setIsSubmitting(true);
+
+    // Optimistic Update: Create the metrics object
+    const updatedMetrics: UserMetrics = {
+      weight: weightNum,
+      height: parseFloat(height) || undefined,
+      age: parseInt(age) || undefined,
+      timesPerWeek: parseInt(timesPerWeek) || undefined,
+      timePerSession: parseInt(timePerSession) || undefined,
+      repRange: repetitionRange || undefined
+    };
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-      const response = await fetch('/api/user', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          weight: weightNum,
-          height: parseFloat(height) || undefined,
-          age: parseInt(age) || undefined,
-          timesPerWeek: parseInt(timesPerWeek) || undefined,
-          timePerSession: parseInt(timePerSession) || undefined,
-          repRange: repetitionRange || undefined
-        }),
+      // 1. Update Cache Immediately (Optimistic)
+      // We construct a temporary UserData object to pass to cacheUserData
+      userService.cacheUserData({
+        metrics: updatedMetrics,
+        ...updatedMetrics // Flattened properties
       });
-      if (!response.ok) throw new Error('Failed to update metrics');
-      const updatedData = await response.json();
-      console.log('Updated metrics:', updatedData);
+
+      // 2. Send to Backend
+      await userService.updateMetrics(updatedMetrics);
+
+      // 3. Navigate back immediately
       onBackToDashboard();
     } catch (error) {
       console.error('Error updating metrics:', error);
       alert('Failed to update metrics');
+      // In a real optimistic UI, we might want to revert the cache here if it failed,
+      // but for this simple app, keeping the user's input in cache is acceptable.
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,6 +110,9 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
       <div className="container mx-auto px-6">
         <div className="max-w-2xl mx-auto">
           <div className="bg-[#0f172a] rounded-[32px] shadow-[0_0_50px_0_rgba(8,_112,_184,_0.7)] border border-blue-500/10 backdrop-blur-xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              {/* Back button removed as it is replaced by Global Navbar */}
+            </div>
             <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-8">
               Edit Metrics
             </h2>
@@ -186,15 +211,17 @@ const EditMetrics: React.FC<EditMetricsProps> = ({ onBackToDashboard }) => {
             <div className="flex gap-4 pt-4">
               <button
                 onClick={handleEdit}
-                className="flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl border border-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:border-blue-300"
+                disabled={isSubmitting}
+                className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl border border-emerald-400/50 transition-all duration-200 shadow-lg shadow-emerald-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-emerald-600 hover:to-emerald-700'}`}
               >
-                Save Changes
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 onClick={onBackToDashboard}
-                className="flex-1 py-4 text-xl font-bold text-blue-200 bg-[#1a2234] rounded-xl border border-blue-500/10 hover:border-blue-500/30 transition-all duration-200"
+                disabled={isSubmitting}
+                className={`flex-1 py-4 text-xl font-bold text-white bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl border border-gray-500/50 transition-all duration-200 shadow-lg shadow-gray-500/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-gray-700 hover:to-gray-800'}`}
               >
-                Go Back
+                Cancel
               </button>
             </div>
           </div>

@@ -1,147 +1,99 @@
 import { Request, Response } from 'express';
+import { UserService } from '../services/UserService';
 import { AppDataSource } from '../config/database';
-import { User } from '../entities/User';
-import { ActivityLog } from '../entities/ActivityLog';
+import { ActivityLog, ActionType } from '../entities/ActivityLog';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 // Get user metrics
-export const getUserMetrics = async (req: Request, res: Response) => {
-    try {
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const userRepository = AppDataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id: req.user.id } });
-
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        res.status(200).json({
-            name: user.name,
-            email: user.email,
-            weight: user.weight || 0,
-            height: user.height || 0,
-            gender: user.gender || '',
-            age: user.age || 0,
-            timesPerWeek: user.timesPerWeek || 0,
-            timePerSession: user.timePerSession || 0,
-            repRange: user.repRange || '',
-            isAdmin: user.isAdmin || false
-        });
-    } catch (error) {
-        console.error('Error fetching user metrics:', error);
-        res.status(500).json({ message: 'Error fetching user metrics' });
+export const getUserMetrics = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
     }
-};
 
-export const updateUserMetrics = async (req: Request, res: Response) => {
+    const metrics = await UserService.getUserMetrics(req.user.id);
+    res.status(200).json(metrics);
+});
+
+export const updateUserMetrics = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
     try {
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const userRepository = AppDataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id: req.user.id } });
-
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        // Update user fields
-        Object.assign(user, req.body);
-        await userRepository.save(user);
+        const updatedUser = await UserService.updateUserMetrics(req.user.id, req.body);
 
         res.status(200).json({
             message: 'User metrics updated successfully',
-            user: {
-                name: user.name,
-                email: user.email,
-                weight: user.weight,
-                height: user.height,
-                gender: user.gender,
-                age: user.age,
-                timesPerWeek: user.timesPerWeek,
-                timePerSession: user.timePerSession,
-                repRange: user.repRange
-            }
+            user: updatedUser
         });
     } catch (error) {
-        console.error('Error updating user metrics:', error);
-        res.status(500).json({ message: 'Error updating user metrics' });
+        if (error instanceof Error && error.message === 'User not found') {
+            throw new AppError('User not found', 404);
+        }
+        throw error;
     }
-};
+});
 
-export const getUser = async (req: Request, res: Response) => {
+export const getUser = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
+    const user = await UserService.getUser(req.user.id);
+    res.status(200).json(user);
+});
+
+export const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
     try {
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const userRepository = AppDataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id: req.user.id } });
-
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
+        const updatedProfile = await UserService.updateUserProfile(req.user.id, req.body);
 
         res.status(200).json({
-            name: user.name,
-            email: user.email,
-            weight: user.weight,
-            height: user.height,
-            gender: user.gender,
-            age: user.age,
-            timesPerWeek: user.timesPerWeek,
-            timePerSession: user.timePerSession,
-            repRange: user.repRange,
-            isAdmin: user.isAdmin
+            success: true,
+            data: updatedProfile
         });
     } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).json({ message: 'Error fetching user' });
+        if (error instanceof Error && error.message === 'User not found') {
+            throw new AppError('User not found', 404);
+        }
+        throw error;
     }
-};
+});
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.params;
+
+    if (!req.user?.id) {
+        throw new AppError('User not authenticated', 401);
+    }
+
     try {
-        const { userId } = req.params;
+        const deletedUserEmail = await UserService.deleteUser(userId, req.user.id);
 
-        if (!req.user?.id) {
-            res.status(401).json({ message: 'User not authenticated' });
-            return;
-        }
-
-        const userRepository = AppDataSource.getRepository(User);
         const activityLogRepository = AppDataSource.getRepository(ActivityLog);
-        const requestingUser = await userRepository.findOne({ where: { id: req.user.id } });
+        await activityLogRepository.save({
+            userId: req.user.id,
+            action: ActionType.DELETE,
+            entityType: 'User',
+            entityId: userId,
+            details: { deletedUser: deletedUserEmail },
+            timestamp: new Date()
+        });
 
-        if (!requestingUser?.isAdmin) {
-            res.status(403).json({ message: 'Only admins can delete users' });
-            return;
-        }
-
-        const userToDelete = await userRepository.findOne({ where: { id: userId } });
-
-        if (!userToDelete) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        // First, delete all activity logs for this user
-        await activityLogRepository.delete({ userId: userId });
-
-        // Then delete the user
-        await userRepository.remove(userToDelete);
         res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
-        console.error('Error deleting user:', error);
-        res.status(500).json({ message: 'Error deleting user' });
+        if (error instanceof Error) {
+            if (error.message === 'Permission denied') {
+                throw new AppError('You do not have permission to delete users', 403);
+            }
+            if (error.message === 'User not found') {
+                throw new AppError('User not found', 404);
+            }
+        }
+        throw error;
     }
-};
+});

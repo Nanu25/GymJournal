@@ -38,4 +38,31 @@ export interface ActivityLog {
     entityId?: string;
     details?: Record<string, any>;
     timestamp: string;
-} 
+}
+
+export interface Exercise {
+    id: string;
+    name: string;
+    muscleGroup: string;
+}
+
+export interface TrainingExercise {
+    id: string;
+    trainingId: string;
+    exerciseId: string;
+    exercise: Exercise;
+    sets: number;
+    reps: number;
+    weight: number;
+    order: number;
+}
+
+export interface Training {
+    id: string;
+    userId: string;
+    date: string;
+    name: string;
+    exercises: TrainingExercise[];
+    createdAt: string;
+    updatedAt: string;
+}

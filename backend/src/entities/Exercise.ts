@@ -1,11 +1,10 @@
-// Exercise.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { TrainingExercise } from './TrainingExercise';
 
-@Entity()
+@Entity('exercises')
 export class Exercise {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column()
     name!: string;
@@ -13,6 +12,6 @@ export class Exercise {
     @Column()
     muscleGroup!: string;
 
-    @OneToMany(() => TrainingExercise, trainingExercise => trainingExercise.exercise)
+    @OneToMany(() => TrainingExercise, (trainingExercise: TrainingExercise) => trainingExercise.exercise)
     trainingExercises!: TrainingExercise[];
 }

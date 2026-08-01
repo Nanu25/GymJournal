@@ -3,19 +3,19 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 't
 import { Training } from './Training';
 import { Exercise } from './Exercise';
 
-@Entity()
+@Entity('training_exercises')
 export class TrainingExercise {
-    @PrimaryGeneratedColumn('uuid')
-    id!: string;
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
 
     @Column()
     weight!: number;
 
-    @Column()
-    trainingId!: string;
+    @Column({ type: 'integer' })
+    trainingId!: number;
 
-    @Column()
-    exerciseId!: string;
+    @Column({ type: 'integer' })
+    exerciseId!: number;
 
     @ManyToOne(() => Training, training => training.trainingExercises)
     @JoinColumn({ name: 'trainingId' })

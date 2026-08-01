@@ -1,115 +1,171 @@
 import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
-import GymJournalRegistration from "./components/GymJournalRegistration";
-import EditMetrics from "./components/EditMetrics"; // Import EditMetrics component
-import TrainingSelector from "@/components/TrainingSelector.tsx";
+import RegistrationPage from "./components/RegistrationPage";
+import EditMetrics from "./components/EditMetrics";
+import TrainingSelector from "./components/TrainingSelector";
 import { ActivityLogs } from "./components/ActivityLogs";
+import ChatPage from "./components/ChatPage";
+import GoogleUserSetupPage from "./components/GoogleUserSetupPage";
+import PRSectionPage from "./components/PRSectionPage";
+import ContactPage from "./components/ContactPage";
+import { useAuth } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import { User } from "./types/index";
+import ProtectedRoute from "./components/ProtectedRoute";
 
+import { Toaster } from "react-hot-toast";
 
-interface TrainingSessionData {
-    id: number;
-    exerciseData: { [exercise: string]: number };
-}
+// Wrapper component to handle Google Login state which needs to be passed to GoogleUserSetupPage
+const AppRoutes = () => {
+    const { logout } = useAuth();
+    const [googleUser, setGoogleUser] = useState<User | null>(null);
+    const navigate = useNavigate();
 
-const App = () => {
-    const [currentPage, setCurrentPage] = useState("login");
-    const [weight, setWeight] = useState(75); // Mock user weight, set an initial value
-    const [trainingSessions, setTrainingSessions] = useState<TrainingSessionData[]>([
-        {
-            id: 1,
-            exerciseData: {
-                "Dumbbell Press": 50,      // Chest
-                "Incline Dumbbell": 40,    // Chest
-                "Pullup": 10,              // Back
-                "Dumbbell Row": 35,        // Back
-            },
-        },
-        {
-            id: 2,
-            exerciseData: {
-                "Squats": 100,             // Legs
-                "Leg Curl": 60,            // Legs
-                "Biceps Curl": 20,         // Arms
-                "Cable Triceps Pushdown": 25, // Arms
-            },
-        },
-    ]);
-
-    const navigateToDashboard = () => {
-        setCurrentPage("dashboard");
+    const handleGoogleLoginSuccess = (user: User) => {
+        setGoogleUser(user);
+        navigate("/google-setup");
     };
 
-    const navigateToLogin = () => {
-        setCurrentPage("login");
-    };
-
-    const navigateToRegistration = () => {
-        setCurrentPage("registration");
-    };
-
-    // Update this function to set currentPage to "editMetrics"
-    const navigateToMetricsSection = () => {
-        setCurrentPage("editMetrics");
-    };
-
-    const navigateToTrainingSelector = () => {
-        setCurrentPage("trainingSelector");
-    }
-
-    const navigateToActivityLogs = () => {
-        setCurrentPage("activityLogs");
+    const handleGoogleSetupComplete = () => {
+        setGoogleUser(null);
+        navigate("/dashboard");
     };
 
     return (
-        <div className="w-screen h-screen flex flex-col">
-            {currentPage === "login" && (
-                <LoginPage
-                    onLoginSuccess={navigateToDashboard}
-                    onNavigateToRegistration={navigateToRegistration}
-                />
-            )}
-            {currentPage === "dashboard" && (
-                <DashboardPage
-                    onLogout={navigateToLogin}
-                    onNavigateToMetricsSection={navigateToMetricsSection}
-                    navigateToTrainingSelector={navigateToTrainingSelector}
-                    onNavigateToActivityLogs={navigateToActivityLogs}
-                    weight={weight}
-                />
-            )}
-            {currentPage === "registration" && (
-                <GymJournalRegistration
-                    onNavigateToLogin={navigateToLogin}
-                />
-            )}
-            {currentPage === "editMetrics" && (
-                <EditMetrics onBackToDashboard={navigateToDashboard} />
-            )}
-            {currentPage === "trainingSelector" && (
-                <TrainingSelector
-                    onBackToDashboard={navigateToDashboard}
-                />
-            )}
-            {currentPage === "activityLogs" && (
-                <div className="flex flex-col h-full">
-                    <div className="bg-white border-b border-gray-200 px-4 py-3">
-                        <button 
-                            onClick={navigateToDashboard}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            <svg className="mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Dashboard
-                        </button>
-                    </div>
-                    <div className="flex-1 overflow-auto">
-                        <ActivityLogs />
-                    </div>
-                </div>
-            )}
+        <div className="w-screen h-screen flex flex-col bg-[#080b14] overflow-hidden">
+            <Toaster position="top-center" toastOptions={{
+                style: {
+                    background: '#1e293b',
+                    color: '#fff',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                },
+            }} />
+
+            {/* Navbar is shown on protected routes mostly, but we can control it via layout or check path */}
+            {/* Ideally Navbar should be part of a Layout component for protected routes. 
+                For now, we'll render it conditionally based on route or let pages handle it? 
+                Actually, Navbar was global. Let's make it global but conditionally hidden. */}
+            <NavbarWrapper onLogout={() => { logout(); navigate("/login"); }} />
+
+            <div className="flex-1 overflow-auto">
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path="/login" element={
+                        <LoginPage
+                            onLoginSuccess={() => navigate("/dashboard")}
+                            onNavigateToRegistration={() => navigate("/register")}
+                            onGoogleLoginSuccess={handleGoogleLoginSuccess}
+                            onNavigateToContact={() => navigate("/contact")}
+                        />
+                    } />
+                    <Route path="/register" element={
+                        <RegistrationPage
+                            onNavigateToLogin={() => navigate("/login")}
+                            onNavigateToContact={() => navigate("/contact")}
+                        />
+                    } />
+                    <Route path="/contact" element={
+                        <ContactPage onNavigateToLogin={() => navigate("/login")} />
+                    } />
+
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/edit-metrics" element={
+                        <ProtectedRoute>
+                            <EditMetrics onBackToDashboard={() => navigate("/dashboard")} />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/add-training" element={
+                        <ProtectedRoute>
+                            <TrainingSelector
+                                onTrainingAdded={() => navigate("/dashboard")}
+                                onCancel={() => navigate("/dashboard")}
+                            />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/activity-logs" element={
+                        <ProtectedRoute>
+                            <div className="flex flex-col h-full">
+                                <div className="flex-1 overflow-auto">
+                                    <ActivityLogs />
+                                </div>
+                            </div>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/chat" element={
+                        <ProtectedRoute>
+                            <ChatPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/pr-section" element={
+                        <ProtectedRoute>
+                            <PRSectionPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/google-setup" element={
+                        googleUser ? (
+                            <GoogleUserSetupPage
+                                user={googleUser}
+                                onComplete={handleGoogleSetupComplete}
+                                onNavigateToContact={() => navigate("/contact")}
+                            />
+                        ) : (
+                            <Navigate to="/login" replace />
+                        )
+                    } />
+
+                    {/* Default Redirect */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+            </div>
         </div>
+    );
+};
+
+// Helper to conditionally render Navbar
+import { useLocation } from "react-router-dom";
+const NavbarWrapper = ({ onLogout }: { onLogout: () => void }) => {
+    const location = useLocation();
+    const hideNavbarPaths = ['/login', '/register', '/google-setup', '/contact'];
+    const showNavbar = !hideNavbarPaths.includes(location.pathname);
+
+    if (!showNavbar) return null;
+
+    return (
+        <Navbar
+            onLogout={onLogout}
+        />
+    );
+};
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 5 * 60 * 1000, // 5 minutes
+        },
+    },
+});
+
+const App = () => {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <Router>
+                <AppRoutes />
+            </Router>
+            <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
     );
 };
 

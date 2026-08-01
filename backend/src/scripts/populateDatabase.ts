@@ -4,7 +4,7 @@ import { Exercise } from '../entities/Exercise';
 import { TrainingExercise } from '../entities/TrainingExercise';
 import { User } from '../entities/User';
 import { faker } from '@faker-js/faker';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const trainingRepository = AppDataSource.getRepository(Training);
 const exerciseRepository = AppDataSource.getRepository(Exercise);

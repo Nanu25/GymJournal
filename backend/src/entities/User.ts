@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity, OneToMany } from 'typeorm';
-import {Training} from "./Training";
+import { Training } from "./Training";
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -12,8 +12,11 @@ export class User extends BaseEntity {
     @Column({ unique: true, length: 100 })
     email!: string;
 
-    @Column()
-    password!: string;
+    @Column({ nullable: true })
+    password?: string;
+
+    @Column({ nullable: true, unique: true })
+    googleId?: string;
 
     @Column({ type: 'float', nullable: true })
     weight?: number;
@@ -45,6 +48,6 @@ export class User extends BaseEntity {
     @UpdateDateColumn()
     updatedAt!: Date;
 
-    @OneToMany(() => Training, training => training.user)
+    @OneToMany(() => Training, (training: Training) => training.user)
     trainings!: Training[];
-} 
+}
