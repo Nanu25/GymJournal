@@ -29,7 +29,7 @@ router.get('/', authenticateToken, requireAdmin, async (_req: Request, res: Resp
 
 // DELETE /api/monitored-users/:id - Admin only
 router.delete('/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const id = req.params.id as string;
     try {
         const monitoredUser = await monitoredUserRepository.findOne({ where: { id } });
         if (!monitoredUser) {

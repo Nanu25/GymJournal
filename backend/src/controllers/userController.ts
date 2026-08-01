@@ -65,7 +65,7 @@ export const updateUserProfile = asyncHandler(async (req: Request, res: Response
 });
 
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
 
     if (!req.user?.id) {
         throw new AppError('User not authenticated', 401);
@@ -76,7 +76,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 
         const activityLogRepository = AppDataSource.getRepository(ActivityLog);
         await activityLogRepository.save({
-            userId: req.user.id,
+            userId: String(req.user.id),
             action: ActionType.DELETE,
             entityType: 'User',
             entityId: userId,

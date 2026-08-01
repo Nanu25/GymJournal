@@ -58,7 +58,7 @@ export const createTraining = asyncHandler(async (req: Request, res: Response): 
 });
 
 export const deleteTraining = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { date } = req.params;
+    const date = req.params.date as string;
 
     if (!req.user?.id) {
         throw new AppError('User not authenticated', 401);
@@ -69,7 +69,7 @@ export const deleteTraining = asyncHandler(async (req: Request, res: Response): 
 });
 
 export const updateTrainingByDate = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { date } = req.params;
+    const date = req.params.date as string;
     const { exercises, date: newDate } = req.body;
 
     if (!req.user?.id) {

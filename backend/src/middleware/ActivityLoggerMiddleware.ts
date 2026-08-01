@@ -29,7 +29,8 @@ export class ActivityLoggerMiddleware {
                         return;
                     }
 
-                    const entityId = req.params.id || req.params.date || undefined;
+                    const rawEntityId = req.params.id || req.params.date;
+                    const entityId = Array.isArray(rawEntityId) ? rawEntityId[0] : (rawEntityId as string | undefined);
                     const details = {
                         method: req.method,
                         path: req.path,
