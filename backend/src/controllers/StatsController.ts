@@ -17,7 +17,7 @@ export const getExerciseProgressData = asyncHandler(async (req: Request, res: Re
         throw new AppError('User not authenticated', 401);
     }
 
-    const { exercise } = req.params;
+    const exercise = req.params.exercise as string;
     const result = await StatsService.getExerciseProgress(req.user.id, exercise);
     res.status(200).json(result);
 });
