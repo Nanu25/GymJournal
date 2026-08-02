@@ -25,27 +25,25 @@ const getDatabaseConfig = (): DataSourceOptions => {
             // Heroku provides a DATABASE_URL in the format:
             // postgres://username:password@host:port/database
             const url = new URL(process.env.DATABASE_URL);
-            console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${url.port}/${url.pathname.substring(1)} with SSL`);
+            const port = url.port ? parseInt(url.port, 10) : 5432;
+            console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${port}/${url.pathname.substring(1)}`);
             return {
                 type: 'postgres',
                 host: url.hostname,
-                port: parseInt(url.port),
-                username: url.username,
-                password: url.password,
-                database: url.pathname.substring(1),
+                port: port,
+                username: decodeURIComponent(url.username),
+                password: decodeURIComponent(url.password),
+                database: url.pathname.substring(1) || 'postgres',
                 ssl: {
-                    rejectUnauthorized: false // Required for Heroku
+                    rejectUnauthorized: process.env.PG_SSL_REJECT_UNAUTHORIZED === 'true'
                 },
                 // Connection pool settings
                 poolSize: 20,
                 connectTimeoutMS: 10000,
                 extra: {
-                    // PostgreSQL specific settings
                     max: 20,
                     idleTimeoutMillis: 30000,
-                    connectionTimeoutMillis: 10000,
-                    // Configure statement timeout to avoid Heroku H12 errors
-                    statement_timeout: 25000 // 25 seconds, below Heroku's 30s timeout
+                    connectionTimeoutMillis: 10000
                 }
             };
         } catch (error) {

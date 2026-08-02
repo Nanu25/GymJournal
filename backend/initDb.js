@@ -1,4 +1,4 @@
-// Simple script to initialize the database on Heroku
+require('dotenv').config();
 const { Client } = require('pg');
 
 async function initializeDatabase() {
