@@ -56,19 +56,24 @@ export class AuthService {
         return { user, token };
     }
 
-    static async loginWithGoogle(googleToken: string): Promise<{ user: User; token: string; createdNewUser: boolean }> {
-        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        const audience = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+        if (!audience) {
+            console.error('[SECURITY_ERROR] GOOGLE_CLIENT_ID is not configured in server environment variables.');
+            throw new AppError('Google authentication is not configured on the server', 500);
+        }
+
+        const client = new OAuth2Client(audience);
 
         try {
-            // Verify the Google token
+            // Verify the Google ID Token with Google's public keys
             const ticket = await client.verifyIdToken({
                 idToken: googleToken,
-                audience: process.env.GOOGLE_CLIENT_ID,
+                audience: audience
             });
 
             const payload = ticket.getPayload();
             if (!payload) {
-                throw new AppError('Invalid Google token', 400);
+                throw new AppError('Invalid Google token payload', 400);
             }
 
             const userRepository = AppDataSource.getRepository(User);
@@ -95,7 +100,6 @@ export class AuthService {
                     name: payload.name || payload.email!.split('@')[0],
                     googleId: payload.sub,
                     // Leave password as undefined for Google users
-                    // Leave fitness metrics as undefined - user will fill them later
                 });
                 await userRepository.save(user);
                 createdNewUser = true;
@@ -108,9 +112,9 @@ export class AuthService {
             );
 
             return { user, token, createdNewUser };
-        } catch (error) {
-            console.error('Google authentication error:', error);
-            throw new AppError('Google authentication failed', 401);
+        } catch (error: any) {
+            console.error('Google authentication error details:', error?.message || error);
+            throw new AppError(error?.message ? `Google authentication failed: ${error.message}` : 'Google authentication failed', 401);
         }
     }
 }
