@@ -56,6 +56,7 @@ export class AuthService {
         return { user, token };
     }
 
+    static async loginWithGoogle(googleToken: string): Promise<{ user: User; token: string; createdNewUser: boolean }> {
         const audience = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
         if (!audience) {
             console.error('[SECURITY_ERROR] GOOGLE_CLIENT_ID is not configured in server environment variables.');
