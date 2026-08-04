@@ -180,7 +180,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
                   throw new Error("Invalid user data received");
                 }
               } else {
-                setError(response.error || "Google login failed");
+                const errVal = response.error;
+                const errStr = typeof errVal === 'string' ? errVal : (errVal && typeof (errVal as any).message === 'string' ? (errVal as any).message : "Google login failed");
+                setError(errStr);
                 setShake(true);
               }
             } catch (err) {

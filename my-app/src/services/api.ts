@@ -55,7 +55,9 @@ export const api = {
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
-                    return error.response?.data || { success: false, error: 'Registration failed' };
+                    const data = error.response?.data;
+                    const errorMsg = typeof data === 'string' ? data : (data?.message || data?.error || 'Registration failed');
+                    return { success: false, error: typeof errorMsg === 'string' ? errorMsg : 'Registration failed' };
                 }
                 return { success: false, error: 'Registration failed' };
             }
@@ -67,7 +69,9 @@ export const api = {
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
-                    return error.response?.data || { success: false, error: 'Login failed' };
+                    const data = error.response?.data;
+                    const errorMsg = typeof data === 'string' ? data : (data?.message || data?.error || 'Login failed');
+                    return { success: false, error: typeof errorMsg === 'string' ? errorMsg : 'Login failed' };
                 }
                 return { success: false, error: 'Login failed' };
             }
@@ -79,7 +83,9 @@ export const api = {
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError(error)) {
-                    return error.response?.data || { success: false, error: 'Google login failed' };
+                    const data = error.response?.data;
+                    const errorMsg = typeof data === 'string' ? data : (data?.message || data?.error || 'Google login failed');
+                    return { success: false, error: typeof errorMsg === 'string' ? errorMsg : 'Google login failed' };
                 }
                 return { success: false, error: 'Google login failed' };
             }
