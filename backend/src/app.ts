@@ -77,6 +77,19 @@ app.use('/api/', limiter); // Apply to API routes only
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Lazy database connection initialization for serverless (Vercel) cold starts.
+// This MUST run before any route handler that uses the database.
+app.use(async (req: Request, _res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/') && !AppDataSource.isInitialized) {
+        try {
+            await initializeDatabase();
+        } catch (error) {
+            console.error('[APP] Error connecting to database on request:', error);
+        }
+    }
+    next();
+});
+
 // Serve static files from the public directory
 app.use(express.static(publicDir));
 
@@ -126,18 +139,6 @@ app.post('/api/auth/google', AuthController.loginWithGoogle);
 app.get('*', (req: Request, res: Response) => {
     if (req.path.startsWith('/api/')) return;
     res.sendFile(path.join(publicDir, 'index.html'));
-});
-
-// Lazy database connection initialization for serverless requests
-app.use(async (req: Request, _res: Response, next: NextFunction) => {
-    if (req.path.startsWith('/api/') && !AppDataSource.isInitialized) {
-        try {
-            await initializeDatabase();
-        } catch (error) {
-            console.error('[APP] Error connecting to database on request:', error);
-        }
-    }
-    next();
 });
 
 // Error handling middleware
