@@ -9,6 +9,9 @@
   "engines": {
     "node": ">=20.x"
   },
+  "dependencies": {
+    "reflect-metadata": "^0.2.2"
+  },
   "cacheDirectories": [
     "backend/node_modules",
     "my-app/node_modules"
