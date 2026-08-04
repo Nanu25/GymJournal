@@ -1,6 +1,7 @@
 import { AppDataSource } from '../config/database';
 import { Exercise } from '../entities/Exercise';
-import muscleGroupMapping from '../data/muscleGroupMappingData.json';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const muscleGroupMapping = require('../data/muscleGroupMappingData.json');
 
 export const ExerciseRepository = AppDataSource.getRepository(Exercise).extend({
     async findByNameOrCreate(name: string): Promise<Exercise> {

@@ -57,19 +57,14 @@ export class AuthService {
     }
 
     static async loginWithGoogle(googleToken: string): Promise<{ user: User; token: string; createdNewUser: boolean }> {
+        const client = new OAuth2Client();
         const audience = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-        if (!audience) {
-            console.error('[SECURITY_ERROR] GOOGLE_CLIENT_ID is not configured in server environment variables.');
-            throw new AppError('Google authentication is not configured on the server', 500);
-        }
-
-        const client = new OAuth2Client(audience);
 
         try {
             // Verify the Google ID Token with Google's public keys
             const ticket = await client.verifyIdToken({
                 idToken: googleToken,
-                audience: audience
+                ...(audience ? { audience } : {})
             });
 
             const payload = ticket.getPayload();
