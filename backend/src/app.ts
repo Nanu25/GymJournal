@@ -18,21 +18,25 @@ import { AuthController } from './controllers/auth.controller';
 import { authenticateToken } from './middleware/auth';
 import { errorHandler } from './middleware/error.middleware';
 
+const isVercel = !!process.env.VERCEL;
 
-
-
-
-// Ensure public directory exists
-const publicDir = path.join(__dirname, '..', 'public');
-if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, { recursive: true });
+// Ensure public directory exists (only on local — Vercel filesystem is read-only)
+if (!isVercel) {
+    const publicDir = path.join(__dirname, '..', 'public');
+    if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+    }
 }
 
+// On local dev, crash early if JWT_SECRET is missing.
+// On Vercel, log a warning but don't crash the module — let the request handler return a proper error.
 if (!process.env.JWT_SECRET) {
-    console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
-    // In serverless (Vercel), process.exit kills the function entirely.
-    // Throw instead so the error propagates to the request handler.
-    throw new Error('[FATAL] JWT_SECRET is not defined. Set it in Vercel Dashboard > Settings > Environment Variables.');
+    if (!isVercel) {
+        console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
+        process.exit(1);
+    } else {
+        console.error('[WARNING] JWT_SECRET is not defined. Auth endpoints will fail. Set it in Vercel Dashboard > Settings > Environment Variables.');
+    }
 }
 
 const app = express();
@@ -51,12 +55,6 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
     credentials: true
 };
-
-// Request logging middleware
-// Request logging middleware - Removed for cleaner logs
-// app.use((req: Request, res: Response, next: NextFunction) => {
-//     next();
-// });
 
 // Middleware
 app.use(helmet({
@@ -92,18 +90,20 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
     next();
 });
 
-// Serve static files from the public directory
-app.use(express.static(publicDir));
+// Serve static files from the public directory (only relevant for local dev)
+if (!isVercel) {
+    const publicDir = path.join(__dirname, '..', 'public');
+    app.use(express.static(publicDir));
 
-// Root path handler - serve the React app
-app.get('*', (req: Request, res: Response, next: NextFunction) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(publicDir, 'index.html'));
-});
+    // Root path handler - serve the React app
+    app.get('*', (req: Request, res: Response, next: NextFunction) => {
+        if (req.path.startsWith('/api/')) return next();
+        res.sendFile(path.join(publicDir, 'index.html'));
+    });
+}
 
 // API status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
-    // console.log('[API] Status endpoint called');
     res.json({
         message: 'Gym Journal API is running',
         time: new Date().toISOString(),
@@ -111,10 +111,6 @@ app.get('/api/status', (_req: Request, res: Response) => {
         dbConnected: AppDataSource.isInitialized
     });
 });
-
-
-
-
 
 // Add exercise routes (no authentication required for read-only data)
 app.use('/api/exercises', exerciseRoutes);
@@ -136,18 +132,20 @@ app.post('/api/auth/register', AuthController.register);
 app.post('/api/auth/login', AuthController.login);
 app.post('/api/auth/google', AuthController.loginWithGoogle);
 
-
-// Fallback: serve index.html for any non-API route (for React Router)
-app.get('*', (req: Request, res: Response) => {
-    if (req.path.startsWith('/api/')) return;
-    res.sendFile(path.join(publicDir, 'index.html'));
-});
+// Fallback: serve index.html for any non-API route (for React Router, local only)
+if (!isVercel) {
+    const publicDir = path.join(__dirname, '..', 'public');
+    app.get('*', (req: Request, res: Response) => {
+        if (req.path.startsWith('/api/')) return;
+        res.sendFile(path.join(publicDir, 'index.html'));
+    });
+}
 
 // Error handling middleware
 app.use(errorHandler);
 
 // Only start standalone HTTP server when not running in Vercel serverless environment
-if (!process.env.VERCEL) {
+if (!isVercel) {
     console.log('[APP] Starting database initialization...');
     initializeDatabase()
         .then((success) => {

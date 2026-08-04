@@ -9,25 +9,28 @@ import { ActivityLog } from '../entities/ActivityLog';
 import { MonitoredUser } from '../entities/MonitoredUser';
 
 // Load environment variables from .env in local development
-if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('dotenv').config();
-    // Make sure to set DATABASE_URL in your .env file for local development
+if (!process.env.VERCEL) {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require('dotenv').config();
+    } catch (_) {
+        // dotenv may not be available in production
+    }
 }
 
-console.log('[DB_CONFIG] Starting database configuration...');
+const isVercel = !!process.env.VERCEL;
 
-// Parse the DATABASE_URL from Heroku
+// Parse the DATABASE_URL
 const getDatabaseConfig = (): DataSourceOptions => {
-    console.log('[DB_CONFIG] Entering getDatabaseConfig()');
     if (process.env.DATABASE_URL) {
-        console.log('[DB_CONFIG] DATABASE_URL found. Parsing...');
         try {
-            // Heroku provides a DATABASE_URL in the format:
-            // postgres://username:password@host:port/database
             const url = new URL(process.env.DATABASE_URL);
             const port = url.port ? parseInt(url.port, 10) : 5432;
             console.log(`[DB_CONFIG] Connecting to PostgreSQL at ${url.hostname}:${port}/${url.pathname.substring(1)}`);
+
+            // Use smaller pool for serverless to avoid exhausting Supabase connections
+            const poolSize = isVercel ? 3 : 20;
+
             return {
                 type: 'postgres',
                 host: url.hostname,
@@ -38,12 +41,9 @@ const getDatabaseConfig = (): DataSourceOptions => {
                 ssl: {
                     rejectUnauthorized: process.env.PG_SSL_REJECT_UNAUTHORIZED === 'true'
                 },
-                // Connection pool settings
-                poolSize: 20,
-                connectTimeoutMS: 10000,
                 extra: {
-                    max: 20,
-                    idleTimeoutMillis: 30000,
+                    max: poolSize,
+                    idleTimeoutMillis: isVercel ? 10000 : 30000,
                     connectionTimeoutMillis: 10000
                 }
             };
@@ -65,37 +65,37 @@ const getDatabaseConfig = (): DataSourceOptions => {
     };
 };
 
-console.log('[DB_CONFIG] Database configuration function defined. Preparing to create DataSource.');
+const entities = [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser];
+
 let appDataSourceInstance: DataSource;
 
 try {
-    console.log('[DB_CONFIG] Defining entities for DataSource...');
-    const entities = [User, Training, Exercise, TrainingExercise, ActivityLog, MonitoredUser];
-    console.log('[DB_CONFIG] Entities defined. Number of entities:', entities.length);
-    entities.forEach(entity => console.log('[DB_CONFIG] Entity:', entity.name));
-
     const dbConfig = getDatabaseConfig();
-    console.log('[DB_CONFIG] Resolved database configuration:', JSON.stringify(dbConfig, (key, value) => key === 'password' ? '[REDACTED]' : value));
 
     appDataSourceInstance = new DataSource({
         ...dbConfig,
-        synchronize: false, // Disable synchronize when using migrations
-        logging: process.env.NODE_ENV !== 'production', // Only log in development
+        synchronize: false,
+        logging: !isVercel && process.env.NODE_ENV !== 'production',
         logger: "advanced-console",
         entities: entities,
         subscribers: [],
-        migrations: [process.env.NODE_ENV === 'production' ? 'dist/migrations/**/*.js' : 'src/migrations/**/*.ts'],
+        migrations: [],
         migrationsTableName: 'migrations',
-        cache: {
-            duration: 60000 // Cache query results for 1 minute
-        }
-        // Note: extra is already included in dbConfig, don't duplicate it here
     });
     console.log('[DB_CONFIG] DataSource instance created successfully.');
 } catch (error) {
     console.error('[DB_CONFIG] CRITICAL ERROR during DataSource instantiation:', error);
-    // Don't call process.exit in serverless — it kills the function with FUNCTION_INVOCATION_FAILED
-    throw error;
+    // Create a dummy DataSource so the module can still export.
+    // initializeDatabase() will fail gracefully at request time.
+    appDataSourceInstance = new DataSource({
+        type: 'postgres',
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: '',
+        database: 'postgres',
+        entities: entities,
+    });
 }
 
 // Create and export the data source
@@ -104,7 +104,8 @@ export const AppDataSource = appDataSourceInstance;
 // Add a wrapper function to help with debugging and connection retries
 export const initializeDatabase = async () => {
     console.log('[DB_INIT] Starting database initialization...');
-    const MAX_RETRIES = 5;
+    // Fewer retries on Vercel to avoid function timeout
+    const MAX_RETRIES = isVercel ? 2 : 5;
     let retries = 0;
 
     while (retries < MAX_RETRIES) {
@@ -115,22 +116,14 @@ export const initializeDatabase = async () => {
                 await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
             }
 
-            console.time('[DB_INIT] Database connection time');
-            // If AppDataSource is already initialized, destroy it first
+            // If AppDataSource is already initialized, skip
             if (AppDataSource.isInitialized) {
-                console.log('[DB_INIT] DataSource already initialized, destroying first');
-                await AppDataSource.destroy();
+                console.log('[DB_INIT] DataSource already initialized, reusing.');
+                return true;
             }
 
             await AppDataSource.initialize();
-            console.timeEnd('[DB_INIT] Database connection time');
             console.log('[DB_INIT] Database connection successful!');
-
-            // Test a simple query to verify it's really working
-            console.time('[DB_INIT] Test query time');
-            const userCount = await AppDataSource.getRepository(User).count();
-            console.timeEnd('[DB_INIT] Test query time');
-            console.log(`[DB_INIT] Database test query complete. Found ${userCount} users.`);
 
             return true;
         } catch (error) {
@@ -145,4 +138,4 @@ export const initializeDatabase = async () => {
     }
 
     return false;
-}; 
+};
