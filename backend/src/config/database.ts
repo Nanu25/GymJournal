@@ -94,7 +94,8 @@ try {
     console.log('[DB_CONFIG] DataSource instance created successfully.');
 } catch (error) {
     console.error('[DB_CONFIG] CRITICAL ERROR during DataSource instantiation:', error);
-    process.exit(1); // Exit to make it clear this is a fatal startup error
+    // Don't call process.exit in serverless — it kills the function with FUNCTION_INVOCATION_FAILED
+    throw error;
 }
 
 // Create and export the data source

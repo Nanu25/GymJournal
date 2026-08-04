@@ -30,7 +30,9 @@ if (!fs.existsSync(publicDir)) {
 
 if (!process.env.JWT_SECRET) {
     console.error('[FATAL] JWT_SECRET is not defined in environment variables.');
-    process.exit(1);
+    // In serverless (Vercel), process.exit kills the function entirely.
+    // Throw instead so the error propagates to the request handler.
+    throw new Error('[FATAL] JWT_SECRET is not defined. Set it in Vercel Dashboard > Settings > Environment Variables.');
 }
 
 const app = express();
