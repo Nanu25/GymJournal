@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import type { DataSourceOptions } from 'typeorm';
 import { User } from '../entities/User';
